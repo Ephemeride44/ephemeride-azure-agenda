@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import EventList from "@/components/EventList";
 import { Event } from "@/lib/types";
 import { sampleEvents } from "@/lib/sample-data";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EventProposalForm from "@/components/EventProposalForm";
 
 const Index = () => {
   const [events] = useState<Event[]>(sampleEvents);
+  const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-ephemeride flex flex-col">
@@ -19,13 +22,22 @@ const Index = () => {
               alt="Ephemeride" 
               className="h-12 md:h-16"
             />
-            <Button 
-              asChild
-              variant="outline" 
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              <Link to="/admin">Administration</Link>
-            </Button>
+            <div className="flex gap-4">
+              <Button 
+                onClick={() => setIsProposalDialogOpen(true)}
+                variant="outline" 
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Proposer un événement
+              </Button>
+              <Button 
+                asChild
+                variant="outline" 
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                <Link to="/admin">Administration</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -45,6 +57,15 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      <Dialog open={isProposalDialogOpen} onOpenChange={setIsProposalDialogOpen}>
+        <DialogContent className="bg-ephemeride-light border-none text-ephemeride-foreground max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Proposer un événement</DialogTitle>
+          </DialogHeader>
+          <EventProposalForm onClose={() => setIsProposalDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
