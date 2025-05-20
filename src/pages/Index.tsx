@@ -59,7 +59,7 @@ const Index = () => {
       </footer>
 
       <Dialog open={isProposalDialogOpen} onOpenChange={setIsProposalDialogOpen}>
-        <DialogContent className="bg-ephemeride-light border-none text-ephemeride-foreground max-w-3xl">
+        <DialogContent className="bg-ephemeride-light border-none text-ephemeride-foreground max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">Proposer un événement</DialogTitle>
           </DialogHeader>
