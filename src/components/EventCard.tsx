@@ -34,26 +34,28 @@ const EventCard = ({ event }: EventCardProps) => {
     const day = getDayOfWeek();
     switch (day) {
       case "lundi":
-        return "border-l-[5px] border-l-purple-500";
+        return "border-l-purple-500";
       case "mardi":
-        return "border-l-[5px] border-l-emerald-400";
+        return "border-l-emerald-400";
       case "mercredi":
-        return "border-l-[5px] border-l-amber-400";
+        return "border-l-amber-400";
       case "jeudi":
-        return "border-l-[5px] border-l-sky-400";
+        return "border-l-sky-400";
       case "vendredi":
-        return "border-l-[5px] border-l-rose-400";
+        return "border-l-rose-400";
       case "samedi":
-        return "border-l-[5px] border-l-orange-400";
+        return "border-l-orange-400";
       case "dimanche":
-        return "border-l-[5px] border-l-teal-400";
+        return "border-l-teal-400";
       default:
-        return "border-l-[5px] border-l-gray-300";
+        return "border-l-gray-300";
     }
   };
   
   return (
-    <Card className={`bg-ephemeride-light border-none text-ephemeride-foreground mb-4 animate-fade-in hover:bg-ephemeride-dark transition-colors ${getBorderColorClass()}`}>
+    <Card 
+      className={`bg-ephemeride-light text-ephemeride-foreground mb-4 animate-fade-in hover:bg-ephemeride-dark transition-colors border-l-[15px] ${getBorderColorClass()} rounded-none rounded-r-lg`}
+    >
       <CardContent className="p-4">
         <div className="mb-2">
           <p className="text-sm font-medium opacity-80">{formatDateDisplay()}</p>
