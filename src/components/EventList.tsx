@@ -10,6 +10,7 @@ interface EventListProps {
 const EventList = ({ events }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<string>("mercredi 21 mai 2025 à 10h19");
 
   // Filter events into upcoming and past based on the current date
   useEffect(() => {
@@ -86,6 +87,13 @@ const EventList = ({ events }: EventListProps) => {
       {/* Upcoming Events Section */}
       <div className="space-y-8 mb-12">
         <h2 className="text-2xl font-bold mb-8">Événements à venir</h2>
+        
+        {/* Events Count and Last Updated Section */}
+        <div className="text-sm opacity-70 mb-6 space-y-1">
+          <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
+          <p>dernière mise à jour : {lastUpdated}</p>
+        </div>
+        
         {Object.entries(groupedUpcomingEvents).map(([date, dayEvents]) => (
           <div key={date} className="mb-6">
             <h3 className="text-xl font-semibold border-b border-white/20 pb-2 mb-4">{date}</h3>
