@@ -34,7 +34,7 @@ const Index = () => {
       <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 bg-ephemeride shadow-md' : ''}`}>
         <div className="container mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
-            <div className={`flex justify-start ${isHeaderSticky ? 'w-auto' : 'w-full justify-center'}`}>
+            <div className="flex justify-start">
               <img 
                 src="/lovable-uploads/131a8b24-2c42-453d-8e62-bb48e8c55b00.png" 
                 alt="Ephemeride" 
@@ -63,8 +63,6 @@ const Index = () => {
 
       <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-32 md:mt-24' : ''}`}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-8">Événements à venir</h1>
-          
           <EventList events={events} />
         </div>
       </main>

@@ -26,7 +26,6 @@ export const sampleEvents: Event[] = [
     },
     price: "",
     audience: "à partir de 3 ans",
-    emoji: "📖",
   },
   {
     id: "3",
@@ -39,7 +38,6 @@ export const sampleEvents: Event[] = [
     },
     price: "",
     audience: "8-12 ans",
-    emoji: "📖",
   },
   {
     id: "4",
@@ -96,11 +94,10 @@ export const sampleEvents: Event[] = [
     location: {
       place: "Espace des Garennes",
       city: "SAINT LUMINE DE CLISSON",
-      department: "",
+      department: "44",
     },
     price: "prix libre",
     audience: "",
-    emoji: "❤❤❤",
   },
   {
     id: "9",
