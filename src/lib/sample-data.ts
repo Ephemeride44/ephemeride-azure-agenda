@@ -111,10 +111,10 @@ export const sampleEvents: Event[] = [
     price: "",
     audience: "tout public de 4 à 12 ans avec accompagnateur, 1h30, sur inscription",
   },
-  // Ajout d'événements passés pour démonstration
+  // Événements passés
   {
     id: "10",
-    datetime: "lundi 19 mai 2025 à 15h00", // Événement passé (par rapport à aujourd'hui)
+    datetime: "lundi 19 mai 2025 à 15h00",
     name: "Exposition photo",
     location: {
       place: "Médiathèque",
@@ -126,7 +126,7 @@ export const sampleEvents: Event[] = [
   },
   {
     id: "11",
-    datetime: "mardi 20 mai 2025 à 14h00", // Événement passé (par rapport à aujourd'hui)
+    datetime: "mardi 20 mai 2025 à 14h00",
     name: "Atelier d'écriture",
     location: {
       place: "Centre culturel",
@@ -135,5 +135,18 @@ export const sampleEvents: Event[] = [
     },
     price: "",
     audience: "Adultes",
+  },
+  {
+    id: "12",
+    datetime: "mardi 20 mai 2025 de 21h00",
+    endTime: "23h00",
+    name: "Dev. ephemeride 2.0",
+    location: {
+      place: "Chez Amaury",
+      city: "GÉTIGNÉ",
+      department: "44",
+    },
+    price: "",
+    audience: "",
   }
 ];

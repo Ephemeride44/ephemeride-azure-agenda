@@ -9,7 +9,7 @@ interface EventListProps {
 
 const EventList = ({ events }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [pastEvents, setPartEvents] = useState<Event[]>([]);
+  const [pastEvents, setPastEvents] = useState<Event[]>([]);
 
   // Filter events into upcoming and past based on the current date
   useEffect(() => {
@@ -57,7 +57,7 @@ const EventList = ({ events }: EventListProps) => {
     });
     
     setUpcomingEvents(upcoming);
-    setPartEvents(past);
+    setPastEvents(past);
   }, [events]);
 
   // Group events by date (just the day part)
