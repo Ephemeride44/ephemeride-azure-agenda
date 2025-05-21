@@ -111,4 +111,29 @@ export const sampleEvents: Event[] = [
     price: "",
     audience: "tout public de 4 à 12 ans avec accompagnateur, 1h30, sur inscription",
   },
+  // Ajout d'événements passés pour démonstration
+  {
+    id: "10",
+    datetime: "lundi 19 mai 2025 à 15h00", // Événement passé (par rapport à aujourd'hui)
+    name: "Exposition photo",
+    location: {
+      place: "Médiathèque",
+      city: "CLISSON",
+      department: "44",
+    },
+    price: "Gratuit",
+    audience: "Tout public",
+  },
+  {
+    id: "11",
+    datetime: "mardi 20 mai 2025 à 14h00", // Événement passé (par rapport à aujourd'hui)
+    name: "Atelier d'écriture",
+    location: {
+      place: "Centre culturel",
+      city: "CLISSON",
+      department: "44",
+    },
+    price: "",
+    audience: "Adultes",
+  }
 ];

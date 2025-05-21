@@ -29,7 +29,7 @@ const EventCard = ({ event }: EventCardProps) => {
     return "autre";
   };
   
-  // Get border color based on day of week with thicker 5px borders
+  // Get border color based on day of week with thicker 15px borders
   const getBorderColorClass = () => {
     const day = getDayOfWeek();
     switch (day) {
@@ -54,7 +54,7 @@ const EventCard = ({ event }: EventCardProps) => {
   
   return (
     <Card 
-      className={`bg-ephemeride-light text-ephemeride-foreground mb-4 animate-fade-in hover:bg-ephemeride-dark transition-colors border-l-[15px] ${getBorderColorClass()} rounded-none rounded-r-lg`}
+      className={`bg-ephemeride-light text-ephemeride-foreground mb-4 animate-fade-in hover:bg-ephemeride-dark transition-colors border-l-[15px] ${getBorderColorClass()} rounded-none rounded-r-lg border-0`}
     >
       <CardContent className="p-4">
         <div className="mb-2">
