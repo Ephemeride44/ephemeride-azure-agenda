@@ -59,7 +59,7 @@
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
@@ -78,9 +78,9 @@
   
   /* Light mode specific styles */
   .light {
-    --ephemeride-bg: 60 33% 99%;
+    --ephemeride-bg: 32 33% 96%; /* #faf3ec */
     --ephemeride-text: 224 100% 30%;
-    --ephemeride-card: 60 33% 99.6%;
+    --ephemeride-card: 240 100% 99.8%; /* #fefeff */
   }
   
   /* Dark mode specific styles */
@@ -91,7 +91,7 @@
   }
   
   body.light {
-    background-color: #fdfdfb;
+    background-color: #faf3ec;
     color: #001f98;
   }
   

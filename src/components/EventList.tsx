@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
+import { Button } from "@/components/ui/button";
+import { Share, Mail, Telegram, Mastodon } from "lucide-react";
 
 interface EventListProps {
   events: Event[];
@@ -106,21 +108,92 @@ const EventList = ({ events }: EventListProps) => {
   const groupedUpcomingEvents = groupEventsByDay(upcomingEvents);
   const groupedPastEvents = groupEventsByDay(pastEvents);
 
+  // Share website function
+  const shareWebsite = (platform: string) => {
+    const url = window.location.href;
+    const text = "Découvrez l'agenda culturel et citoyen du vignoble nantais";
+    
+    let shareUrl = "";
+    
+    switch (platform) {
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+        break;
+      case 'telegram':
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      case 'mastodon':
+        shareUrl = `https://toot.kytta.dev/?text=${encodeURIComponent(text + " " + url)}`;
+        break;
+      case 'email':
+        shareUrl = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+        break;
+      default:
+        shareUrl = `https://share.diaspodon.fr/?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    }
+    
+    window.open(shareUrl, '_blank');
+  };
+
   return (
     <div>
+      {/* Events Count and Last Updated Section - Before upcoming events heading */}
+      <div className="text-lg opacity-70 mb-8 space-y-1 text-[#001f98]">
+        <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
+        <p><span className="underline">dernière mise à jour</span> : {lastUpdated}</p>
+        
+        {/* Social sharing buttons */}
+        <div className="flex space-x-3 pt-3">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full border-[#001f98]/20 text-[#001f98]" 
+            onClick={() => shareWebsite('whatsapp')}
+            title="Partager sur WhatsApp"
+          >
+            <Share className="h-4 w-4" />
+            <span className="sr-only">Partager sur WhatsApp</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full border-[#001f98]/20 text-[#001f98]" 
+            onClick={() => shareWebsite('telegram')}
+            title="Partager sur Telegram"
+          >
+            <Telegram className="h-4 w-4" />
+            <span className="sr-only">Partager sur Telegram</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full border-[#001f98]/20 text-[#001f98]" 
+            onClick={() => shareWebsite('mastodon')}
+            title="Partager sur Mastodon"
+          >
+            <Mastodon className="h-4 w-4" />
+            <span className="sr-only">Partager sur Mastodon</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full border-[#001f98]/20 text-[#001f98]" 
+            onClick={() => shareWebsite('email')}
+            title="Partager par email"
+          >
+            <Mail className="h-4 w-4" />
+            <span className="sr-only">Partager par email</span>
+          </Button>
+        </div>
+      </div>
+      
       {/* Upcoming Events Section */}
       <div className="space-y-8 mb-12">
-        <h2 className="text-2xl font-bold mb-8">Événements à venir</h2>
-        
-        {/* Events Count and Last Updated Section - Updated font size */}
-        <div className="text-lg opacity-70 mb-6 space-y-1">
-          <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
-          <p><span className="underline">dernière mise à jour</span> : {lastUpdated}</p>
-        </div>
+        <h2 className="text-2xl font-bold mb-8 text-[#001f98]">Événements à venir</h2>
         
         {Object.entries(groupedUpcomingEvents).map(([date, dayEvents]) => (
           <div key={date} className="mb-6">
-            <h3 className="text-xl font-semibold border-b border-white/20 pb-2 mb-4">{date}</h3>
+            <h3 className="text-xl font-semibold border-b border-white/20 pb-2 mb-4 text-[#001f98]">{date}</h3>
             <div className="space-y-4">
               {dayEvents.map(event => (
                 <EventCard key={event.id} event={event} />
@@ -133,10 +206,10 @@ const EventList = ({ events }: EventListProps) => {
       {/* Past Events Section */}
       {Object.keys(groupedPastEvents).length > 0 && (
         <div className="space-y-8 mt-16">
-          <h2 className="text-2xl font-bold mb-8">Événements passés</h2>
+          <h2 className="text-2xl font-bold mb-8 text-[#001f98]">Événements passés</h2>
           {Object.entries(groupedPastEvents).map(([date, dayEvents]) => (
             <div key={date} className="mb-6">
-              <h3 className="text-xl font-semibold border-b border-white/20 pb-2 mb-4">{date}</h3>
+              <h3 className="text-xl font-semibold border-b border-white/20 pb-2 mb-4 text-[#001f98]">{date}</h3>
               <div className="space-y-4">
                 {dayEvents.map(event => (
                   <EventCard key={event.id} event={event} />
