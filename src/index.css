@@ -80,7 +80,7 @@
   .light {
     --ephemeride-bg: 60 33% 99%;
     --ephemeride-text: 224 100% 30%;
-    --ephemeride-card: 60 33% 97%;
+    --ephemeride-card: 60 33% 99.6%;
   }
   
   /* Dark mode specific styles */

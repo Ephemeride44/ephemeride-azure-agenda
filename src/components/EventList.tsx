@@ -10,7 +10,31 @@ interface EventListProps {
 const EventList = ({ events }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<string>("mercredi 21 mai 2025 à 10h19");
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+
+  // Get formatted current date for "dernière mise à jour"
+  useEffect(() => {
+    const getCurrentDate = () => {
+      const now = new Date();
+      const daysOfWeek = [
+        "dimanche", "lundi", "mardi", "mercredi", 
+        "jeudi", "vendredi", "samedi"
+      ];
+      const monthNames = [
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+      ];
+      
+      const dayName = daysOfWeek[now.getDay()];
+      const day = now.getDate();
+      const month = monthNames[now.getMonth()];
+      const year = now.getFullYear();
+      
+      return `${dayName} ${day} ${month} ${year} à 00h00`;
+    };
+    
+    setLastUpdated(getCurrentDate());
+  }, []);
 
   // Filter events into upcoming and past based on the current date
   useEffect(() => {
@@ -89,7 +113,7 @@ const EventList = ({ events }: EventListProps) => {
         <h2 className="text-2xl font-bold mb-8">Événements à venir</h2>
         
         {/* Events Count and Last Updated Section - Updated font size */}
-        <div className="text-base opacity-70 mb-6 space-y-1">
+        <div className="text-lg opacity-70 mb-6 space-y-1">
           <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
           <p><span className="underline">dernière mise à jour</span> : {lastUpdated}</p>
         </div>

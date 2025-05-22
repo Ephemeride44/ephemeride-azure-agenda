@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EventList from "@/components/EventList";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/components/ThemeProvider";
 import { Event } from "@/lib/types";
 import { sampleEvents } from "@/lib/sample-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,6 +21,7 @@ const Index = () => {
   const [events] = useState<Event[]>(filteredEvents);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
   useEffect(() => {
@@ -43,11 +45,19 @@ const Index = () => {
         <div className="container mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              <img 
-                src="/lovable-uploads/131a8b24-2c42-453d-8e62-bb48e8c55b00.png" 
-                alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
-              />
+              {theme === 'light' ? (
+                <img 
+                  src="/lovable-uploads/1fa2ef48-47e9-4040-b9f7-58c350a23a4d.png" 
+                  alt="Ephemeride" 
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
+                />
+              ) : (
+                <img 
+                  src="/lovable-uploads/131a8b24-2c42-453d-8e62-bb48e8c55b00.png" 
+                  alt="Ephemeride" 
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
+                />
+              )}
             </div>
             <div className="flex gap-4 items-center">
               <ThemeToggle />
