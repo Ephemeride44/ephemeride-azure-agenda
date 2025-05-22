@@ -34,19 +34,19 @@ const EventCard = ({ event }: EventCardProps) => {
     const day = getDayOfWeek();
     switch (day) {
       case "lundi":
-        return "border-l-purple-500";
+        return "border-l-[#9b5fe0]"; // Purple for Monday
       case "mardi":
-        return "border-l-emerald-400";
+        return "border-l-[#16a4d8]"; // Blue for Tuesday
       case "mercredi":
-        return "border-l-amber-400";
+        return "border-l-[#efdf48]"; // Yellow for Wednesday
       case "jeudi":
-        return "border-l-sky-400";
+        return "border-l-[#8bd346]"; // Green for Thursday
       case "vendredi":
-        return "border-l-rose-400";
+        return "border-l-[#60dbe8]"; // Light blue for Friday
       case "samedi":
-        return "border-l-orange-400";
+        return "border-l-[#f9a52c]"; // Orange for Saturday
       case "dimanche":
-        return "border-l-teal-400";
+        return "border-l-[#d64e12]"; // Red for Sunday
       default:
         return "border-l-gray-300";
     }
@@ -54,7 +54,7 @@ const EventCard = ({ event }: EventCardProps) => {
   
   return (
     <Card 
-      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#001f98] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#001f98] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
     >
       <CardContent className="p-4">
         <div className="mb-2">

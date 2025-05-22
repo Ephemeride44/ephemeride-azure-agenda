@@ -14,7 +14,7 @@ export function ThemeToggle() {
       className={`border-white/20 hover:bg-white/20 ${
         theme === 'light' 
           ? 'bg-white/10 text-ephemeride' 
-          : 'bg-white/10 text-white'
+          : 'bg-white/10 text-[#faf3ec]'
       }`}
     >
       {theme === 'light' ? (

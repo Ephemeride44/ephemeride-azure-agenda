@@ -38,25 +38,25 @@
 
   .dark {
     --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --foreground: 32 33% 96%; /* Same as #faf3ec */
 
     --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 32 33% 96%; /* Same as #faf3ec */
 
     --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 32 33% 96%; /* Same as #faf3ec */
 
-    --primary: 210 40% 98%;
+    --primary: 32 33% 96%; /* Same as #faf3ec */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 32 33% 96%; /* Same as #faf3ec */
 
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 32 33% 96%; /* 65% opacity of #faf3ec */
 
     --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 32 33% 96%; /* Same as #faf3ec */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -86,7 +86,7 @@
   /* Dark mode specific styles */
   .dark {
     --ephemeride-bg: 224 100% 30%;
-    --ephemeride-text: 0 0% 100%;
+    --ephemeride-text: 32 33% 96%; /* Same as #faf3ec */
     --ephemeride-card: 224 100% 36%;
   }
   
@@ -97,7 +97,7 @@
   
   body.dark {
     background-color: #001f98;
-    color: #ffffff;
+    color: #faf3ec;
   }
 }
 
