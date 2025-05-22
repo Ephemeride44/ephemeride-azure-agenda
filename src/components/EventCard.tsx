@@ -54,7 +54,7 @@ const EventCard = ({ event }: EventCardProps) => {
   
   return (
     <Card 
-      className={`bg-ephemeride-light text-ephemeride-foreground mb-4 animate-fade-in hover:bg-ephemeride-dark transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      className={`dark:bg-ephemeride-light light:bg-[#f8f8f6] dark:text-ephemeride-foreground light:text-ephemeride mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
     >
       <CardContent className="p-4">
         <div className="mb-2">

@@ -73,6 +73,34 @@
   }
 
   body {
-    @apply bg-ephemeride text-ephemeride-foreground;
+    @apply bg-background text-foreground;
   }
+  
+  /* Light mode specific styles */
+  .light {
+    --ephemeride-bg: 60 33% 99%;
+    --ephemeride-text: 224 100% 30%;
+    --ephemeride-card: 60 33% 97%;
+  }
+  
+  /* Dark mode specific styles */
+  .dark {
+    --ephemeride-bg: 224 100% 30%;
+    --ephemeride-text: 0 0% 100%;
+    --ephemeride-card: 224 100% 36%;
+  }
+  
+  body.light {
+    background-color: #fdfdfb;
+    color: #001f98;
+  }
+  
+  body.dark {
+    background-color: #001f98;
+    color: #ffffff;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }

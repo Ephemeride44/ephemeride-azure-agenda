@@ -88,10 +88,10 @@ const EventList = ({ events }: EventListProps) => {
       <div className="space-y-8 mb-12">
         <h2 className="text-2xl font-bold mb-8">Événements à venir</h2>
         
-        {/* Events Count and Last Updated Section */}
-        <div className="text-sm opacity-70 mb-6 space-y-1">
+        {/* Events Count and Last Updated Section - Updated font size */}
+        <div className="text-base opacity-70 mb-6 space-y-1">
           <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
-          <p>dernière mise à jour : {lastUpdated}</p>
+          <p><span className="underline">dernière mise à jour</span> : {lastUpdated}</p>
         </div>
         
         {Object.entries(groupedUpcomingEvents).map(([date, dayEvents]) => (

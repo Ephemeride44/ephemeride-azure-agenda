@@ -3,13 +3,21 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EventList from "@/components/EventList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Event } from "@/lib/types";
 import { sampleEvents } from "@/lib/sample-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventProposalForm from "@/components/EventProposalForm";
 
 const Index = () => {
-  const [events] = useState<Event[]>(sampleEvents);
+  // Filter out test events from May 19 and 20
+  const filteredEvents = sampleEvents.filter(event => {
+    // Check if it's not May 19 or May 20
+    return !event.datetime.includes("lundi 19 mai 2025") && 
+           !event.datetime.includes("mardi 20 mai 2025");
+  });
+  
+  const [events] = useState<Event[]>(filteredEvents);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
 
@@ -30,8 +38,8 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-ephemeride flex flex-col">
-      <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 bg-ephemeride shadow-md' : ''}`}>
+    <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#fdfdfb]">
+      <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride light:bg-[#fdfdfb] shadow-md' : ''}`}>
         <div className="container mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
@@ -41,18 +49,19 @@ const Index = () => {
                 className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
               />
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
+              <ThemeToggle />
               <Button 
                 onClick={() => setIsProposalDialogOpen(true)}
                 variant="outline" 
-                className="bg-white text-ephemeride hover:bg-white/90 border-white/20"
+                className="bg-white text-ephemeride hover:bg-white/90 border-white/20 dark:bg-white dark:text-ephemeride dark:hover:bg-white/90 light:bg-ephemeride light:text-white light:hover:bg-ephemeride/90"
               >
                 Proposer un événement
               </Button>
               <Button 
                 asChild
                 variant="outline" 
-                className="bg-white text-ephemeride hover:bg-white/90 border-white/20"
+                className="bg-white text-ephemeride hover:bg-white/90 border-white/20 dark:bg-white dark:text-ephemeride dark:hover:bg-white/90 light:bg-ephemeride light:text-white light:hover:bg-ephemeride/90"
               >
                 <Link to="/admin">Administration</Link>
               </Button>
@@ -67,7 +76,7 @@ const Index = () => {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 py-6 px-4 md:px-8">
+      <footer className="border-t border-white/10 py-6 px-4 md:px-8 dark:border-white/10 light:border-ephemeride/10">
         <div className="container mx-auto text-center">
           <p className="text-sm opacity-70">
             L'AGENDA CULTUREL ET CITOYEN DU VIGNOBLE NANTAIS
@@ -76,7 +85,7 @@ const Index = () => {
       </footer>
 
       <Dialog open={isProposalDialogOpen} onOpenChange={setIsProposalDialogOpen}>
-        <DialogContent className="bg-ephemeride-light border-none text-ephemeride-foreground max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="dark:bg-ephemeride-light light:bg-[#f8f8f6] border-none dark:text-ephemeride-foreground light:text-ephemeride max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">Proposer un événement</DialogTitle>
           </DialogHeader>
