@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
 import { Button } from "@/components/ui/button";
-import { Share, Mail, Telegram, Mastodon } from "lucide-react";
+import { Share, Mail, MessageSquare, Send } from "lucide-react";
 
 interface EventListProps {
   events: Event[];
@@ -161,7 +161,7 @@ const EventList = ({ events }: EventListProps) => {
             onClick={() => shareWebsite('telegram')}
             title="Partager sur Telegram"
           >
-            <Telegram className="h-4 w-4" />
+            <Send className="h-4 w-4" />
             <span className="sr-only">Partager sur Telegram</span>
           </Button>
           <Button 
@@ -171,7 +171,7 @@ const EventList = ({ events }: EventListProps) => {
             onClick={() => shareWebsite('mastodon')}
             title="Partager sur Mastodon"
           >
-            <Mastodon className="h-4 w-4" />
+            <MessageSquare className="h-4 w-4" />
             <span className="sr-only">Partager sur Mastodon</span>
           </Button>
           <Button 
