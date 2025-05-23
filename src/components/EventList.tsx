@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -199,7 +200,7 @@ const EventList = ({ events }: EventListProps) => {
             <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
             <div className="space-y-4">
               {dayEvents.map(event => (
-                <EventCard key={event.id} event={event} />
+                <EventCard key={event.id} event={event} isPast={false} />
               ))}
             </div>
           </div>
@@ -215,7 +216,7 @@ const EventList = ({ events }: EventListProps) => {
               <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
               <div className="space-y-4">
                 {dayEvents.map(event => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} isPast={true} />
                 ))}
               </div>
             </div>

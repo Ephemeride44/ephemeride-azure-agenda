@@ -4,9 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface EventCardProps {
   event: Event;
+  isPast?: boolean;
 }
 
-const EventCard = ({ event }: EventCardProps) => {
+const EventCard = ({ event, isPast = false }: EventCardProps) => {
   // Format datetime string
   const formatDateDisplay = () => {
     if (event.endTime) {
@@ -62,7 +63,7 @@ const EventCard = ({ event }: EventCardProps) => {
         </div>
         <h3 className="text-lg font-bold mb-1">{event.name}</h3>
         <p className="text-sm mb-2">{locationString}</p>
-        {(event.price || event.audience) && (
+        {!isPast && (event.price || event.audience) && (
           <p className="text-sm opacity-80">
             {event.price && `${event.price}`}
             {event.price && event.audience && " / "}

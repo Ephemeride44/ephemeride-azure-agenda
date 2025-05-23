@@ -49,13 +49,13 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/c18241ba-1d6f-42eb-bb78-97568c0c4fac.png" 
                   alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-36'}`}
                 />
               ) : (
                 <img 
-                  src="/lovable-uploads/131a8b24-2c42-453d-8e62-bb48e8c55b00.png" 
+                  src="/lovable-uploads/15218a42-0b31-4264-9ed8-b47663aeb1ea.png" 
                   alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-24 md:h-32'}`}
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-36'}`}
                 />
               )}
             </div>

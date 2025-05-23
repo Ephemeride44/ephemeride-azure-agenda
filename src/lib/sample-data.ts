@@ -1,4 +1,3 @@
-
 import { Event } from "./types";
 
 export const sampleEvents: Event[] = [
@@ -409,8 +408,8 @@ export const sampleEvents: Event[] = [
       city: "CLISSON",
       department: "44",
     },
-    price: "Gratuit",
-    audience: "Tout public",
+    price: "",
+    audience: "",
   },
   {
     id: "11",
@@ -422,7 +421,7 @@ export const sampleEvents: Event[] = [
       department: "44",
     },
     price: "",
-    audience: "Adultes",
+    audience: "",
   },
   {
     id: "12",
@@ -432,6 +431,18 @@ export const sampleEvents: Event[] = [
     location: {
       place: "Chez Amaury",
       city: "GÉTIGNÉ",
+      department: "44",
+    },
+    price: "",
+    audience: "",
+  },
+  {
+    id: "36",
+    datetime: "jeudi 22 mai 2025 à 20h00",
+    name: "Club Ciné : « Grease »",
+    location: {
+      place: "Cinéma Le connétable (salle 1)",
+      city: "CLISSON",
       department: "44",
     },
     price: "",
