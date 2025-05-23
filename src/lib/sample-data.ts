@@ -376,7 +376,7 @@ export const sampleEvents: Event[] = [
   },
   {
     id: "34",
-    datetime: "samedi 31 mai 2025 aux horaires d'ouverture",
+    datetime: "samedi 31 mai 2025",
     name: "Fête du jeu",
     location: {
       place: "Médiathèque Geneviève Couteau",

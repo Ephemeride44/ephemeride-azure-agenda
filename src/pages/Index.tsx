@@ -47,15 +47,15 @@ const Index = () => {
             <div className="flex justify-start">
               {theme === 'light' ? (
                 <img 
-                  src="/lovable-uploads/c18241ba-1d6f-42eb-bb78-97568c0c4fac.png" 
+                  src="/lovable-uploads/1f2f7642-583f-45b5-bddd-2c5f1276b430.png" 
                   alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-36'}`}
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
                 />
               ) : (
                 <img 
-                  src="/lovable-uploads/15218a42-0b31-4264-9ed8-b47663aeb1ea.png" 
+                  src="/lovable-uploads/f285eade-aadf-47e3-80d0-a33c668ff99d.png" 
                   alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-36'}`}
+                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
                 />
               )}
             </div>
