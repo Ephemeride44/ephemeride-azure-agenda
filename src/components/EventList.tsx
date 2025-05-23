@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
 import { Button } from "@/components/ui/button";
-import { Share, Mail, MessageSquare, Send } from "lucide-react";
+import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface EventListProps {
   events: Event[];
@@ -14,6 +15,7 @@ const EventList = ({ events }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   const { theme } = useTheme();
 
   // Get formatted current date for "dernière mise à jour"
@@ -207,21 +209,43 @@ const EventList = ({ events }: EventListProps) => {
         ))}
       </div>
 
-      {/* Past Events Section */}
+      {/* Past Events Section - Now collapsible */}
       {Object.keys(groupedPastEvents).length > 0 && (
-        <div className="space-y-8 mt-16">
-          <h2 className={`text-2xl font-bold mb-8 ${textColorClass}`}>Événements passés</h2>
-          {Object.entries(groupedPastEvents).map(([date, dayEvents]) => (
-            <div key={date} className="mb-6">
-              <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
-              <div className="space-y-4">
-                {dayEvents.map(event => (
-                  <EventCard key={event.id} event={event} isPast={true} />
-                ))}
+        <Collapsible 
+          open={isPastEventsOpen} 
+          onOpenChange={setIsPastEventsOpen} 
+          className="space-y-8 mt-16"
+        >
+          <div className="flex items-center">
+            <h2 className={`text-2xl font-bold ${textColorClass}`}>Événements passés</h2>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-4 p-0 hover:bg-transparent"
+                aria-label={isPastEventsOpen ? "Masquer les événements passés" : "Afficher les événements passés"}
+              >
+                {isPastEventsOpen ? (
+                  <ChevronUp className={`h-6 w-6 ${textColorClass}`} />
+                ) : (
+                  <ChevronDown className={`h-6 w-6 ${textColorClass}`} />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="space-y-8">
+            {Object.entries(groupedPastEvents).map(([date, dayEvents]) => (
+              <div key={date} className="mb-6">
+                <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
+                <div className="space-y-4">
+                  {dayEvents.map(event => (
+                    <EventCard key={event.id} event={event} isPast={true} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
