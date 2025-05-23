@@ -1,6 +1,7 @@
 
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { ExternalLink } from "lucide-react";
 
 interface EventCardProps {
   event: Event;
@@ -11,7 +12,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   // Format datetime string
   const formatDateDisplay = () => {
     if (event.endTime) {
-      return `${event.datetime} de ${event.endTime}`;
+      return `${event.datetime} ${event.datetime.includes(" de ") ? "à" : "de"} ${event.endTime}`;
     }
     return `${event.datetime}`;
   };
@@ -53,6 +54,23 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     }
   };
   
+  const renderEventName = () => {
+    if (event.url) {
+      return (
+        <a 
+          href={event.url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center hover:underline"
+        >
+          <h3 className="text-lg font-bold mb-1">{event.name}</h3>
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </a>
+      );
+    }
+    return <h3 className="text-lg font-bold mb-1">{event.name}</h3>;
+  };
+  
   return (
     <Card 
       className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#001f98] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
@@ -61,7 +79,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         <div className="mb-2">
           <p className="text-sm font-medium opacity-80">{formatDateDisplay()}</p>
         </div>
-        <h3 className="text-lg font-bold mb-1">{event.name}</h3>
+        {renderEventName()}
         <p className="text-sm mb-2">{locationString}</p>
         {!isPast && (event.price || event.audience) && (
           <p className="text-sm opacity-80">

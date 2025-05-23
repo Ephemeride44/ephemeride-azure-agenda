@@ -12,4 +12,5 @@ export interface Event {
   price: string;
   audience: string;
   emoji?: string; // For optional emoji indicators like 📖
+  url?: string; // URL for external links to event websites
 }

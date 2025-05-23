@@ -97,6 +97,7 @@ export const sampleEvents: Event[] = [
     },
     price: "prix libre",
     audience: "",
+    url: "https://thesmollfestivoll.wixsite.com/thesmollfestivoll"
   },
   {
     id: "9",
@@ -196,6 +197,7 @@ export const sampleEvents: Event[] = [
     },
     price: "14€",
     audience: "",
+    url: "https://thesmollfestivoll.wixsite.com/thesmollfestivoll"
   },
   {
     id: "20",
