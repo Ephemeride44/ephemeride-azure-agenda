@@ -45,19 +45,11 @@ const Index = () => {
         <div className="container mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              {theme === 'light' ? (
-                <img 
-                  src="/lovable-uploads/1f2f7642-583f-45b5-bddd-2c5f1276b430.png" 
-                  alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
-                />
-              ) : (
-                <img 
-                  src="/lovable-uploads/f285eade-aadf-47e3-80d0-a33c668ff99d.png" 
-                  alt="Ephemeride" 
-                  className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
-                />
-              )}
+              <img 
+                src="/lovable-uploads/49630352-a547-4f0f-b8ba-3dbc0fc033d3.png" 
+                alt="Ephemeride" 
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
+              />
             </div>
             <div className="flex gap-4 items-center">
               <ThemeToggle />

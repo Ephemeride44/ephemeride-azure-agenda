@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -92,26 +93,53 @@ const EventList = ({ events }: EventListProps) => {
     setPastEvents(past);
   }, [events]);
 
-  // Group events by date (just the day part)
-  const groupEventsByDay = (eventList: Event[]) => {
-    const grouped: Record<string, Event[]> = {};
+  // Group events by month then by day
+  const groupEventsByMonthAndDay = (eventList: Event[]) => {
+    const monthMap: {[key: string]: string} = {
+      'janvier': 'Janvier',
+      'février': 'Février', 
+      'mars': 'Mars', 
+      'avril': 'Avril',
+      'mai': 'Mai', 
+      'juin': 'Juin', 
+      'juillet': 'Juillet', 
+      'août': 'Août',
+      'septembre': 'Septembre', 
+      'octobre': 'Octobre', 
+      'novembre': 'Novembre', 
+      'décembre': 'Décembre'
+    };
+    
+    const grouped: Record<string, Record<string, Event[]>> = {};
     
     eventList.forEach(event => {
       // Extract just the date part (e.g., "mercredi 21 mai 2025")
       const dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
       
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
+      // Extract month from date string
+      const dateParts = dateKey.split(' ');
+      if (dateParts.length >= 4) {
+        const month = dateParts[2].toLowerCase();
+        const year = dateParts[3];
+        const monthKey = `${monthMap[month]} ${year}`;
+        
+        if (!grouped[monthKey]) {
+          grouped[monthKey] = {};
+        }
+        
+        if (!grouped[monthKey][dateKey]) {
+          grouped[monthKey][dateKey] = [];
+        }
+        
+        grouped[monthKey][dateKey].push(event);
       }
-      
-      grouped[dateKey].push(event);
     });
     
     return grouped;
   };
 
-  const groupedUpcomingEvents = groupEventsByDay(upcomingEvents);
-  const groupedPastEvents = groupEventsByDay(pastEvents);
+  const groupedUpcomingEvents = groupEventsByMonthAndDay(upcomingEvents);
+  const groupedPastEvents = groupEventsByMonthAndDay(pastEvents);
 
   // Share website function
   const shareWebsite = (platform: string) => {
@@ -198,14 +226,25 @@ const EventList = ({ events }: EventListProps) => {
       <div className="space-y-8 mb-12">
         <h2 className={`text-2xl font-semibold mb-8 ${textColorClass}`}>Événements à venir</h2>
         
-        {Object.entries(groupedUpcomingEvents).map(([date, dayEvents]) => (
-          <div key={date} className="mb-6">
-            <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
-            <div className="space-y-4">
-              {dayEvents.map(event => (
-                <EventCard key={event.id} event={event} isPast={false} />
-              ))}
+        {Object.entries(groupedUpcomingEvents).map(([month, dayEvents]) => (
+          <div key={month} className="mb-12">
+            {/* Month separator */}
+            <div className={`text-center py-6 mb-8 ${textColorClass}`}>
+              <div className={`inline-block px-6 py-3 rounded-full font-semibold text-xl ${theme === "light" ? "bg-[#1B263B] text-[#faf3ec]" : "bg-[#faf3ec] text-[#1B263B]"}`}>
+                {month}
+              </div>
             </div>
+            
+            {Object.entries(dayEvents).map(([date, events]) => (
+              <div key={date} className="mb-6">
+                <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
+                <div className="space-y-4">
+                  {events.map(event => (
+                    <EventCard key={event.id} event={event} isPast={false} />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
@@ -235,14 +274,25 @@ const EventList = ({ events }: EventListProps) => {
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-8">
-            {Object.entries(groupedPastEvents).map(([date, dayEvents]) => (
-              <div key={date} className="mb-6">
-                <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
-                <div className="space-y-4">
-                  {dayEvents.map(event => (
-                    <EventCard key={event.id} event={event} isPast={true} />
-                  ))}
+            {Object.entries(groupedPastEvents).map(([month, dayEvents]) => (
+              <div key={month} className="mb-12">
+                {/* Month separator for past events */}
+                <div className={`text-center py-6 mb-8 ${textColorClass}`}>
+                  <div className={`inline-block px-6 py-3 rounded-full font-semibold text-xl opacity-60 ${theme === "light" ? "bg-[#1B263B] text-[#faf3ec]" : "bg-[#faf3ec] text-[#1B263B]"}`}>
+                    {month}
+                  </div>
                 </div>
+                
+                {Object.entries(dayEvents).map(([date, events]) => (
+                  <div key={date} className="mb-6">
+                    <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
+                    <div className="space-y-4">
+                      {events.map(event => (
+                        <EventCard key={event.id} event={event} isPast={true} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </CollapsibleContent>
