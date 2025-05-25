@@ -18,9 +18,9 @@ const EventList = ({ events }: EventListProps) => {
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   const { theme } = useTheme();
 
-  // Get formatted current date for "dernière mise à jour"
+  // Get formatted current date and time for "dernière mise à jour"
   useEffect(() => {
-    const getCurrentDate = () => {
+    const getCurrentDateTime = () => {
       const now = new Date();
       const daysOfWeek = [
         "dimanche", "lundi", "mardi", "mercredi", 
@@ -35,11 +35,13 @@ const EventList = ({ events }: EventListProps) => {
       const day = now.getDate();
       const month = monthNames[now.getMonth()];
       const year = now.getFullYear();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
       
-      return `${dayName} ${day} ${month} ${year} à 00h00`;
+      return `${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`;
     };
     
-    setLastUpdated(getCurrentDate());
+    setLastUpdated(getCurrentDateTime());
   }, []);
 
   // Filter events into upcoming and past based on the current date

@@ -31,24 +31,24 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     return "autre";
   };
   
-  // Get border color based on day of week with thicker 15px borders
+  // Get border color based on day of week with new color scheme
   const getBorderColorClass = () => {
     const day = getDayOfWeek();
     switch (day) {
       case "lundi":
-        return "border-l-[#9b5fe0]"; // Purple for Monday
+        return "border-l-[#4C5C68]"; // Gris bleuté doux
       case "mardi":
-        return "border-l-[#16a4d8]"; // Blue for Tuesday
+        return "border-l-[#62B6CB]"; // Bleu azur clair
       case "mercredi":
-        return "border-l-[#efdf48]"; // Yellow for Wednesday
+        return "border-l-[#F4D35E]"; // Jaune sable pâle
       case "jeudi":
-        return "border-l-[#8bd346]"; // Green for Thursday
+        return "border-l-[#A3B18A]"; // Vert sauge doux
       case "vendredi":
-        return "border-l-[#60dbe8]"; // Light blue for Friday
+        return "border-l-[#FF9770]"; // Corail pastel
       case "samedi":
-        return "border-l-[#f9a52c]"; // Orange for Saturday
+        return "border-l-[#E29578]"; // Rose des sables
       case "dimanche":
-        return "border-l-[#d64e12]"; // Red for Sunday
+        return "border-l-[#B35C49]"; // Rouge argile doux
       default:
         return "border-l-gray-300";
     }
