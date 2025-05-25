@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,14 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import EventProposalForm from "@/components/EventProposalForm";
 
 const Index = () => {
-  // Filter out test events from May 19 and 20
-  const filteredEvents = sampleEvents.filter(event => {
-    // Check if it's not May 19 or May 20
-    return !event.datetime.includes("lundi 19 mai 2025") && 
-           !event.datetime.includes("mardi 20 mai 2025");
-  });
-  
-  const [events] = useState<Event[]>(filteredEvents);
+  const [events] = useState<Event[]>(sampleEvents);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const { theme } = useTheme();
