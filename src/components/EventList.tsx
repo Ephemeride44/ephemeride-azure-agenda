@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -141,21 +140,21 @@ const EventList = ({ events }: EventListProps) => {
     window.open(shareUrl, '_blank');
   };
 
-  const textColorClass = theme === "light" ? "text-[#001f98]" : "text-[#faf3ec]";
+  const textColorClass = theme === "light" ? "text-[#1B263B]" : "text-[#faf3ec]";
 
   return (
     <div>
       {/* Events Count and Last Updated Section - Before upcoming events heading */}
-      <div className={`text-lg opacity-70 mb-8 space-y-1 ${textColorClass}`}>
+      <div className={`text-lg font-normal opacity-70 mb-8 space-y-1 ${textColorClass}`}>
         <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
-        <p><span className="underline">dernière mise à jour</span> : {lastUpdated}</p>
+        <p><span className="underline font-medium">dernière mise à jour</span> : {lastUpdated}</p>
         
         {/* Social sharing buttons */}
         <div className="flex space-x-3 pt-3">
           <Button 
             variant="outline" 
             size="icon" 
-            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#001f98]/20 text-[#001f98]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
+            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#1B263B]/20 text-[#1B263B]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
             onClick={() => shareWebsite('whatsapp')}
             title="Partager sur WhatsApp"
           >
@@ -165,7 +164,7 @@ const EventList = ({ events }: EventListProps) => {
           <Button 
             variant="outline" 
             size="icon" 
-            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#001f98]/20 text-[#001f98]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
+            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#1B263B]/20 text-[#1B263B]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
             onClick={() => shareWebsite('telegram')}
             title="Partager sur Telegram"
           >
@@ -175,7 +174,7 @@ const EventList = ({ events }: EventListProps) => {
           <Button 
             variant="outline" 
             size="icon" 
-            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#001f98]/20 text-[#001f98]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
+            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#1B263B]/20 text-[#1B263B]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
             onClick={() => shareWebsite('mastodon')}
             title="Partager sur Mastodon"
           >
@@ -185,7 +184,7 @@ const EventList = ({ events }: EventListProps) => {
           <Button 
             variant="outline" 
             size="icon" 
-            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#001f98]/20 text-[#001f98]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
+            className={`rounded-full border-opacity-20 ${theme === "light" ? "border-[#1B263B]/20 text-[#1B263B]" : "border-[#faf3ec]/20 text-[#faf3ec]"}`}
             onClick={() => shareWebsite('email')}
             title="Partager par email"
           >
@@ -197,11 +196,11 @@ const EventList = ({ events }: EventListProps) => {
       
       {/* Upcoming Events Section */}
       <div className="space-y-8 mb-12">
-        <h2 className={`text-2xl font-bold mb-8 ${textColorClass}`}>Événements à venir</h2>
+        <h2 className={`text-2xl font-semibold mb-8 ${textColorClass}`}>Événements à venir</h2>
         
         {Object.entries(groupedUpcomingEvents).map(([date, dayEvents]) => (
           <div key={date} className="mb-6">
-            <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
+            <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
             <div className="space-y-4">
               {dayEvents.map(event => (
                 <EventCard key={event.id} event={event} isPast={false} />
@@ -219,7 +218,7 @@ const EventList = ({ events }: EventListProps) => {
           className="space-y-8 mt-16"
         >
           <div className="flex items-center">
-            <h2 className={`text-2xl font-bold ${textColorClass}`}>Événements passés</h2>
+            <h2 className={`text-2xl font-semibold ${textColorClass}`}>Événements passés</h2>
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
@@ -238,7 +237,7 @@ const EventList = ({ events }: EventListProps) => {
           <CollapsibleContent className="space-y-8">
             {Object.entries(groupedPastEvents).map(([date, dayEvents]) => (
               <div key={date} className="mb-6">
-                <h3 className={`text-xl font-semibold border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
+                <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
                 <div className="space-y-4">
                   {dayEvents.map(event => (
                     <EventCard key={event.id} event={event} isPast={true} />

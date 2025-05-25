@@ -1,4 +1,3 @@
-
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
@@ -63,26 +62,26 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           rel="noopener noreferrer"
           className="flex items-center hover:underline"
         >
-          <h3 className="text-lg font-bold mb-1">{event.name}</h3>
+          <h3 className="text-lg font-medium mb-1">{event.name}</h3>
           <ExternalLink className="ml-2 h-4 w-4" />
         </a>
       );
     }
-    return <h3 className="text-lg font-bold mb-1">{event.name}</h3>;
+    return <h3 className="text-lg font-medium mb-1">{event.name}</h3>;
   };
   
   return (
     <Card 
-      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#001f98] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
     >
       <CardContent className="p-4">
         <div className="mb-2">
-          <p className="text-sm font-medium opacity-80">{formatDateDisplay()}</p>
+          <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
         </div>
         {renderEventName()}
-        <p className="text-sm mb-2">{locationString}</p>
+        <p className="text-sm font-normal mb-2">{locationString}</p>
         {!isPast && (event.price || event.audience) && (
-          <p className="text-sm opacity-80">
+          <p className="text-sm font-normal opacity-80">
             {event.price && `${event.price}`}
             {event.price && event.audience && " / "}
             {event.audience && event.audience}

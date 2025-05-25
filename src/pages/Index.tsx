@@ -88,7 +88,7 @@ const Index = () => {
 
       <footer className="border-t border-white/10 py-6 px-4 md:px-8 dark:border-white/10 light:border-ephemeride/10">
         <div className="container mx-auto text-center">
-          <p className="text-sm opacity-70">
+          <p className="text-sm font-normal opacity-70">
             L'AGENDA CULTUREL ET CITOYEN DU VIGNOBLE NANTAIS
           </p>
         </div>

@@ -13,10 +13,13 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
-        ephemeride: "#001f98",
-        "ephemeride-light": "#0026b9",
-        "ephemeride-dark": "#001a7d",
+        ephemeride: "#1B263B", // Bleu nuit plus doux
+        "ephemeride-light": "#243447", // Version légèrement plus claire
+        "ephemeride-dark": "#162029", // Version plus sombre
         "ephemeride-foreground": "#ffffff",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
