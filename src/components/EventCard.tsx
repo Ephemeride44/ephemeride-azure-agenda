@@ -1,6 +1,8 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface EventCardProps {
   event: Event;
@@ -8,6 +10,8 @@ interface EventCardProps {
 }
 
 const EventCard = ({ event, isPast = false }: EventCardProps) => {
+  const { theme } = useTheme();
+
   // Format datetime string
   const formatDateDisplay = () => {
     if (event.endTime) {
@@ -62,19 +66,39 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     const bookKeywords = ["librairie", "bibliothèque", "médiathèque", "livres"];
     return bookKeywords.some(keyword => eventText.includes(keyword));
   };
+
+  // Check if event contains music-related keywords
+  const containsMusicKeywords = () => {
+    const eventText = `${event.name} ${event.location.place}`.toLowerCase();
+    const musicKeywords = ["dj", "concert", "dub", "electro", "reggea", "pop", "rock", "jazz"];
+    return musicKeywords.some(keyword => eventText.includes(keyword));
+  };
   
   // Get background style for themed events
   const getBackgroundStyle = () => {
     if (containsVelo) {
       return {
-        backgroundImage: "url('/lovable-uploads/19a0d8c5-9f24-4be9-90e9-570e97abbdb1.png')",
+        backgroundImage: theme === 'light' 
+          ? "url('/lovable-uploads/6de3cd7d-d523-4c41-8773-e3c1955a2c50.png')"
+          : "url('/lovable-uploads/19a0d8c5-9f24-4be9-90e9-570e97abbdb1.png')",
         backgroundRepeat: "repeat",
         backgroundSize: "auto"
       };
     }
     if (containsBookKeywords()) {
       return {
-        backgroundImage: "url('/lovable-uploads/7fcbdc7e-7498-4085-90b6-528ac0a7b672.png')",
+        backgroundImage: theme === 'light'
+          ? "url('/lovable-uploads/1333f13d-4615-4c32-8b35-90be76362cd3.png')"
+          : "url('/lovable-uploads/7fcbdc7e-7498-4085-90b6-528ac0a7b672.png')",
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto"
+      };
+    }
+    if (containsMusicKeywords()) {
+      return {
+        backgroundImage: theme === 'light'
+          ? "url('/lovable-uploads/daa646ac-77b6-49e1-94dd-9dd06c1a3e81.png')"
+          : "url('/lovable-uploads/155e0553-659e-4444-bfa8-24da8a2ed165.png')",
         backgroundRepeat: "repeat",
         backgroundSize: "auto"
       };
