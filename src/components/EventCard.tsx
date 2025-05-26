@@ -57,11 +57,25 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   // Check if event contains "vélo" keyword
   const containsVelo = event.name.toLowerCase().includes("vélo");
   
-  // Get background style for vélo events
+  // Check if event contains book-related keywords
+  const containsBookKeywords = () => {
+    const eventText = `${event.name} ${event.location.place}`.toLowerCase();
+    const bookKeywords = ["librairie", "bibliothèque", "médiathèque", "livres"];
+    return bookKeywords.some(keyword => eventText.includes(keyword));
+  };
+  
+  // Get background style for themed events
   const getBackgroundStyle = () => {
     if (containsVelo) {
       return {
         backgroundImage: "url('/lovable-uploads/19a0d8c5-9f24-4be9-90e9-570e97abbdb1.png')",
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto"
+      };
+    }
+    if (containsBookKeywords()) {
+      return {
+        backgroundImage: "url('/lovable-uploads/49f3d760-b453-4fe3-9160-73ecd391dcfa.png')",
         backgroundRepeat: "repeat",
         backgroundSize: "auto"
       };
