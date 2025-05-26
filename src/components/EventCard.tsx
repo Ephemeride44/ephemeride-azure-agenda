@@ -54,6 +54,21 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     }
   };
   
+  // Check if event contains "vélo" keyword
+  const containsVelo = event.name.toLowerCase().includes("vélo");
+  
+  // Get background style for vélo events
+  const getBackgroundStyle = () => {
+    if (containsVelo) {
+      return {
+        backgroundImage: "url('/lovable-uploads/19a0d8c5-9f24-4be9-90e9-570e97abbdb1.png')",
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto"
+      };
+    }
+    return {};
+  };
+  
   const renderEventName = () => {
     if (event.url) {
       return (
@@ -74,6 +89,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   return (
     <Card 
       className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      style={getBackgroundStyle()}
     >
       <CardContent className="p-4">
         <div className="mb-2">
