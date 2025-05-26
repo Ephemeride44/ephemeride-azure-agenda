@@ -1,4 +1,3 @@
-
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
@@ -75,7 +74,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     }
     if (containsBookKeywords()) {
       return {
-        backgroundImage: "url('/lovable-uploads/49f3d760-b453-4fe3-9160-73ecd391dcfa.png')",
+        backgroundImage: "url('/lovable-uploads/7fcbdc7e-7498-4085-90b6-528ac0a7b672.png')",
         backgroundRepeat: "repeat",
         backgroundSize: "auto"
       };
