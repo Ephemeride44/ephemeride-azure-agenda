@@ -1,3 +1,4 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
@@ -30,24 +31,24 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     return "autre";
   };
   
-  // Get border color based on day of week with new color scheme
+  // Get border color based on day of week with new WCAG compliant colors
   const getBorderColorClass = () => {
     const day = getDayOfWeek();
     switch (day) {
       case "lundi":
-        return "border-l-[#4C5C68]"; // Gris bleuté doux
+        return "border-l-[#81F5FF]"; // Menthe givrée
       case "mardi":
-        return "border-l-[#62B6CB]"; // Bleu azur clair
+        return "border-l-[#FFD06E]"; // Jaune pamplemousse doux
       case "mercredi":
-        return "border-l-[#F4D35E]"; // Jaune sable pâle
+        return "border-l-[#A8E890]"; // Vert anis pastel
       case "jeudi":
-        return "border-l-[#A3B18A]"; // Vert sauge doux
+        return "border-l-[#7CC6FE]"; // Bleu ciel doux
       case "vendredi":
-        return "border-l-[#FF9770]"; // Corail pastel
+        return "border-l-[#FFA69E]"; // Corail clair
       case "samedi":
-        return "border-l-[#E29578]"; // Rose des sables
+        return "border-l-[#CAB8FF]"; // Lavande lumineuse
       case "dimanche":
-        return "border-l-[#B35C49]"; // Rouge argile doux
+        return "border-l-[#FF6B6B]"; // Rouge cerise lumineux
       default:
         return "border-l-gray-300";
     }
