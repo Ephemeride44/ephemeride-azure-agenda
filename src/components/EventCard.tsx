@@ -1,4 +1,3 @@
-
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
@@ -23,15 +22,12 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   // Format location
   const locationString = `@ ${event.location.place} – ${event.location.city} ${event.location.department ? `(${event.location.department})` : ''}`;
   
-  // Get day of week from datetime string for border color
+  // Get day of week from date for border color
   const getDayOfWeek = () => {
+    const d = new Date(event.date);
     const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    for (const day of days) {
-      if (event.datetime.toLowerCase().startsWith(day)) {
-        return day;
-      }
-    }
-    return "autre";
+    return days[d.getDay()];
+    
   };
   
   // Get border color based on day of week with new WCAG compliant colors
@@ -57,48 +53,11 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     }
   };
   
-  // Check if event contains "vélo" keyword
-  const containsVelo = event.name.toLowerCase().includes("vélo");
-  
-  // Check if event contains book-related keywords
-  const containsBookKeywords = () => {
-    const eventText = `${event.name} ${event.location.place}`.toLowerCase();
-    const bookKeywords = ["librairie", "bibliothèque", "médiathèque", "livres"];
-    return bookKeywords.some(keyword => eventText.includes(keyword));
-  };
-
-  // Check if event contains music-related keywords
-  const containsMusicKeywords = () => {
-    const eventText = `${event.name} ${event.location.place}`.toLowerCase();
-    const musicKeywords = ["dj", "concert", "dub", "electro", "reggea", "pop", "rock", "jazz"];
-    return musicKeywords.some(keyword => eventText.includes(keyword));
-  };
-  
-  // Get background style for themed events
+  // Get background style pour le thème choisi
   const getBackgroundStyle = () => {
-    if (containsVelo) {
+    if (event.theme && event.theme.image_url) {
       return {
-        backgroundImage: theme === 'light' 
-          ? "url('/lovable-uploads/6de3cd7d-d523-4c41-8773-e3c1955a2c50.png')"
-          : "url('/lovable-uploads/19a0d8c5-9f24-4be9-90e9-570e97abbdb1.png')",
-        backgroundRepeat: "repeat",
-        backgroundSize: "auto"
-      };
-    }
-    if (containsBookKeywords()) {
-      return {
-        backgroundImage: theme === 'light'
-          ? "url('/lovable-uploads/1333f13d-4615-4c32-8b35-90be76362cd3.png')"
-          : "url('/lovable-uploads/7fcbdc7e-7498-4085-90b6-528ac0a7b672.png')",
-        backgroundRepeat: "repeat",
-        backgroundSize: "auto"
-      };
-    }
-    if (containsMusicKeywords()) {
-      return {
-        backgroundImage: theme === 'light'
-          ? "url('/lovable-uploads/daa646ac-77b6-49e1-94dd-9dd06c1a3e81.png')"
-          : "url('/lovable-uploads/155e0553-659e-4444-bfa8-24da8a2ed165.png')",
+        backgroundImage: `url('${event.theme.image_url}')`,
         backgroundRepeat: "repeat",
         backgroundSize: "auto"
       };

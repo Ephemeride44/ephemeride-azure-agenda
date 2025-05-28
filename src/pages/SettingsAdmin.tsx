@@ -1,0 +1,260 @@
+import React, { useRef, useState, useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { useDropzone } from "react-dropzone";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import AdminLayout from "@/components/events/AdminLayout";
+import { Link } from "react-router-dom";
+
+type Theme = Database["public"]["Tables"]["themes"]["Row"];
+type ThemeFormValues = {
+  name: string;
+  image_file?: FileList;
+};
+
+const fetchThemes = async (): Promise<Theme[]> => {
+  const { data, error } = await supabase.from("themes").select("*").order("name");
+  if (error) throw error;
+  return data as Theme[];
+};
+
+const SettingsAdmin = () => {
+  const queryClient = useQueryClient();
+  const { data: themes, isLoading, error } = useQuery<Theme[]>({
+    queryKey: ["themes"],
+    queryFn: fetchThemes,
+  });
+  const [open, setOpen] = useState(false);
+  const { register, handleSubmit, reset, setValue, formState: { isSubmitting } } = useForm<ThemeFormValues>();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [editTheme, setEditTheme] = useState<Theme | null>(null);
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
+  const { register: registerEdit, handleSubmit: handleSubmitEdit, reset: resetEdit, setValue: setValueEdit, formState: { isSubmitting: isSubmittingEdit } } = useForm<ThemeFormValues>();
+  const [themeToDelete, setThemeToDelete] = useState<Theme | null>(null);
+
+  // Préremplir le formulaire d'édition à l'ouverture
+  useEffect(() => {
+    if (editTheme) {
+      resetEdit({ name: editTheme.name });
+      setEditPreviewUrl(editTheme.image_url || null);
+      setEditFile(null);
+    }
+  }, [editTheme, resetEdit]);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles && acceptedFiles[0]) {
+      setSelectedFile(acceptedFiles[0]);
+      setPreviewUrl(URL.createObjectURL(acceptedFiles[0]));
+      // Pour react-hook-form, on simule le champ FileList
+      const dt = new DataTransfer();
+      dt.items.add(acceptedFiles[0]);
+      setValue("image_file", dt.files as any, { shouldValidate: true });
+    }
+  }, [setValue]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    multiple: false,
+  });
+
+  const onSubmit = async (values: ThemeFormValues) => {
+    let image_url = null;
+    if (selectedFile) {
+      const filePath = `themes/${Date.now()}_${selectedFile.name}`;
+      const { error: uploadError } = await supabase.storage.from('event-assets').upload(filePath, selectedFile, { upsert: true });
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage.from('event-assets').getPublicUrl(filePath);
+        image_url = publicUrlData.publicUrl;
+      }
+    }
+    await supabase.from("themes").insert({
+      name: values.name,
+      image_url,
+    });
+    setOpen(false);
+    reset();
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    queryClient.invalidateQueries({ queryKey: ["themes"] });
+  };
+
+  const handleDialogClose = () => {
+    setOpen(false);
+    reset();
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const onDropEdit = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles && acceptedFiles[0]) {
+      setEditFile(acceptedFiles[0]);
+      setEditPreviewUrl(URL.createObjectURL(acceptedFiles[0]));
+      const dt = new DataTransfer();
+      dt.items.add(acceptedFiles[0]);
+      setValueEdit("image_file", dt.files as any, { shouldValidate: true });
+    }
+  }, [setValueEdit]);
+
+  const { getRootProps: getEditRootProps, getInputProps: getEditInputProps, isDragActive: isEditDragActive } = useDropzone({
+    onDrop: onDropEdit,
+    accept: { "image/*": [] },
+    multiple: false,
+  });
+
+  const onEditSubmit = async (values: ThemeFormValues) => {
+    if (!editTheme) return;
+    let image_url = editTheme.image_url;
+    if (editFile) {
+      const filePath = `themes/${Date.now()}_${editFile.name}`;
+      const { error: uploadError } = await supabase.storage.from('event-assets').upload(filePath, editFile, { upsert: true });
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage.from('event-assets').getPublicUrl(filePath);
+        image_url = publicUrlData.publicUrl;
+      }
+    }
+    await supabase.from("themes").update({
+      name: values.name,
+      image_url,
+    }).eq('id', editTheme.id);
+    setEditTheme(null);
+    setEditFile(null);
+    setEditPreviewUrl(null);
+    resetEdit();
+    queryClient.invalidateQueries({ queryKey: ["themes"] });
+  };
+
+  const handleEditDialogClose = () => {
+    setEditTheme(null);
+    setEditFile(null);
+    setEditPreviewUrl(null);
+    resetEdit();
+  };
+
+  const handleDeleteTheme = async () => {
+    if (!themeToDelete) return;
+    await supabase.from("themes").delete().eq("id", themeToDelete.id);
+    setThemeToDelete(null);
+    queryClient.invalidateQueries({ queryKey: ["themes"] });
+  };
+
+  return (
+    <AdminLayout>   
+        <div className="max-w-2xl mx-auto py-8">
+            <div><Link to="/admin/dashboard">Retour</Link></div>
+            <h1 className="text-2xl font-bold mb-6">Paramètres du site</h1>
+            <section>
+                <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Thèmes</h2>
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                    <Button variant="outline" className="text-white border-white/20">Ajouter un thème</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Ajouter un thème</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                        <div>
+                        <label className="block mb-1">Nom</label>
+                        <Input {...register("name", { required: true })} placeholder="Nom du thème" />
+                        </div>
+                        <div>
+                        <label className="block mb-1">Image (optionnel)</label>
+                        <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragActive ? 'border-blue-400 bg-blue-50' : 'border-white/30 bg-white/5'}`}>
+                            <input {...getInputProps()} />
+                            {previewUrl ? (
+                            <img src={previewUrl} alt="Prévisualisation" className="mx-auto mb-2 max-h-32 rounded" />
+                            ) : (
+                            <span className="text-white/70">Glissez-déposez une image ici, ou cliquez pour sélectionner un fichier</span>
+                            )}
+                        </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                        <Button type="button" variant="ghost" onClick={handleDialogClose}>Annuler</Button>
+                        <Button type="submit" disabled={isSubmitting}>Ajouter</Button>
+                        </div>
+                    </form>
+                    </DialogContent>
+                </Dialog>
+                </div>
+                <div className="bg-white/10 rounded-lg p-4 text-white">
+                {isLoading && <p>Chargement…</p>}
+                {error && <p className="text-red-400">Erreur lors du chargement des thèmes</p>}
+                {themes && themes.length === 0 && <p>Aucun thème pour l'instant.</p>}
+                {themes && themes.length > 0 && (
+                    <ul className="space-y-2">
+                    {themes.map((theme) => (
+                        <li key={theme.id} className="flex items-center gap-4 p-2 bg-white/5 rounded">
+                        {theme.image_url && (
+                            <img src={theme.image_url} alt={theme.name} className="w-10 h-10 object-cover rounded" />
+                        )}
+                        <div className="flex-1">
+                            <div className="font-semibold">{theme.name}</div>
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => setEditTheme(theme)}>Modifier</Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" onClick={() => setThemeToDelete(theme)}>Supprimer</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Supprimer ce thème ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                Cette action est irréversible. Le thème sera définitivement supprimé.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setThemeToDelete(null)}>Annuler</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteTheme}>Supprimer</AlertDialogAction>
+                            </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        </li>
+                    ))}
+                    </ul>
+                )}
+                </div>
+                {/* Dialog d'édition */}
+                <Dialog open={!!editTheme} onOpenChange={v => { if (!v) handleEditDialogClose(); }}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Modifier le thème</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4 mt-4">
+                    <div>
+                        <label className="block mb-1">Nom</label>
+                        <Input {...registerEdit("name", { required: true })} placeholder="Nom du thème" />
+                    </div>
+                    <div>
+                        <label className="block mb-1">Image (optionnel)</label>
+                        <div {...getEditRootProps()} className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isEditDragActive ? 'border-blue-400 bg-blue-50' : 'border-white/30 bg-white/5'}`}>
+                        <input {...getEditInputProps()} />
+                        {editPreviewUrl ? (
+                            <img src={editPreviewUrl} alt="Prévisualisation" className="mx-auto mb-2 max-h-32 rounded" />
+                        ) : (
+                            <span className="text-white/70">Glissez-déposez une image ici, ou cliquez pour sélectionner un fichier</span>
+                        )}
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="ghost" onClick={handleEditDialogClose}>Annuler</Button>
+                        <Button type="submit" disabled={isSubmittingEdit}>Enregistrer</Button>
+                    </div>
+                    </form>
+                </DialogContent>
+                </Dialog>
+            </section>
+        </div>
+    </AdminLayout>
+  );
+};
+
+export default SettingsAdmin; 

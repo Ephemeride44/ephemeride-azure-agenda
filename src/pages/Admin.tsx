@@ -1,19 +1,19 @@
-
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
+import { supabase as baseSupabase } from "@/integrations/supabase/client";
+const supabase: any = baseSupabase;
 
 const Admin = () => {
-  const [isAuthenticated] = useState(() => {
-    return localStorage.getItem("ephemeride-admin") === "true";
-  });
   const navigate = useNavigate();
 
-  // If user is already authenticated, redirect to dashboard
-  if (isAuthenticated) {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
     navigate("/admin/dashboard");
-    return null;
   }
+    });
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-ephemeride flex flex-col items-center justify-center p-4">

@@ -9,7 +9,73 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      themes: {
+        Row: {
+          id: string;
+          name: string;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      events: {
+        Row: {
+          id: string;
+          datetime: string;
+          end_time: string | null;
+          name: string;
+          location_place: string;
+          location_city: string;
+          location_department: string;
+          price: string | null;
+          audience: string | null;
+          url: string | null;
+          emoji: string | null;
+          theme_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          datetime: string;
+          end_time?: string | null;
+          name: string;
+          location_place: string;
+          location_city: string;
+          location_department: string;
+          price?: string | null;
+          audience?: string | null;
+          url?: string | null;
+          emoji?: string | null;
+          theme_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          datetime?: string;
+          end_time?: string | null;
+          name?: string;
+          location_place?: string;
+          location_city?: string;
+          location_department?: string;
+          price?: string | null;
+          audience?: string | null;
+          url?: string | null;
+          emoji?: string | null;
+          theme_id?: string | null;
+        };
+      };
     }
     Views: {
       [_ in never]: never

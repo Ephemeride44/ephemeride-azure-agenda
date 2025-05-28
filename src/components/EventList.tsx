@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -20,75 +19,51 @@ const EventList = ({ events }: EventListProps) => {
 
   // Get formatted current date and time for "dernière mise à jour"
   useEffect(() => {
-    const getCurrentDateTime = () => {
-      const now = new Date();
-      const daysOfWeek = [
-        "dimanche", "lundi", "mardi", "mercredi", 
-        "jeudi", "vendredi", "samedi"
-      ];
-      const monthNames = [
-        "janvier", "février", "mars", "avril", "mai", "juin",
-        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-      ];
-      
-      const dayName = daysOfWeek[now.getDay()];
-      const day = now.getDate();
-      const month = monthNames[now.getMonth()];
-      const year = now.getFullYear();
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      
-      return `${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`;
-    };
-    
-    setLastUpdated(getCurrentDateTime());
-  }, []);
+    if (!events || events.length === 0) {
+      setLastUpdated("");
+      return;
+    }
+    // On cherche la date de mise à jour la plus récente
+    let maxUpdated: string | null = null;
+    events.forEach(event => {
+      if (event.updated_at && (!maxUpdated || event.updated_at > maxUpdated)) {
+        maxUpdated = event.updated_at;
+      }
+    });
+    if (maxUpdated) {
+      const d = new Date(maxUpdated);
+      const daysOfWeek = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+      const dayName = daysOfWeek[d.getDay()];
+      const day = d.getDate();
+      const month = monthNames[d.getMonth()];
+      const year = d.getFullYear();
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
+    } else {
+      setLastUpdated("");
+    }
+  }, [events]);
 
   // Filter events into upcoming and past based on the current date
   useEffect(() => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Helper to extract date from event string format
-    const extractDateFromEvent = (dateStr: string) => {
-      // Convert French month names to numbers
-      const monthMap: {[key: string]: number} = {
-        'janvier': 0, 'février': 1, 'mars': 2, 'avril': 3,
-        'mai': 4, 'juin': 5, 'juillet': 6, 'août': 7,
-        'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11
-      };
-      
-      // Extract day and month from strings like "mercredi 21 mai 2025"
-      const dateParts = dateStr.split(' ');
-      if (dateParts.length >= 4) {
-        const day = parseInt(dateParts[1], 10);
-        const month = monthMap[dateParts[2].toLowerCase()];
-        const year = parseInt(dateParts[3], 10);
-        
-        if (!isNaN(day) && month !== undefined && !isNaN(year)) {
-          return new Date(year, month, day);
-        }
-      }
-      
-      // Default to today if parsing fails
-      return new Date();
-    };
-
+    const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const upcoming: Event[] = [];
     const past: Event[] = [];
 
     events.forEach(event => {
-      // Extract just the date part (e.g., "mercredi 21 mai 2025")
-      const dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
-      const eventDate = extractDateFromEvent(dateKey);
-      
-      if (eventDate >= today) {
-        upcoming.push(event);
+      if (event.date) {
+        if (event.date >= todayStr) {
+          upcoming.push(event);
+        } else {
+          past.push(event);
+        }
       } else {
         past.push(event);
       }
     });
-    
     setUpcomingEvents(upcoming);
     setPastEvents(past);
   }, [events]);
@@ -113,24 +88,19 @@ const EventList = ({ events }: EventListProps) => {
     const grouped: Record<string, Record<string, Event[]>> = {};
     
     eventList.forEach(event => {
-      // Extract just the date part (e.g., "mercredi 21 mai 2025")
-      const dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
-      
-      // Extract month from date string
-      const dateParts = dateKey.split(' ');
-      if (dateParts.length >= 4) {
-        const month = dateParts[2].toLowerCase();
-        const year = dateParts[3];
-        const monthKey = `${monthMap[month]} ${year}`;
-        
+      let dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
+      let monthKey = "";
+      // dateKey = YYYY-MM-DD
+      const [year, month, day] = event.date.split("-");
+      dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
+      monthKey = `${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
+      if (monthKey) {
         if (!grouped[monthKey]) {
           grouped[monthKey] = {};
         }
-        
         if (!grouped[monthKey][dateKey]) {
           grouped[monthKey][dateKey] = [];
         }
-        
         grouped[monthKey][dateKey].push(event);
       }
     });

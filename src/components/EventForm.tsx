@@ -1,11 +1,14 @@
-
-import { useState } from "react";
-import { Event } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Event, Theme } from "@/lib/types";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventFormProps {
   event?: Event;
@@ -13,50 +16,70 @@ interface EventFormProps {
   onCancel: () => void;
 }
 
+type EventFormValues = Omit<Event, 'id' | 'theme'> & { id?: string };
+
+const defaultValues: EventFormValues = {
+  id: '',
+  datetime: '',
+  date: '',
+  endTime: '',
+  name: '',
+  location: {
+    place: '',
+    city: '',
+    department: '',
+  },
+  price: '',
+  audience: '',
+  emoji: '',
+  url: '',
+  theme_id: null,
+};
+
+const fetchThemes = async (): Promise<Theme[]> => {
+  const { data, error } = await supabase.from("themes").select("*").order("name");
+  if (error) throw error;
+  return data as Theme[];
+};
+
 const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
-  const [formData, setFormData] = useState({
-    id: event?.id || "",
-    datetime: event?.datetime || "",
-    endTime: event?.endTime || "",
-    name: event?.name || "",
-    location: {
-      place: event?.location.place || "",
-      city: event?.location.city || "",
-      department: event?.location.department || "",
-    },
-    price: event?.price || "",
-    audience: event?.audience || "",
-    emoji: event?.emoji || "",
-  });
-  
   const { toast } = useToast();
   const isEditing = !!event;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    if (name.startsWith("location.")) {
-      const locationField = name.split(".")[1];
-      setFormData(prev => ({
-        ...prev,
-        location: {
-          ...prev.location,
-          [locationField]: value
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { isSubmitting },
+    reset,
+  } = useForm<EventFormValues>({
+    defaultValues,
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!formData.datetime || !formData.name || !formData.location.place || !formData.location.city || !formData.location.department) {
+  // Remplir le formulaire si édition
+  useEffect(() => {
+    if (event) {
+      reset({
+        ...event,
+        endTime: event.endTime || '',
+        emoji: event.emoji || '',
+        url: event.url || '',
+        theme_id: event.theme_id || null,
+        date: event.date || '',
+      });
+    } else {
+      reset(defaultValues);
+    }
+  }, [event, reset]);
+
+  const { data: themes, isLoading: isLoadingThemes } = useQuery<Theme[]>({
+    queryKey: ["themes"],
+    queryFn: fetchThemes,
+  });
+
+  const onSubmit = async (data: EventFormValues) => {
+    if (!data.datetime || !data.name || !data.location.city) {
       toast({
         title: "Erreur de validation",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -64,96 +87,128 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
       });
       return;
     }
-    
-    // Save event
-    onSave(formData);
+    try {
+      await onSave(data);
+    } catch (e) {
+      console.error('[EventForm] onSave error', e);
+    }
   };
 
   return (
-    <Card className="w-full bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg">
-      <CardHeader>
-        <CardTitle>{isEditing ? "Modifier l'événement" : "Nouvel événement"}</CardTitle>
-        <CardDescription className="text-white/70">
-          {isEditing ? "Modifiez les détails de l'événement" : "Ajoutez un nouvel événement au calendrier"}
-        </CardDescription>
-      </CardHeader>
+    <Card className="w-full bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5">
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="datetime">Date et heure</Label>
-              <Input
-                id="datetime"
-                name="datetime"
-                placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                value={formData.datetime}
-                onChange={handleChange}
-                className="border-white/20 bg-white/10 text-white"
-              />
-              <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="endTime">Heure de fin (optionnel)</Label>
-              <Input
-                id="endTime"
-                name="endTime"
-                placeholder="ex: 19h00"
-                value={formData.endTime}
-                onChange={handleChange}
-                className="border-white/20 bg-white/10 text-white"
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nom de l'événement</Label>
-            <Input
-              id="name"
+            <Controller
               name="name"
-              placeholder="ex: Atelier vélo Good'Huile"
-              value={formData.name}
-              onChange={handleChange}
-              className="border-white/20 bg-white/10 text-white"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  id="name"
+                  placeholder="ex: Atelier vélo Good'Huile"
+                  className="border-white/20 bg-white/10 text-white"
+                />
+              )}
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="datetime">Date et heure</Label>
+              <Controller
+                name="datetime"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="datetime"
+                    placeholder="ex: mercredi 21 mai 2025 à 16h30"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
+              />
+              <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date réelle (optionnelle)</Label>
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="date"
+                    type="date"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
+              />
+              <p className="text-xs text-white/60">Permet un tri fiable par date</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">Heure de fin (optionnel)</Label>
+              <Controller
+                name="endTime"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="endTime"
+                    placeholder="ex: 19h00"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
+              />
+            </div>
+          </div>
+
           <div className="space-y-4">
-            <h3 className="font-medium">Lieu</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="location.place">Nom du lieu</Label>
-                <Input
-                  id="location.place"
+                <Label htmlFor="location.place">Nom du lieu (optionnel)</Label>
+                <Controller
                   name="location.place"
-                  placeholder="ex: La Solid'"
-                  value={formData.location.place}
-                  onChange={handleChange}
-                  className="border-white/20 bg-white/10 text-white"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="location.place"
+                      placeholder="ex: La Solid'"
+                      className="border-white/20 bg-white/10 text-white"
+                    />
+                  )}
                 />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="location.city">Ville</Label>
-                <Input
-                  id="location.city"
+                <Controller
                   name="location.city"
-                  placeholder="ex: CLISSON"
-                  value={formData.location.city}
-                  onChange={handleChange}
-                  className="border-white/20 bg-white/10 text-white"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="location.city"
+                      placeholder="ex: CLISSON"
+                      className="border-white/20 bg-white/10 text-white"
+                    />
+                  )}
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="location.department">Département</Label>
-                <Input
-                  id="location.department"
+                <Label htmlFor="location.department">Département (optionnel)</Label>
+                <Controller
                   name="location.department"
-                  placeholder="ex: 44"
-                  value={formData.location.department}
-                  onChange={handleChange}
-                  className="border-white/20 bg-white/10 text-white"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="location.department"
+                      placeholder="ex: 44"
+                      className="border-white/20 bg-white/10 text-white"
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -162,57 +217,101 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">Prix (optionnel)</Label>
-              <Input
-                id="price"
+              <Controller
                 name="price"
-                placeholder="ex: 5-8€, gratuit, prix libre"
-                value={formData.price}
-                onChange={handleChange}
-                className="border-white/20 bg-white/10 text-white"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="price"
+                    placeholder="ex: 5-8€, gratuit, prix libre"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="audience">Public visé (optionnel)</Label>
-              <Input
-                id="audience"
+              <Controller
                 name="audience"
-                placeholder="ex: à partir de 3 ans, tout public"
-                value={formData.audience}
-                onChange={handleChange}
-                className="border-white/20 bg-white/10 text-white"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="audience"
+                    placeholder="ex: à partir de 3 ans, tout public"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="emoji">Emoji (optionnel)</Label>
-              <Input
-                id="emoji"
+              <Controller
                 name="emoji"
-                placeholder="ex: 📖, ❤️"
-                value={formData.emoji}
-                onChange={handleChange}
-                className="border-white/20 bg-white/10 text-white"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="emoji"
+                    placeholder="ex: 📖, ❤️"
+                    className="border-white/20 bg-white/10 text-white"
+                  />
+                )}
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme_id">Thème visuel</Label>
+              <Controller
+                name="theme_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || 'none'}
+                    onValueChange={value => field.onChange(value === 'none' ? null : value)}
+                  >
+                    <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                      <SelectValue placeholder={isLoadingThemes ? "Chargement..." : "Choisir un thème"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      {themes && themes.map(theme => (
+                        <SelectItem key={theme.id} value={theme.id}>
+                          <div className="flex items-center gap-2">
+                            {theme.image_url && <img src={theme.image_url} alt={theme.name} className="w-6 h-6 rounded object-cover" />}
+                            <span>{theme.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+        <CardFooter className="flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={onCancel}
+            className="border-white/20 text-white hover:bg-white/10"
+            type="button"
+            disabled={isSubmitting}
+          >
+            Annuler
+          </Button>
+          <Button 
+            type="submit"
+            className="bg-white text-ephemeride hover:bg-white/80"
+            disabled={isSubmitting}
+          >
+            {isEditing ? "Mettre à jour" : "Créer l'événement"}
+          </Button>
+        </CardFooter>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={onCancel}
-          className="border-white/20 text-white hover:bg-white/10"
-        >
-          Annuler
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          className="bg-white text-ephemeride hover:bg-white/80"
-        >
-          {isEditing ? "Mettre à jour" : "Créer l'événement"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
