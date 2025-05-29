@@ -82,9 +82,9 @@ const Index = () => {
             <div className="flex justify-start">
               {/* Use different logos for light and dark themes */}
               <img 
-                src={theme === 'light' ? '/lovable-uploads/8e8f0129-29c2-4848-af6f-32f9babdee16.png' : '/lovable-uploads/49630352-a547-4f0f-b8ba-3dbc0fc033d3.png'}
+                src={theme === 'light' ? '/images/ephemeride-logo-lite.png' : '/images/ephemeride-logo-dark.png'}
                 alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-32 md:h-40'}`}
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-20 md:h-24'}`}
               />
             </div>
             <div className="flex gap-4 items-center">
