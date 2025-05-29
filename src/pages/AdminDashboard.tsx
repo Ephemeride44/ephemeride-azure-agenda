@@ -16,6 +16,8 @@ import { Event, Theme } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EventsSearchBar from "@/components/events/EventsSearchBar";
+import { useTheme } from "@/components/ThemeProvider";
+import { Switch } from "@/components/ui/switch";
 
 const AdminDashboard = () => {
   const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
@@ -30,9 +32,11 @@ const AdminDashboard = () => {
   const debouncedSearch = useDebounce(search, 400);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [showPastEvents, setShowPastEvents] = useState(false);
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -44,7 +48,7 @@ const AdminDashboard = () => {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, page, debouncedSearch]);
+  }, [navigate, page, debouncedSearch, showPastEvents]);
 
   useEffect(() => {
     // Charger les thèmes au montage
@@ -83,8 +87,16 @@ const AdminDashboard = () => {
     let query = supabase
       .from('events')
       .select('*, theme:theme_id(*)', { count: 'exact' })
-      .eq('status', 'accepted')
-      .order('date', { ascending: false })
+      .eq('status', 'accepted');
+
+    const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
+    // Filtrer sur la date si on ne veut pas les événements passés
+    if (!showPastEvents) {
+      query = query.gte('date', today).order('date', { ascending: true });
+    } else {
+      query = query.lt('date', today).order('date', { ascending: false });
+    }
+    query = query
       .order('datetime', { ascending: false })
       .range(from, to);
     if (search) {
@@ -245,19 +257,13 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <EventsHeader 
-        onAdd={handleAddEvent}
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Rechercher par nom, date ou lieu..."
-      />
       {/* Section événements en attente */}
       {pendingEvents.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4 text-orange-600">Événements en attente de validation</h2>
-          <table className="w-full text-left mb-4">
+          <table className={`w-full text-left mb-4 rounded-lg overflow-hidden ${theme === 'light' ? 'bg-white text-[#1B263B] border border-[#f3e0c7]' : 'bg-ephemeride-light text-white border border-white/10'}`}>
             <thead>
-              <tr className="border-b border-white/10">
+              <tr className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
                 <th className="px-6 py-3 font-medium">Date</th>
                 <th className="px-6 py-3 font-medium">Nom</th>
                 <th className="px-6 py-3 font-medium">Lieu</th>
@@ -267,7 +273,7 @@ const AdminDashboard = () => {
             </thead>
             <tbody>
               {pendingEvents.map(event => (
-                <tr key={event.id} className="border-b border-white/10">
+                <tr key={event.id} className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
                   <td className="px-6 py-4">{event.datetime}</td>
                   <td className="px-6 py-4">{event.name}</td>
                   <td className="px-6 py-4">{event.location.place}<br/>{event.location.city}</td>
@@ -284,11 +290,22 @@ const AdminDashboard = () => {
           </table>
         </div>
       )}
+
+      {/* Section événements acceptés */}
+      <EventsHeader
+        onAdd={handleAddEvent}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Rechercher par nom, date ou lieu..."
+        theme={theme}
+        showPastEvents={showPastEvents}
+        onTogglePastEvents={setShowPastEvents}
+      />
       {/* Tableau principal des événements */}
-      <EventsTable events={filteredEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} />
+      <EventsTable events={filteredEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} theme={theme} />
       <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="w-3/4 max-w-4xl mx-auto">
+        <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
           <DialogHeader>
             <DialogTitle>{currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
           </DialogHeader>

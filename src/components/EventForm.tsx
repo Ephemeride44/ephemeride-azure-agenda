@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface EventFormProps {
   event?: Event;
@@ -18,6 +19,7 @@ interface EventFormProps {
   onCancel: () => void;
   showValidationActions?: boolean;
   themes?: Theme[];
+  theme?: 'light' | 'dark';
 }
 
 type EventFormValues = Omit<Event, 'id'> & { id?: string };
@@ -46,12 +48,14 @@ const fetchThemes = async (): Promise<Theme[]> => {
   return data as Theme[];
 };
 
-const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: EventFormProps) => {
+const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp }: EventFormProps) => {
   const { toast } = useToast();
   const isEditing = !!event;
   const [coverPreview, setCoverPreview] = useState<string | null>(event?.cover_url || null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { theme: contextTheme } = useTheme();
+  const theme = themeProp || contextTheme;
 
   const {
     control,
@@ -140,7 +144,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="flex flex-col md:flex-row gap-6">
-        <Card className="w-full md:w-3/4 bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5">
+        <Card className={theme === 'light' ? 'w-full md:w-3/4 bg-[#fff7e6] border-[#f3e0c7] text-[#1B263B] shadow-lg py-5' : 'w-full md:w-3/4 bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5'}>
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -154,7 +158,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="name"
                         placeholder="ex: Atelier vélo Good'Huile"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -169,7 +173,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         value={field.value || 'none'}
                         onValueChange={value => field.onChange(value === 'none' ? null : value)}
                       >
-                        <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                        <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
                           <SelectValue placeholder={themes ? "Choisir un thème" : (isLoadingThemes ? "Chargement..." : "Choisir un thème") } />
                         </SelectTrigger>
                         <SelectContent>
@@ -200,7 +204,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="datetime"
                         placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -217,7 +221,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="date"
                         type="date"
-                        className={`border-white/20 bg-white/10 text-white ${errors.date ? 'border-red-500' : ''}`}
+                        className={theme === 'light' ? `border-[#f3e0c7] bg-white text-[#1B263B] ${errors.date ? 'border-red-500' : ''}` : `border-white/20 bg-white/10 text-white ${errors.date ? 'border-red-500' : ''}`}
                       />
                     )}
                   />
@@ -236,7 +240,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="endTime"
                         placeholder="ex: 19h00"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -255,7 +259,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                           {...field}
                           id="location.place"
                           placeholder="ex: La Solid'"
-                          className="border-white/20 bg-white/10 text-white"
+                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />
                       )}
                     />
@@ -270,7 +274,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                           {...field}
                           id="location.city"
                           placeholder="ex: CLISSON"
-                          className="border-white/20 bg-white/10 text-white"
+                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />
                       )}
                     />
@@ -285,7 +289,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                           {...field}
                           id="location.department"
                           placeholder="ex: 44"
-                          className="border-white/20 bg-white/10 text-white"
+                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />
                       )}
                     />
@@ -304,7 +308,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="price"
                         placeholder="ex: 5-8€, gratuit, prix libre"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -319,7 +323,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="audience"
                         placeholder="ex: à partir de 3 ans, tout public"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -334,7 +338,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                         {...field}
                         id="emoji"
                         placeholder="ex: 📖, ❤️"
-                        className="border-white/20 bg-white/10 text-white"
+                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
                     )}
                   />
@@ -352,7 +356,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
                       id="url"
                       type="url"
                       placeholder="ex: https://www.monevenement.com"
-                      className="border-white/20 bg-white/10 text-white"
+                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                     />
                   )}
                 />
@@ -361,7 +365,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
           </CardContent>
         </Card>
         {/* Card d'upload affiche avec dropzone */}
-        <Card className="w-full md:w-1/4 bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5 flex flex-col items-center justify-start min-h-[350px]">
+        <Card className={theme === 'light' ? 'w-full md:w-1/4 bg-[#fff7e6] border-[#f3e0c7] text-[#1B263B] shadow-lg py-5 flex flex-col items-center justify-start min-h-[350px]' : 'w-full md:w-1/4 bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5 flex flex-col items-center justify-start min-h-[350px]'}>
           <CardContent className="flex flex-col items-center justify-start w-full">
             <Label className="mb-2 text-lg">Affiche</Label>
             <div className="w-full mb-4 relative group">
@@ -385,7 +389,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
               ) : (
                 <div
                   {...getRootProps()}
-                  className={`w-full h-48 flex flex-col items-center justify-center rounded border-2 border-dashed transition-colors cursor-pointer ${isDragActive ? 'border-green-400 bg-green-50/10' : 'border-white/20 bg-white/10'}`}
+                  className={`w-full h-48 flex flex-col items-center justify-center rounded border-2 border-dashed transition-colors cursor-pointer ${isDragActive ? (theme === 'light' ? 'border-green-400 bg-green-50/10' : 'border-green-400 bg-green-50/10') : (theme === 'light' ? 'border-[#f3e0c7] bg-white' : 'border-white/20 bg-white/10')}`}
                   style={{ outline: 'none' }}
                 >
                   <input {...getInputProps()} />
@@ -400,10 +404,10 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
       {/* Footer global pour les actions */}
       <div className="w-full mt-6 pt-6 flex flex-col items-center">
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl justify-end">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onCancel}
-            className="border-white/20 text-white hover:bg-white/10"
+            className={theme === 'light' ? 'border-[#f3e0c7] text-[#1B263B] hover:bg-[#ffe2b0]' : 'border-white/20 text-white hover:bg-white/10'}
             type="button"
             disabled={isSubmitting}
           >
@@ -429,9 +433,9 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: E
               </Button>
             </div>
           ) : (
-            <Button 
+            <Button
               type="submit"
-              className="bg-white text-ephemeride hover:bg-white/80"
+              className={theme === 'light' ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] shadow-sm' : 'bg-white text-ephemeride hover:bg-white/80'}
               disabled={isSubmitting}
             >
               {isEditing ? "Mettre à jour" : "Créer l'événement"}

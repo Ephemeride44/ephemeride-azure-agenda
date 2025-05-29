@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -10,40 +11,53 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   return (
-  <div className="min-h-screen bg-ephemeride flex flex-col">
+  <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
     <header className="py-4 px-4 md:px-8 border-b border-white/10">
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
           <Link to="/">
             <img 
-              src="/lovable-uploads/131a8b24-2c42-453d-8e62-bb48e8c55b00.png" 
+              src={theme === 'light' ? '/images/ephemeride-logo-lite.png' : '/images/ephemeride-logo-dark.png'} 
               alt="Ephemeride" 
               className="h-10"
             />
           </Link>
           <div className="flex items-center gap-4">
-            <Button 
+            <Button
               asChild
-              variant="ghost" 
-              className="text-white hover:bg-white/10"
+              variant="outline"
+              className={
+                theme === 'light'
+                  ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm rounded transition'
+                  : 'text-white border-white/20 hover:bg-white/10 rounded transition'
+              }
             >
               <Link to="/">Voir le site</Link>
             </Button>
             <Button
               asChild
-              variant="ghost"
-              className="text-white hover:bg-white/10 p-2"
+              variant="outline"
+              className={
+                theme === 'light'
+                  ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm rounded p-2 transition'
+                  : 'text-white border-white/20 hover:bg-white/10 rounded p-2 transition'
+              }
               title="Paramètres du site"
             >
               <Link to="/admin/settings">
                 <Settings className="w-6 h-6" />
               </Link>
             </Button>
-            <Button 
-              variant="outline" 
-              className="border-white/20 text-white hover:bg-white/10"
+            <Button
+              variant="outline"
+              className={
+                theme === 'light'
+                  ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm rounded transition'
+                  : 'text-white border-white/20 hover:bg-white/10 rounded transition'
+              }
               onClick={() => {
                 supabase.auth.signOut();
                 navigate("/admin");
