@@ -96,13 +96,6 @@ const Index = () => {
               >
                 Proposer un événement
               </Button>
-              <Button 
-                asChild
-                variant="outline" 
-                className="bg-white text-ephemeride hover:bg-white/90 border-white/20 dark:bg-white dark:text-ephemeride dark:hover:bg-white/90 light:bg-ephemeride light:text-white light:hover:bg-ephemeride/90"
-              >
-                <Link to="/admin">Administration</Link>
-              </Button>
             </div>
           </div>
         </div>
