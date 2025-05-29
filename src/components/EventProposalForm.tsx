@@ -19,6 +19,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     },
     price: "",
     audience: "",
+    url: "",
     description: "",
     proposerName: "",
     proposerEmail: "",
@@ -69,6 +70,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       location_department: formData.location.department || null,
       price: formData.price || null,
       audience: formData.audience || null,
+      url: formData.url || null,
       status: 'pending',
       createdby: { name: formData.proposerName, email: formData.proposerEmail },
     });
@@ -136,6 +138,18 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
                   className="border-white/20 bg-white/10 text-white mt-1"
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="url" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Lien externe (optionnel)</Label>
+              <Input
+                id="url"
+                name="url"
+                type="url"
+                placeholder="ex: https://www.monevenement.com"
+                value={formData.url}
+                onChange={handleChange}
+                className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
+              />
             </div>
           </div>
         </CardContent>

@@ -9,6 +9,8 @@ import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventProposalForm from "@/components/EventProposalForm";
 import BackToTop from "@/components/BackToTop";
+import { Shield } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 // HACK : cast temporaire pour ignorer le typage strict de Supabase
 const supabase: any = baseSupabase;
@@ -17,6 +19,7 @@ const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
@@ -74,6 +77,18 @@ const Index = () => {
     fetchEvents();
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
       <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-sm' : ''}`}>
@@ -88,11 +103,47 @@ const Index = () => {
               />
             </div>
             <div className="flex gap-4 items-center">
-              <ThemeToggle />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="outline-none focus:ring-2 focus:ring-ring rounded-md">
+                    <ThemeToggle />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Changer le thème
+                </TooltipContent>
+              </Tooltip>
+              {user && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      asChild
+                      variant="outline"
+                      size="icon"
+                      className={`border-white/20 hover:bg-white/20 ${
+                        theme === 'light' 
+                          ? 'bg-white/10 text-ephemeride' 
+                          : 'bg-white/10 text-[#faf3ec]'
+                      }`}
+                    >
+                      <Link to="/admin">
+                        <Shield size={22} />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    Administration
+                  </TooltipContent>
+                </Tooltip>
+              )}
               <Button 
                 onClick={() => setIsProposalDialogOpen(true)}
                 variant="outline" 
-                className="bg-white text-ephemeride hover:bg-white/90 border-white/20 dark:bg-white dark:text-ephemeride dark:hover:bg-white/90 light:bg-ephemeride light:text-white light:hover:bg-ephemeride/90"
+                className={
+                  theme === 'light'
+                    ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
+                    : 'bg-white text-ephemeride hover:bg-white/90 border-white/20'
+                }
               >
                 Proposer un événement
               </Button>

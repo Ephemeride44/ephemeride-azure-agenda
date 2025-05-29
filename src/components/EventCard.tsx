@@ -1,6 +1,6 @@
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ArrowRight } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 interface EventCardProps {
@@ -65,42 +65,57 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     return {};
   };
   
-  const renderEventName = () => {
-    if (event.url) {
-      return (
-        <a 
-          href={event.url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="flex items-center hover:underline"
-        >
-          <h3 className="text-lg font-medium mb-1">{event.name}</h3>
-          <ExternalLink className="ml-2 h-4 w-4" />
-        </a>
-      );
-    }
-    return <h3 className="text-lg font-medium mb-1">{event.name}</h3>;
-  };
+  const renderEventName = () => (
+    <h3 className="text-lg font-medium mb-1">{event.name}</h3>
+  );
   
+  const cardContent = (
+    <CardContent className="p-4 relative">
+      <div className="mb-2">
+        <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
+      </div>
+      {renderEventName()}
+      <p className="text-sm font-normal mb-2">{locationString}</p>
+      {!isPast && (event.price || event.audience) && (
+        <p className="text-sm font-normal opacity-80">
+          {event.price && `${event.price}`}
+          {event.price && event.audience && " / "}
+          {event.audience && event.audience}
+        </p>
+      )}
+      {/* ArrowRight au survol si lien */}
+      {event.url && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <ArrowRight className="w-7 h-7 text-ephemeride-foreground drop-shadow-lg" />
+        </span>
+      )}
+    </CardContent>
+  );
+
+  if (event.url) {
+    return (
+      <a
+        href={event.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`group block focus:outline-none`}
+        style={{ textDecoration: "none" }}
+      >
+        <Card
+          className={`cursor-pointer dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+          style={getBackgroundStyle()}
+        >
+          {cardContent}
+        </Card>
+      </a>
+    );
+  }
   return (
-    <Card 
+    <Card
       className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
       style={getBackgroundStyle()}
     >
-      <CardContent className="p-4">
-        <div className="mb-2">
-          <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
-        </div>
-        {renderEventName()}
-        <p className="text-sm font-normal mb-2">{locationString}</p>
-        {!isPast && (event.price || event.audience) && (
-          <p className="text-sm font-normal opacity-80">
-            {event.price && `${event.price}`}
-            {event.price && event.audience && " / "}
-            {event.audience && event.audience}
-          </p>
-        )}
-      </CardContent>
+      {cardContent}
     </Card>
   );
 };
