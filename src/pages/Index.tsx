@@ -69,6 +69,7 @@ const Index = () => {
             theme_id: event.theme_id ?? null,
             theme: event.theme ?? null,
             date: event.date ?? null,
+            cover_url: event.cover_url ?? null,
             updated_at: event.updated_at ?? null,
           }))
         );

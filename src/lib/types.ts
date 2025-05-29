@@ -18,6 +18,7 @@ export interface Event {
   audience: string;
   emoji?: string; // For optional emoji indicators like 📖
   url?: string; // URL for external links to event websites
+  cover_url?: string | null; // URL de l'affiche (image de couverture)
   theme_id?: string | null;
   theme?: Theme | null;
   date?: string | null; // Nouvelle date réelle (YYYY-MM-DD), non obligatoire

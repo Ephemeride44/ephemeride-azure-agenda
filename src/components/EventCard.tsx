@@ -2,6 +2,9 @@ import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, ArrowRight } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 interface EventCardProps {
   event: Event;
@@ -9,7 +12,7 @@ interface EventCardProps {
 }
 
 const EventCard = ({ event, isPast = false }: EventCardProps) => {
-  const { theme } = useTheme();
+  const [openDialog, setOpenDialog] = useState(false);
 
   // Format datetime string
   const formatDateDisplay = () => {
@@ -68,28 +71,81 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   const renderEventName = () => (
     <h3 className="text-lg font-medium mb-1">{event.name}</h3>
   );
+
+  console.log(event.cover_url)
   
   const cardContent = (
-    <CardContent className="p-4 relative">
-      <div className="mb-2">
-        <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
-      </div>
-      {renderEventName()}
-      <p className="text-sm font-normal mb-2">{locationString}</p>
-      {!isPast && (event.price || event.audience) && (
-        <p className="text-sm font-normal opacity-80">
-          {event.price && `${event.price}`}
-          {event.price && event.audience && " / "}
-          {event.audience && event.audience}
-        </p>
+    <CardContent className="p-4 relative flex flex-row gap-4 items-center">
+      {/* Affiche à gauche si présente, avec son Tooltip */}
+      {event.cover_url && (
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-shrink-0 flex items-center">
+                <img
+                  src={event.cover_url}
+                  alt="Affiche de l'événement"
+                  className="w-20 h-28 object-cover rounded shadow-lg cursor-pointer transition-transform hover:scale-105 border border-white/20"
+                  onClick={e => { e.preventDefault(); setOpenDialog(true); }}
+                  tabIndex={0}
+                  aria-label="Voir l'affiche en grand"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Voir l'affiche en grand
+            </TooltipContent>
+          </Tooltip>
+          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+            <DialogContent className="max-w-2xl flex flex-col items-center bg-black/95">
+              <img
+                src={event.cover_url}
+                alt="Affiche de l'événement"
+                className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
+                style={{ background: '#fff' }}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
       )}
-      {/* ArrowRight au survol si lien */}
+      {/* Contenu textuel */}
+      <div className="flex-1 min-w-0">
+        <div className="mb-2">
+          <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
+        </div>
+        {renderEventName()}
+        <p className="text-sm font-normal mb-2">{locationString}</p>
+        {!isPast && (event.price || event.audience) && (
+          <p className="text-sm font-normal opacity-80">
+            {event.price && `${event.price}`}
+            {event.price && event.audience && " / "}
+            {event.audience && event.audience}
+          </p>
+        )}
+      </div>
+      {/* ArrowRight en absolute à droite, avec son Tooltip, visible au hover si event.url */}
       {event.url && (
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <ArrowRight className="w-7 h-7 text-ephemeride-foreground drop-shadow-lg" />
-        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <ArrowRight className="w-7 h-7 text-ephemeride-foreground drop-shadow-lg" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="text-xs">
+            Accéder au site de l'événement
+          </TooltipContent>
+        </Tooltip>
       )}
     </CardContent>
+  );
+
+  const card = (
+    <Card
+      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      style={getBackgroundStyle()}
+    >
+      {cardContent}
+    </Card>
   );
 
   if (event.url) {
@@ -101,23 +157,11 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         className={`group block focus:outline-none`}
         style={{ textDecoration: "none" }}
       >
-        <Card
-          className={`cursor-pointer dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
-          style={getBackgroundStyle()}
-        >
-          {cardContent}
-        </Card>
+        {card}
       </a>
     );
   }
-  return (
-    <Card
-      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
-      style={getBackgroundStyle()}
-    >
-      {cardContent}
-    </Card>
-  );
+  return card;
 };
 
 export default EventCard;

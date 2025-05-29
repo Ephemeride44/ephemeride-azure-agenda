@@ -296,7 +296,6 @@ const AdminDashboard = () => {
             <EventForm
               event={currentEvent}
               onSave={async (eventData) => {
-                console.log(eventData);
                 // Mapping camelCase vers snake_case pour la base
                 const mappedData = {
                   ...eventData,
