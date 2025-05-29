@@ -77,7 +77,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
       <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-sm' : ''}`}>
-        <div className="container mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
               {/* Use different logos for light and dark themes */}
