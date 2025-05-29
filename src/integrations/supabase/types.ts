@@ -14,6 +14,7 @@ export type Database = {
           id: string;
           name: string;
           image_url: string | null;
+          image_url_light: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,6 +22,7 @@ export type Database = {
           id?: string;
           name: string;
           image_url?: string | null;
+          image_url_light?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,6 +30,7 @@ export type Database = {
           id?: string;
           name?: string;
           image_url?: string | null;
+          image_url_light?: string | null;
           created_at?: string;
           updated_at?: string;
         };

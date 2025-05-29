@@ -2,6 +2,7 @@ export interface Theme {
   id: string;
   name: string;
   image_url: string | null;
+  image_url_light: string | null;
 }
 
 export interface Event {

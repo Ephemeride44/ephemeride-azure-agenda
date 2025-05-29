@@ -13,6 +13,7 @@ interface EventCardProps {
 
 const EventCard = ({ event, isPast = false }: EventCardProps) => {
   const [openDialog, setOpenDialog] = useState(false);
+  const { theme } = useTheme();
 
   // Format datetime string
   const formatDateDisplay = () => {
@@ -58,7 +59,15 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   
   // Get background style pour le thème choisi
   const getBackgroundStyle = () => {
-    if (event.theme && event.theme.image_url) {
+    if (!event.theme) return {};
+    if (theme === 'light' && event.theme.image_url_light) {
+      return {
+        backgroundImage: `url('${event.theme.image_url_light}')`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto"
+      };
+    }
+    if (event.theme.image_url) {
       return {
         backgroundImage: `url('${event.theme.image_url}')`,
         backgroundRepeat: "repeat",
