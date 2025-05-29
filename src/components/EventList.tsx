@@ -199,10 +199,12 @@ const EventList = ({ events }: EventListProps) => {
         {Object.entries(groupedUpcomingEvents).map(([month, dayEvents]) => (
           <div key={month} className="mb-12">
             {/* Month separator */}
-            <div className={`text-center py-6 mb-8 ${textColorClass}`}>
-              <div className={`inline-block px-6 py-3 rounded-full font-semibold text-xl ${theme === "light" ? "bg-[#1B263B] text-[#faf3ec]" : "bg-[#faf3ec] text-[#1B263B]"}`}>
+            <div className="flex items-center w-full my-8">
+              <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
+              <span className={`mx-4 font-semibold text-xl ${theme === "light" ? "text-[#1B263B]" : "text-[#faf3ec]"}`}>
                 {month}
-              </div>
+              </span>
+              <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
             </div>
             
             {Object.entries(dayEvents).map(([date, events]) => (
@@ -246,11 +248,13 @@ const EventList = ({ events }: EventListProps) => {
           <CollapsibleContent className="space-y-8">
             {Object.entries(groupedPastEvents).map(([month, dayEvents]) => (
               <div key={month} className="mb-12">
-                {/* Month separator for past events */}
-                <div className={`text-center py-6 mb-8 ${textColorClass}`}>
-                  <div className={`inline-block px-6 py-3 rounded-full font-semibold text-xl opacity-60 ${theme === "light" ? "bg-[#1B263B] text-[#faf3ec]" : "bg-[#faf3ec] text-[#1B263B]"}`}>
+                {/* Month separator for past events - nouveau style divider with text */}
+                <div className="flex items-center w-full my-8">
+                  <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
+                  <span className={`mx-4 font-semibold text-xl opacity-60 ${theme === "light" ? "text-[#1B263B]" : "text-[#1B263B]"}`}>
                     {month}
-                  </div>
+                  </span>
+                  <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
                 </div>
                 
                 {Object.entries(dayEvents).map(([date, events]) => (
