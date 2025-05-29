@@ -22,4 +22,6 @@ export interface Event {
   theme?: Theme | null;
   date?: string | null; // Nouvelle date réelle (YYYY-MM-DD), non obligatoire
   updated_at?: string | null; // Date de dernière mise à jour
+  status?: string; // Statut de l'événement : pending, accepted, rejected
+  createdby?: { name: string; email: string };
 }

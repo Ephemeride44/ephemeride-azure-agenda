@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const [formData, setFormData] = useState({
@@ -19,8 +19,9 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     },
     price: "",
     audience: "",
-    contactEmail: "",
     description: "",
+    proposerName: "",
+    proposerEmail: "",
   });
 
   const handleChange = (
@@ -45,11 +46,11 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
-    if (!formData.name || !formData.datetime || !formData.contactEmail) {
+    if (!formData.name || !formData.datetime) {
       toast({
         title: "Informations manquantes",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -58,8 +59,27 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       return;
     }
 
-    // This would typically send data to a backend service
-    console.log("Event proposal submitted:", formData);
+    // Insertion dans Supabase avec statut 'pending' et createdby
+    const { error } = await supabase.from('events').insert({
+      name: formData.name,
+      datetime: formData.datetime,
+      end_time: formData.endTime || null,
+      location_place: formData.location.place || null,
+      location_city: formData.location.city || null,
+      location_department: formData.location.department || null,
+      price: formData.price || null,
+      audience: formData.audience || null,
+      status: 'pending',
+      createdby: { name: formData.proposerName, email: formData.proposerEmail },
+    });
+    if (error) {
+      toast({
+        title: "Erreur lors de la proposition",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Show success message
     toast({
@@ -214,19 +234,30 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       <Card className="border-white/20 bg-ephemeride-light/50">
         <CardContent className="pt-6">
           <h3 className="text-lg font-medium mb-4">Contact</h3>
-          
-          <div>
-            <Label htmlFor="contactEmail" className="text-white">Email de contact *</Label>
-            <Input
-              id="contactEmail"
-              name="contactEmail"
-              type="email"
-              required
-              placeholder="votre@email.com"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              className="border-white/20 bg-white/10 text-white mt-1"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="proposerName" className="text-white">Votre nom (optionnel)</Label>
+              <Input
+                id="proposerName"
+                name="proposerName"
+                placeholder="Votre nom"
+                value={formData.proposerName}
+                onChange={handleChange}
+                className="border-white/20 bg-white/10 text-white mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="proposerEmail" className="text-white">Votre email (optionnel)</Label>
+              <Input
+                id="proposerEmail"
+                name="proposerEmail"
+                type="email"
+                placeholder="votre@email.com"
+                value={formData.proposerEmail}
+                onChange={handleChange}
+                className="border-white/20 bg-white/10 text-white mt-1"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

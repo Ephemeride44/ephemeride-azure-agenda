@@ -14,9 +14,11 @@ interface EventFormProps {
   event?: Event;
   onSave: (event: Omit<Event, 'id'> & { id?: string }) => void;
   onCancel: () => void;
+  showValidationActions?: boolean;
+  themes?: Theme[];
 }
 
-type EventFormValues = Omit<Event, 'id' | 'theme'> & { id?: string };
+type EventFormValues = Omit<Event, 'id'> & { id?: string };
 
 const defaultValues: EventFormValues = {
   id: '',
@@ -42,7 +44,7 @@ const fetchThemes = async (): Promise<Theme[]> => {
   return data as Theme[];
 };
 
-const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
+const EventForm = ({ event, onSave, onCancel, showValidationActions, themes }: EventFormProps) => {
   const { toast } = useToast();
   const isEditing = !!event;
 
@@ -51,7 +53,7 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
     handleSubmit,
     setValue,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     reset,
   } = useForm<EventFormValues>({
     defaultValues,
@@ -73,10 +75,12 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
     }
   }, [event, reset]);
 
-  const { data: themes, isLoading: isLoadingThemes } = useQuery<Theme[]>({
+  const { data: themesData, isLoading: isLoadingThemes } = useQuery<Theme[]>({
     queryKey: ["themes"],
     queryFn: fetchThemes,
+    enabled: !themes,
   });
+  const themeList = themes || themesData || [];
 
   const onSubmit = async (data: EventFormValues) => {
     if (!data.datetime || !data.name || !data.location.city) {
@@ -132,19 +136,23 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
               <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date réelle (optionnelle)</Label>
+              <Label htmlFor="date">Date réelle</Label>
               <Controller
                 name="date"
                 control={control}
+                rules={{ required: "La date réelle est obligatoire" }}
                 render={({ field }) => (
                   <Input
                     {...field}
                     id="date"
                     type="date"
-                    className="border-white/20 bg-white/10 text-white"
+                    className={`border-white/20 bg-white/10 text-white ${errors.date ? 'border-red-500' : ''}`}
                   />
                 )}
               />
+              {errors.date && (
+                <p className="text-xs text-red-500 mt-1">{errors.date.message}</p>
+              )}
               <p className="text-xs text-white/60">Permet un tri fiable par date</p>
             </div>
             <div className="space-y-2">
@@ -274,11 +282,11 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
                     onValueChange={value => field.onChange(value === 'none' ? null : value)}
                   >
                     <SelectTrigger className="border-white/20 bg-white/10 text-white">
-                      <SelectValue placeholder={isLoadingThemes ? "Chargement..." : "Choisir un thème"} />
+                      <SelectValue placeholder={themes ? "Choisir un thème" : (isLoadingThemes ? "Chargement..." : "Choisir un thème") } />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Aucun</SelectItem>
-                      {themes && themes.map(theme => (
+                      {themeList.map(theme => (
                         <SelectItem key={theme.id} value={theme.id}>
                           <div className="flex items-center gap-2">
                             {theme.image_url && <img src={theme.image_url} alt={theme.name} className="w-6 h-6 rounded object-cover" />}
@@ -292,24 +300,45 @@ const EventForm = ({ event, onSave, onCancel }: EventFormProps) => {
               />
             </div>
           </div>
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            className="border-white/20 text-white hover:bg-white/10"
-            type="button"
-            disabled={isSubmitting}
-          >
-            Annuler
-          </Button>
-          <Button 
-            type="submit"
-            className="bg-white text-ephemeride hover:bg-white/80"
-            disabled={isSubmitting}
-          >
-            {isEditing ? "Mettre à jour" : "Créer l'événement"}
-          </Button>
-        </CardFooter>
+          <CardFooter className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={onCancel}
+              className="border-white/20 text-white hover:bg-white/10"
+              type="button"
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
+            {showValidationActions ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  disabled={isSubmitting || !!errors.date || !watch('date')}
+                  onClick={handleSubmit((data) => onSave({ ...data, status: 'accepted' }))}
+                >
+                  Accepter
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  disabled={isSubmitting}
+                  onClick={handleSubmit((data) => onSave({ ...data, status: 'rejected' }))}
+                >
+                  Refuser
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                type="submit"
+                className="bg-white text-ephemeride hover:bg-white/80"
+                disabled={isSubmitting}
+              >
+                {isEditing ? "Mettre à jour" : "Créer l'événement"}
+              </Button>
+            )}
+          </CardFooter>
         </form>
       </CardContent>
     </Card>

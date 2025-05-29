@@ -91,7 +91,7 @@ const EventList = ({ events }: EventListProps) => {
       let dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
       let monthKey = "";
       // dateKey = YYYY-MM-DD
-      const [year, month, day] = event.date.split("-");
+      const [year, month, day] = event.date?.split("-");
       dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
       monthKey = `${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
       if (monthKey) {

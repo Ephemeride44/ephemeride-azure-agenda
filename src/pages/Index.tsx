@@ -40,6 +40,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('events')
         .select('*, theme:theme_id(*)')
+        .eq('status', 'accepted')
         .order('date', { ascending: false, nullsFirst: false })
         .order('datetime', { ascending: false });
       if (error) {
