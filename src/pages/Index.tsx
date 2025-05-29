@@ -41,8 +41,8 @@ const Index = () => {
         .from('events')
         .select('*, theme:theme_id(*)')
         .eq('status', 'accepted')
-        .order('date', { ascending: false, nullsFirst: false })
-        .order('datetime', { ascending: false });
+        .order('date', { nullsFirst: false })
+        .order('datetime');
       if (error) {
         console.error('Erreur lors du chargement des événements :', error);
         return;
