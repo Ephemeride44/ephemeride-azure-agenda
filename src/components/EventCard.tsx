@@ -1,3 +1,4 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, ArrowRight } from "lucide-react";
@@ -31,7 +32,6 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     const d = new Date(event.date);
     const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
     return days[d.getDay()];
-    
   };
   
   // Get border color based on day of week with new WCAG compliant colors
@@ -59,7 +59,45 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   
   // Get background style pour le thème choisi
   const getBackgroundStyle = () => {
-    if (!event.theme) return {};
+    if (!event.theme) {
+      // Dynamic background based on keywords
+      const eventName = event.name.toLowerCase();
+      
+      // Check for vélo keywords
+      if (eventName.includes('vélo')) {
+        return {
+          backgroundImage: `url('/lovable-uploads/bikes.png')`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "auto"
+        };
+      }
+      
+      // Check for book/library keywords
+      if (eventName.includes('librairie') || eventName.includes('bibliothèque') || 
+          eventName.includes('médiathèque') || eventName.includes('livres')) {
+        const imageUrl = theme === 'light' ? '/lovable-uploads/books-lite.png' : '/lovable-uploads/books.png';
+        return {
+          backgroundImage: `url('${imageUrl}')`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "auto"
+        };
+      }
+      
+      // Check for music keywords
+      if (eventName.includes('dj') || eventName.includes('concert') || eventName.includes('dub') ||
+          eventName.includes('electro') || eventName.includes('reggae') || eventName.includes('pop') ||
+          eventName.includes('rock') || eventName.includes('jazz')) {
+        const imageUrl = theme === 'light' ? '/lovable-uploads/music-lite.png' : '/lovable-uploads/music.png';
+        return {
+          backgroundImage: `url('${imageUrl}')`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "auto"
+        };
+      }
+      
+      return {};
+    }
+    
     if (theme === 'light' && event.theme.image_url_light) {
       return {
         backgroundImage: `url('${event.theme.image_url_light}')`,
@@ -132,13 +170,13 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           </p>
         )}
       </div>
-      {/* ArrowRight en absolute à droite, avec son Tooltip, visible au hover si event.url */}
+      {/* ArrowRight visible en permanence en bas à droite si event.url existe */}
       {event.url && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              <ArrowRight className="w-7 h-7 text-ephemeride-foreground drop-shadow-lg" />
-            </span>
+            <div className="absolute bottom-4 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200 cursor-pointer">
+              <ArrowRight className="w-4 h-4 text-ephemeride-foreground dark:text-[#faf3ec] light:text-[#1B263B]" />
+            </div>
           </TooltipTrigger>
           <TooltipContent side="left" className="text-xs">
             Accéder au site de l'événement
