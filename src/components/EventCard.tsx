@@ -1,3 +1,4 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, ArrowRight } from "lucide-react";
@@ -132,12 +133,16 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           </p>
         )}
       </div>
-      {/* ArrowRight en absolute à droite, avec son Tooltip, visible au hover si event.url */}
+      {/* ArrowRight en bas à droite, visible en permanence si event.url */}
       {event.url && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              <ArrowRight className="w-7 h-7 text-ephemeride-foreground drop-shadow-lg" />
+            <span className="absolute bottom-3 right-3 flex items-center transition-transform hover:scale-110 cursor-pointer">
+              <ArrowRight className={`w-5 h-5 ${
+                theme === 'dark' 
+                  ? 'text-white/70 hover:text-white' 
+                  : 'text-gray-600 hover:text-gray-800'
+              } drop-shadow-sm`} />
             </span>
           </TooltipTrigger>
           <TooltipContent side="left" className="text-xs">
