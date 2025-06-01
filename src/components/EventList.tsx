@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -64,6 +65,13 @@ const EventList = ({ events }: EventListProps) => {
         past.push(event);
       }
     });
+    
+    // Sort past events from most recent to oldest (descending order)
+    past.sort((a, b) => {
+      if (!a.date || !b.date) return 0;
+      return b.date.localeCompare(a.date);
+    });
+    
     setUpcomingEvents(upcoming);
     setPastEvents(past);
   }, [events]);
@@ -71,18 +79,18 @@ const EventList = ({ events }: EventListProps) => {
   // Group events by month then by day
   const groupEventsByMonthAndDay = (eventList: Event[]) => {
     const monthMap: {[key: string]: string} = {
-      'janvier': 'Janvier',
-      'février': 'Février', 
-      'mars': 'Mars', 
-      'avril': 'Avril',
-      'mai': 'Mai', 
-      'juin': 'Juin', 
-      'juillet': 'Juillet', 
-      'août': 'Août',
-      'septembre': 'Septembre', 
-      'octobre': 'Octobre', 
-      'novembre': 'Novembre', 
-      'décembre': 'Décembre'
+      'janvier': 'JANVIER',
+      'février': 'FÉVRIER', 
+      'mars': 'MARS', 
+      'avril': 'AVRIL',
+      'mai': 'MAI', 
+      'juin': 'JUIN', 
+      'juillet': 'JUILLET', 
+      'août': 'AOÛT',
+      'septembre': 'SEPTEMBRE', 
+      'octobre': 'OCTOBRE', 
+      'novembre': 'NOVEMBRE', 
+      'décembre': 'DÉCEMBRE'
     };
     
     const grouped: Record<string, Record<string, Event[]>> = {};
@@ -92,7 +100,7 @@ const EventList = ({ events }: EventListProps) => {
       let monthKey = "";
       // dateKey = YYYY-MM-DD
       const [year, month, day] = event.date?.split("-");
-      dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
+      dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]].toLowerCase()} ${year}`;
       monthKey = `${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
       if (monthKey) {
         if (!grouped[monthKey]) {
