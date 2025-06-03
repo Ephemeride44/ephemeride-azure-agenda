@@ -9,7 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          audience: string | null
+          cover_url: string | null
+          created_at: string | null
+          date: string | null
+          datetime: string
+          emoji: string | null
+          end_time: string | null
+          id: string
+          location_city: string | null
+          location_department: string | null
+          location_place: string | null
+          name: string
+          price: string | null
+          status: string | null
+          theme_id: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          audience?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date?: string | null
+          datetime: string
+          emoji?: string | null
+          end_time?: string | null
+          id: string
+          location_city?: string | null
+          location_department?: string | null
+          location_place?: string | null
+          name: string
+          price?: string | null
+          status?: string | null
+          theme_id?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          audience?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date?: string | null
+          datetime?: string
+          emoji?: string | null
+          end_time?: string | null
+          id?: string
+          location_city?: string | null
+          location_department?: string | null
+          location_place?: string | null
+          name?: string
+          price?: string | null
+          status?: string | null
+          theme_id?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      themes: {
+        Row: {
+          id: string
+          image_url: string | null
+          image_url_light: string | null
+          name: string
+        }
+        Insert: {
+          id: string
+          image_url?: string | null
+          image_url_light?: string | null
+          name: string
+        }
+        Update: {
+          id?: string
+          image_url?: string | null
+          image_url_light?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
