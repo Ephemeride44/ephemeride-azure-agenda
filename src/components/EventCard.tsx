@@ -1,3 +1,4 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, ArrowRight } from "lucide-react";
@@ -24,7 +25,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   };
 
   // Format location
-  const locationString = `@ ${event.location.place} – ${event.location.city} ${event.location.department ? `(${event.location.department})` : ''}`;
+  const locationString = `${event.location.place} – ${event.location.city} ${event.location.department ? `(${event.location.department})` : ''}`;
   
   // Get day of week from date for border color
   const getDayOfWeek = () => {
@@ -123,7 +124,16 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           <p className="text-sm font-semibold opacity-90">{formatDateDisplay()}</p>
         </div>
         {renderEventName()}
-        <p className="text-sm font-normal mb-2">{locationString}</p>
+        <div className="flex items-center text-sm font-normal mb-2">
+          <img 
+            src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
+            alt="Lieu" 
+            className={`w-4 h-4 mr-2 ${
+              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
+            }`} 
+          />
+          {locationString}
+        </div>
         {!isPast && (event.price || event.audience) && (
           <p className="text-sm font-normal opacity-80">
             {event.price && `${event.price}`}
