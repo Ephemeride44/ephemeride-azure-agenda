@@ -132,11 +132,6 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
 
           {/* Texte de l'événement */}
           <div className="flex-1 min-w-0">
-            {/* Type d'événement en petit */}
-            <div className={`text-xs font-medium uppercase tracking-wide mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-              {event.audience || "ÉVÉNEMENT"}
-            </div>
-
             {/* Nom de l'événement */}
             <h3 className="text-xl font-bold mb-3 leading-tight">{event.name}</h3>
 
@@ -154,14 +149,19 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
 
             {/* Prix */}
             {!isPast && event.price && (
-              <p className={`text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+              <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
                 {event.price}
               </p>
             )}
+
+            {/* Type d'événement en bas */}
+            <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+              {event.audience || "ÉVÉNEMENT"}
+            </div>
           </div>
         </div>
 
-        {/* Bouton réserver / flèche en bas à droite */}
+        {/* Bouton plus d'infos / flèche en bas à droite */}
         {event.url && (
           <div className="absolute bottom-4 right-4">
             {!isPast ? (
@@ -172,7 +172,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
                       ? 'border-white/20 text-white hover:bg-white/10' 
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}>
-                    RÉSERVER
+                    PLUS D'INFOS
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="text-xs">
