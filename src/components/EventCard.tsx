@@ -79,7 +79,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   };
   
   const renderEventName = () => (
-    <h3 className="text-lg font-medium mb-1">{event.name}</h3>
+    <h3 className="text-lg font-bold mb-1">{event.name}</h3>
   );
 
   console.log(event.cover_url)
