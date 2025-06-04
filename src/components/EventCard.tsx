@@ -79,7 +79,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   };
   
   const renderEventName = () => (
-    <h3 className="text-lg font-bold mb-1">{event.name}</h3>
+    <h3 className="text-lg font-medium mb-1">{event.name}</h3>
   );
 
   console.log(event.cover_url)
@@ -164,7 +164,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
 
   const card = (
     <Card
-      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[15px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
+      className={`dark:bg-ephemeride-light light:bg-[#fefeff] text-[#1B263B] dark:text-[#faf3ec] mb-4 animate-fade-in hover:dark:bg-ephemeride-dark hover:light:bg-[#f5f5f3] transition-colors border-l-[130px] ${getBorderColorClass()} border-t-0 border-r-0 border-b-0 rounded-none rounded-r-lg`}
       style={getBackgroundStyle()}
     >
       {cardContent}
