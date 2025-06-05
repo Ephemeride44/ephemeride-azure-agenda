@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Event } from "@/lib/types";
 import EventCard from "./EventCard";
@@ -24,27 +23,19 @@ const EventList = ({ events }: EventListProps) => {
       setLastUpdated("");
       return;
     }
-    // On cherche la date de mise à jour la plus récente
-    let maxUpdated: string | null = null;
-    events.forEach(event => {
-      if (event.updated_at && (!maxUpdated || event.updated_at > maxUpdated)) {
-        maxUpdated = event.updated_at;
-      }
-    });
-    if (maxUpdated) {
-      const d = new Date(maxUpdated);
-      const daysOfWeek = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-      const dayName = daysOfWeek[d.getDay()];
-      const day = d.getDate();
-      const month = monthNames[d.getMonth()];
-      const year = d.getFullYear();
-      const hours = d.getHours().toString().padStart(2, '0');
-      const minutes = d.getMinutes().toString().padStart(2, '0');
-      setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
-    } else {
-      setLastUpdated("");
-    }
+    
+    // Use current date/time when the component loads or events change
+    // This reflects when the categorization of events (upcoming vs past) was last calculated
+    const now = new Date();
+    const daysOfWeek = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const dayName = daysOfWeek[now.getDay()];
+    const day = now.getDate();
+    const month = monthNames[now.getMonth()];
+    const year = now.getFullYear();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
   }, [events]);
 
   // Filter events into upcoming and past based on the current date
