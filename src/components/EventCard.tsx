@@ -154,10 +154,12 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
               </p>
             )}
 
-            {/* Type d'événement en bas */}
-            <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-              {event.audience || "ÉVÉNEMENT"}
-            </div>
+            {/* Type d'événement en bas - Ne s'affiche que si audience n'est pas vide */}
+            {event.audience && (
+              <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                {event.audience}
+              </div>
+            )}
           </div>
         </div>
 
