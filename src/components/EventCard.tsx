@@ -1,4 +1,3 @@
-
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -80,7 +79,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   };
 
   const cardContent = (
-    <div className="flex">
+    <div className="flex h-full">
       {/* Date block à gauche */}
       <div className={`${getDateBlockColor()} text-white flex flex-col items-center justify-center px-4 py-6 min-w-[120px] ${isPast ? 'opacity-60' : ''}`}>
         <div className="text-2xl font-bold leading-none">{day}</div>
@@ -94,74 +93,69 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         )}
       </div>
 
+      {/* Affiche à gauche si présente - prend toute la hauteur */}
+      {event.cover_url && (
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-shrink-0 h-full">
+                <img
+                  src={event.cover_url}
+                  alt="Affiche de l'événement"
+                  className="h-full w-24 object-cover cursor-pointer transition-transform hover:scale-105"
+                  onClick={e => { e.preventDefault(); setOpenDialog(true); }}
+                  tabIndex={0}
+                  aria-label="Voir l'affiche en grand"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Voir l'affiche en grand
+            </TooltipContent>
+          </Tooltip>
+          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+            <DialogContent className="max-w-2xl flex flex-col items-center bg-black/95">
+              <img
+                src={event.cover_url}
+                alt="Affiche de l'événement"
+                className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
+                style={{ background: '#fff' }}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+
       {/* Contenu principal */}
       <div className="flex-1 p-6 relative">
-        <div className="flex gap-4">
-          {/* Affiche à gauche si présente */}
-          {event.cover_url && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-shrink-0">
-                    <img
-                      src={event.cover_url}
-                      alt="Affiche de l'événement"
-                      className="w-16 h-20 object-cover rounded shadow-sm cursor-pointer transition-transform hover:scale-105"
-                      onClick={e => { e.preventDefault(); setOpenDialog(true); }}
-                      tabIndex={0}
-                      aria-label="Voir l'affiche en grand"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Voir l'affiche en grand
-                </TooltipContent>
-              </Tooltip>
-              <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                <DialogContent className="max-w-2xl flex flex-col items-center bg-black/95">
-                  <img
-                    src={event.cover_url}
-                    alt="Affiche de l'événement"
-                    className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
-                    style={{ background: '#fff' }}
-                  />
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
+        {/* Nom de l'événement */}
+        <h3 className="text-xl font-bold mb-3 leading-tight">{event.name}</h3>
 
-          {/* Texte de l'événement */}
-          <div className="flex-1 min-w-0">
-            {/* Nom de l'événement */}
-            <h3 className="text-xl font-bold mb-3 leading-tight">{event.name}</h3>
-
-            {/* Lieu */}
-            <div className="flex items-center text-sm mb-2">
-              <img 
-                src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
-                alt="Lieu" 
-                className={`w-4 h-4 mr-2 ${
-                  theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
-                }`} 
-              />
-              {locationString}
-            </div>
-
-            {/* Prix */}
-            {!isPast && event.price && (
-              <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-                {event.price}
-              </p>
-            )}
-
-            {/* Type d'événement en bas - Ne s'affiche que si audience n'est pas vide */}
-            {event.audience && (
-              <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                {event.audience}
-              </div>
-            )}
-          </div>
+        {/* Lieu */}
+        <div className="flex items-center text-sm mb-2">
+          <img 
+            src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
+            alt="Lieu" 
+            className={`w-4 h-4 mr-2 ${
+              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
+            }`} 
+          />
+          {locationString}
         </div>
+
+        {/* Prix */}
+        {!isPast && event.price && (
+          <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+            {event.price}
+          </p>
+        )}
+
+        {/* Type d'événement en bas - Ne s'affiche que si audience n'est pas vide */}
+        {event.audience && (
+          <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+            {event.audience}
+          </div>
+        )}
 
         {/* Bouton plus d'infos / flèche en bas à droite */}
         {event.url && (
@@ -207,7 +201,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     <Card
       className={`${theme === 'dark' ? 'bg-ephemeride-light' : 'bg-white'} ${theme === 'dark' ? 'text-[#faf3ec]' : 'text-[#1B263B]'} mb-4 animate-fade-in hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden`}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-0 h-full">
         {cardContent}
       </CardContent>
     </Card>
