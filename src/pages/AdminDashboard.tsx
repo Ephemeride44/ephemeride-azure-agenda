@@ -3,6 +3,7 @@ import AdminLayout from "@/components/events/AdminLayout";
 import EventsHeader from "@/components/events/EventsHeader";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventsTable from "@/components/events/EventsTable";
+import { useTheme } from "@/components/ThemeProvider";
 import {
   Dialog,
   DialogContent,
@@ -13,11 +14,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/database.types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import EventsSearchBar from "@/components/events/EventsSearchBar";
-import { useTheme } from "@/components/ThemeProvider";
-import { Switch } from "@/components/ui/switch";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type ThemeRow = Database["public"]["Tables"]["themes"]["Row"];
@@ -177,18 +175,7 @@ const AdminDashboard = () => {
       const { error: updateError } = await supabase
         .from('events')
         .update({
-          datetime: eventData.datetime,
-          date: eventData.date || null,
-          end_time: eventData.end_time ?? null,
-          name: eventData.name,
-          location_place: eventData.location_place ?? null,
-          location_city: eventData.location_city ?? null,
-          location_department: eventData.location_department ?? null,
-          price: eventData.price,
-          audience: eventData.audience,
-          url: eventData.url ?? null,
-          emoji: eventData.emoji ?? null,
-          theme_id: eventData.theme_id ?? null,
+          ...eventData,
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventData.id);
@@ -307,23 +294,12 @@ const AdminDashboard = () => {
           <EventForm
             event={currentEvent ?? emptyEvent}
             onSave={async (eventData) => {
-              // Mapping camelCase vers snake_case pour la base
               const mappedData = {
                 ...eventData,
-                end_time: eventData.end_time ?? null,
-                location_place: eventData.location_place ?? null,
-                location_city: eventData.location_city ?? null,
-                location_department: eventData.location_department ?? null,
-                theme_id: eventData.theme_id ?? null,
                 updated_at: new Date().toISOString(),
-              };
-              delete mappedData.end_time;
-              delete mappedData.location_place;
-              delete mappedData.location_city;
-              delete mappedData.location_department;
-              delete mappedData.theme_id;
+              } as EventRow & { theme: ThemeRow };
+              delete mappedData.theme;
 
-              // Si on clique sur Accepter, on passe le statut à accepted
               if (eventData.status === 'accepted') {
                 await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent?.id);
                 setShowForm(false);
