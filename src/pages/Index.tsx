@@ -104,11 +104,11 @@ const Index = () => {
                       asChild
                       variant="outline"
                       size="icon"
-                      className={`border-white/20 hover:bg-white/20 ${
-                        theme === 'light' 
-                          ? 'bg-white/10 text-ephemeride' 
+                      className={
+                        theme === 'light'
+                          ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
                           : 'bg-white/10 text-[#faf3ec]'
-                      }`}
+                      }
                     >
                       <Link to="/admin">
                         <Shield size={22} />
@@ -126,7 +126,7 @@ const Index = () => {
                 className={
                   theme === 'light'
                     ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
-                    : 'bg-white text-ephemeride hover:bg-white/90 border-white/20'
+                    : 'bg-white/10 text-[#faf3ec]'
                 }
               >
                 Proposer un événement

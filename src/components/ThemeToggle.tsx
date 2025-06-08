@@ -10,12 +10,12 @@ export function ThemeToggle() {
     <Button 
       variant="outline" 
       size="icon" 
-      onClick={toggleTheme}
-      className={`border-white/20 hover:bg-white/20 ${
-        theme === 'light' 
-          ? 'bg-white/10 text-ephemeride' 
+      onClick={toggleTheme}     
+      className={
+        theme === 'light'
+          ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
           : 'bg-white/10 text-[#faf3ec]'
-      }`}
+      }
     >
       {theme === 'light' ? (
         <Moon className="h-5 w-5" />
