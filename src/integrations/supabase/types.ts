@@ -13,7 +13,7 @@ export type Database = {
         Row: {
           audience: string | null
           cover_url: string | null
-          created_at: string | null
+          createdby: Json | null
           date: string | null
           datetime: string
           emoji: string | null
@@ -24,34 +24,34 @@ export type Database = {
           location_place: string | null
           name: string
           price: string | null
-          status: string | null
+          status: string
           theme_id: string | null
-          updated_at: string | null
+          updated_at: string
           url: string | null
         }
         Insert: {
           audience?: string | null
           cover_url?: string | null
-          created_at?: string | null
+          createdby?: Json | null
           date?: string | null
           datetime: string
           emoji?: string | null
           end_time?: string | null
-          id: string
+          id?: string
           location_city?: string | null
           location_department?: string | null
           location_place?: string | null
           name: string
           price?: string | null
-          status?: string | null
+          status?: string
           theme_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           url?: string | null
         }
         Update: {
           audience?: string | null
           cover_url?: string | null
-          created_at?: string | null
+          createdby?: Json | null
           date?: string | null
           datetime?: string
           emoji?: string | null
@@ -62,31 +62,45 @@ export type Database = {
           location_place?: string | null
           name?: string
           price?: string | null
-          status?: string | null
+          status?: string
           theme_id?: string | null
-          updated_at?: string | null
+          updated_at?: string
           url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       themes: {
         Row: {
+          created_at: string | null
           id: string
           image_url: string | null
           image_url_light: string | null
           name: string
+          updated_at: string | null
         }
         Insert: {
-          id: string
+          created_at?: string | null
+          id?: string
           image_url?: string | null
           image_url_light?: string | null
           name: string
+          updated_at?: string | null
         }
         Update: {
+          created_at?: string | null
           id?: string
           image_url?: string | null
           image_url_light?: string | null
           name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
