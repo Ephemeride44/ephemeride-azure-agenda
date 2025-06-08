@@ -1,6 +1,7 @@
+
 import { Event } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Euro } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -98,7 +99,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         <>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex-shrink-0 h-full">
+              <div className="flex-shrink-0">
                 <img
                   src={event.cover_url}
                   alt="Affiche de l'événement"
@@ -143,11 +144,14 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           {locationString}
         </div>
 
-        {/* Prix */}
+        {/* Prix avec icône euro */}
         {!isPast && event.price && (
-          <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+          <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+            <Euro className={`w-4 h-4 mr-1 ${
+              theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+            }`} />
             {event.price}
-          </p>
+          </div>
         )}
 
         {/* Type d'événement en bas - Ne s'affiche que si audience n'est pas vide */}
