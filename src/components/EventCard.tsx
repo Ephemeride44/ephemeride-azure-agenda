@@ -148,7 +148,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         {!isPast && event.price && (
           <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
             <Euro className={`w-4 h-4 mr-1 ${
-              theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
             }`} />
             {event.price}
           </div>
