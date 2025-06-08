@@ -64,7 +64,7 @@ const SettingsAdmin = () => {
       // Pour react-hook-form, on simule le champ FileList
       const dt = new DataTransfer();
       dt.items.add(acceptedFiles[0]);
-      setValue("image_file", dt.files as any, { shouldValidate: true });
+      setValue("image_file", dt.files as FileList, { shouldValidate: true });
     }
   }, [setValue]);
 
@@ -80,7 +80,7 @@ const SettingsAdmin = () => {
       setPreviewUrlLight(URL.createObjectURL(acceptedFiles[0]));
       const dt = new DataTransfer();
       dt.items.add(acceptedFiles[0]);
-      setValue("image_light_file", dt.files as any, { shouldValidate: true });
+      setValue("image_light_file", dt.files as FileList, { shouldValidate: true });
     }
   }, [setValue]);
 
@@ -148,7 +148,7 @@ const SettingsAdmin = () => {
       setEditPreviewUrl(URL.createObjectURL(acceptedFiles[0]));
       const dt = new DataTransfer();
       dt.items.add(acceptedFiles[0]);
-      setValueEdit("image_file", dt.files as any, { shouldValidate: true });
+      setValueEdit("image_file", dt.files as FileList, { shouldValidate: true });
     }
   }, [setValueEdit]);
 
@@ -164,7 +164,7 @@ const SettingsAdmin = () => {
       setEditPreviewUrlLight(URL.createObjectURL(acceptedFiles[0]));
       const dt = new DataTransfer();
       dt.items.add(acceptedFiles[0]);
-      setValueEdit("image_light_file", dt.files as any, { shouldValidate: true });
+      setValueEdit("image_light_file", dt.files as FileList, { shouldValidate: true });
     }
   }, [setValueEdit]);
 

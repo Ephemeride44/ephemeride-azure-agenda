@@ -4,22 +4,26 @@ import { Button } from "@/components/ui/button";
 import EventList from "@/components/EventList";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/components/ThemeProvider";
-import { Event, Theme } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
 import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventProposalForm from "@/components/EventProposalForm";
 import BackToTop from "@/components/BackToTop";
 import { Shield } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 // HACK : cast temporaire pour ignorer le typage strict de Supabase
-const supabase: any = baseSupabase;
+const supabase: SupabaseClient = baseSupabase;
+
+type Event = Database["public"]["Tables"]["events"]["Row"];
+type Theme = Database["public"]["Tables"]["themes"]["Row"];
 
 const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
@@ -51,28 +55,7 @@ const Index = () => {
         return;
       }
       if (data) {
-        setEvents(
-          data.map((event: any) => ({
-            id: event.id,
-            datetime: event.datetime,
-            endTime: event.end_time ?? undefined,
-            name: event.name,
-            location: {
-              place: event.location_place ?? '',
-              city: event.location_city ?? '',
-              department: event.location_department ?? '',
-            },
-            price: event.price ?? '',
-            audience: event.audience ?? '',
-            url: event.url ?? undefined,
-            emoji: event.emoji ?? undefined,
-            theme_id: event.theme_id ?? null,
-            theme: event.theme ?? null,
-            date: event.date ?? null,
-            cover_url: event.cover_url ?? null,
-            updated_at: event.updated_at ?? null,
-          }))
-        );
+        setEvents(data as Event[]);
       }
     };
     fetchEvents();
@@ -82,7 +65,7 @@ const Index = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
     return () => {

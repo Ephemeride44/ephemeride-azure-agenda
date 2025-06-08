@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase as baseSupabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // HACK : cast temporaire pour ignorer le typage strict de Supabase
-const supabase: any = baseSupabase;
+const supabase: SupabaseClient = baseSupabase;
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");

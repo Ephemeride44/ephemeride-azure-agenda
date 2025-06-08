@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Event } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
+type Event = Database["public"]["Tables"]["events"]["Row"];
 import EventCard from "./EventCard";
 import { Button } from "@/components/ui/button";
 import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
@@ -87,10 +88,11 @@ const EventList = ({ events }: EventListProps) => {
     const grouped: Record<string, Record<string, Event[]>> = {};
     
     eventList.forEach(event => {
+      if (!event.date) return;
       let dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
       let monthKey = "";
       // dateKey = YYYY-MM-DD
-      const [year, month, day] = event.date?.split("-");
+      const [year, month, day] = event.date.split("-");
       dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]].toLowerCase()} ${year}`;
       monthKey = `${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
       if (monthKey) {

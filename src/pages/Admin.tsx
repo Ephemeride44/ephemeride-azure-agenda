@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/LoginForm";
 import { supabase as baseSupabase } from "@/integrations/supabase/client";
-const supabase: any = baseSupabase;
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+const supabase: SupabaseClient = baseSupabase;
 
 const Admin = () => {
   const navigate = useNavigate();

@@ -12,31 +12,54 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Event, Theme } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EventsSearchBar from "@/components/events/EventsSearchBar";
 import { useTheme } from "@/components/ThemeProvider";
 import { Switch } from "@/components/ui/switch";
 
+type EventRow = Database["public"]["Tables"]["events"]["Row"];
+type ThemeRow = Database["public"]["Tables"]["themes"]["Row"];
+
 const AdminDashboard = () => {
-  const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
-  const [acceptedEvents, setAcceptedEvents] = useState<Event[]>([]);
-  const [themes, setThemes] = useState<Theme[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<EventRow[]>([]);
+  const [acceptedEvents, setAcceptedEvents] = useState<EventRow[]>([]);
+  const [themes, setThemes] = useState<ThemeRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 25;
   const [showForm, setShowForm] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<Event | undefined>(undefined);
+  const [currentEvent, setCurrentEvent] = useState<EventRow | undefined>(undefined);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<EventRow | null>(null);
   const [showPastEvents, setShowPastEvents] = useState(false);
   
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme } = useTheme();
+
+  const emptyEvent: EventRow = {
+    id: '',
+    name: '',
+    datetime: '',
+    date: '',
+    end_time: null,
+    location_place: '',
+    location_city: '',
+    location_department: '',
+    price: '',
+    audience: '',
+    url: '',
+    emoji: '',
+    cover_url: null,
+    theme_id: null,
+    status: 'pending',
+    createdby: null,
+    updated_at: '',
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,15 +93,7 @@ const AdminDashboard = () => {
       console.error('Erreur lors du chargement des événements en attente :', error);
       return;
     }
-    setPendingEvents((data || []).map(({end_time, location_place, location_city, location_department, ...event}: any) => ({
-      ...event,
-      endTime: end_time ?? undefined,          
-      location: {
-        place: location_place ?? '',
-        city: location_city ?? '',
-        department: location_department ?? '',
-      }
-    })));
+    setPendingEvents(data || []);
   };
 
   const fetchAcceptedEvents = async () => {
@@ -96,35 +111,24 @@ const AdminDashboard = () => {
     } else {
       query = query.lt('date', today).order('date', { ascending: false });
     }
-    query = query
-      .order('datetime', { ascending: false })
-      .range(from, to);
+    // Appliquer le filtre de recherche AVANT la pagination
     if (search) {
       const lower = debouncedSearch.toLowerCase();
       query = query.or(
-        `name.ilike.%${lower}%,datetime.ilike.%${lower}%,location_place.ilike.%${lower}%,location_city.ilike.%${lower}%`
+        `name.ilike.%${lower}%,datetime.ilike.%${lower}%,location_place.ilike.%${lower}%,location_city.ilike.%${lower}%,location_department.ilike.%${lower}%`
       );
     }
+    // Appliquer la pagination en dernier
+    query = query
+      .order('datetime', { ascending: false })
+      .range(from, to);
     const { data, error, count } = await query;
     if (error) {
       console.error('Erreur lors du chargement des événements acceptés :', error);
       return;
     }
-    setAcceptedEvents((data || []).map(({end_time, location_place, location_city, location_department, ...event}: any) => ({
-      ...event,
-      endTime: end_time ?? undefined,          
-      location: {
-        place: location_place ?? '',
-        city: location_city ?? '',
-        department: location_department ?? '',
-      }
-    })));
+    setAcceptedEvents(data || []);
     setTotal(count || 0);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/admin");
   };
 
   const handleAddEvent = () => {
@@ -132,7 +136,7 @@ const AdminDashboard = () => {
     setShowForm(true);
   };
 
-  const handleEditEvent = (event: Event) => {
+  const handleEditEvent = (event: EventRow) => {
     setCurrentEvent(event);
     setShowForm(true);
   };
@@ -146,11 +150,11 @@ const AdminDashboard = () => {
 
   const handleDeleteConfirmed = async () => {
     if (!eventToDelete) return;
-    const { error } = await supabase.from('events').delete().eq('id', eventToDelete.id);
-    if (error) {
+    const { error: deleteError } = await supabase.from('events').delete().eq('id', eventToDelete.id);
+    if (deleteError) {
       toast({
         title: "Erreur lors de la suppression",
-        description: error.message,
+        description: deleteError.message,
         variant: "destructive",
       });
     } else {
@@ -164,20 +168,20 @@ const AdminDashboard = () => {
     setEventToDelete(null);
   };
 
-  const handleSaveEvent = async (eventData: Omit<Event, 'id'> & { id?: string }) => {
+  const handleSaveEvent = async (eventData: Omit<EventRow, 'id'> & { id?: string }) => {
     let success = false;
     if (eventData.id) {
       // Update existing event dans Supabase
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('events')
         .update({
           datetime: eventData.datetime,
           date: eventData.date || null,
-          end_time: eventData.endTime ?? null,
+          end_time: eventData.end_time ?? null,
           name: eventData.name,
-          location_place: eventData.location?.place ?? null,
-          location_city: eventData.location?.city ?? null,
-          location_department: eventData.location?.department ?? null,
+          location_place: eventData.location_place ?? null,
+          location_city: eventData.location_city ?? null,
+          location_department: eventData.location_department ?? null,
           price: eventData.price,
           audience: eventData.audience,
           url: eventData.url ?? null,
@@ -186,10 +190,10 @@ const AdminDashboard = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventData.id);
-      if (error) {
+      if (updateError) {
         toast({
           title: "Erreur lors de la mise à jour",
-          description: error.message,
+          description: updateError.message,
           variant: "destructive",
         });
       } else {
@@ -201,28 +205,28 @@ const AdminDashboard = () => {
       }
     } else {
       // Add new event dans Supabase
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('events')
         .insert({
-          id: Date.now().toString(),
           datetime: eventData.datetime,
           date: eventData.date || null,
-          end_time: eventData.endTime ?? null,
+          end_time: eventData.end_time ?? null,
           name: eventData.name,
-          location_place: eventData.location?.place ?? null,
-          location_city: eventData.location?.city ?? null,
-          location_department: eventData.location?.department ?? null,
+          location_place: eventData.location_place ?? null,
+          location_city: eventData.location_city ?? null,
+          location_department: eventData.location_department ?? null,
           price: eventData.price,
           audience: eventData.audience,
           url: eventData.url ?? null,
           emoji: eventData.emoji ?? null,
           theme_id: eventData.theme_id ?? null,
           updated_at: new Date().toISOString(),
+          status: "accepted",
         });
-      if (error) {
+      if (insertError) {
         toast({
           title: "Erreur lors de la création",
-          description: error.message,
+          description: insertError.message,
           variant: "destructive",
         });
       } else {
@@ -241,19 +245,6 @@ const AdminDashboard = () => {
     }
     return success;
   };
-
-  // Barre de recherche
-  const filteredEvents = useMemo(() => {
-    if (!debouncedSearch) return acceptedEvents;
-    const lower = debouncedSearch.toLowerCase();
-    return acceptedEvents.filter(e =>
-      e.name.toLowerCase().includes(lower) ||
-      e.datetime.toLowerCase().includes(lower) ||
-      e.location.place.toLowerCase().includes(lower) ||
-      e.location.city.toLowerCase().includes(lower)
-    );
-  }, [debouncedSearch, acceptedEvents]);
-
 
   return (
     <AdminLayout>
@@ -276,10 +267,12 @@ const AdminDashboard = () => {
                 <tr key={event.id} className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
                   <td className="px-6 py-4">{event.datetime}</td>
                   <td className="px-6 py-4">{event.name}</td>
-                  <td className="px-6 py-4">{event.location.place}<br/>{event.location.city}</td>
+                  <td className="px-6 py-4">{event.location_place}<br/>{event.location_city}</td>
                   <td className="px-6 py-4">
-                    {event.createdby?.name}<br/>
-                    <a href={`mailto:${event.createdby?.email}`} className="underline text-blue-600">{event.createdby?.email}</a>
+                    {event.createdby && typeof event.createdby === 'object' && 'name' in event.createdby ? (event.createdby as { name?: string }).name : ''}<br/>
+                    {event.createdby && typeof event.createdby === 'object' && 'email' in event.createdby ? (
+                      <a href={`mailto:${(event.createdby as { email?: string }).email}`} className="underline text-blue-600">{(event.createdby as { email?: string }).email}</a>
+                    ) : ''}
                   </td>
                   <td className="px-6 py-4 flex gap-2">
                     <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={() => { setCurrentEvent(event); setShowForm(true); }}>Voir</button>
@@ -302,57 +295,57 @@ const AdminDashboard = () => {
         onTogglePastEvents={setShowPastEvents}
       />
       {/* Tableau principal des événements */}
-      <EventsTable events={filteredEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} theme={theme} />
+      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} theme={theme} />
       <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
           <DialogHeader>
             <DialogTitle>{currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
           </DialogHeader>
-          {currentEvent && (
-            <EventForm
-              event={currentEvent}
-              onSave={async (eventData) => {
-                // Mapping camelCase vers snake_case pour la base
-                const mappedData = {
-                  ...eventData,
-                  end_time: eventData.endTime ?? null,
-                  location_place: eventData.location?.place ?? null,
-                  location_city: eventData.location?.city ?? null,
-                  location_department: eventData.location?.department ?? null,
-                  theme_id: eventData.theme_id ?? null,
-                  updated_at: new Date().toISOString(),
-                };
-                delete mappedData.endTime;
-                delete mappedData.location;
-                delete mappedData.theme;
+          <EventForm
+            event={currentEvent ?? emptyEvent}
+            onSave={async (eventData) => {
+              // Mapping camelCase vers snake_case pour la base
+              const mappedData = {
+                ...eventData,
+                end_time: eventData.end_time ?? null,
+                location_place: eventData.location_place ?? null,
+                location_city: eventData.location_city ?? null,
+                location_department: eventData.location_department ?? null,
+                theme_id: eventData.theme_id ?? null,
+                updated_at: new Date().toISOString(),
+              };
+              delete mappedData.end_time;
+              delete mappedData.location_place;
+              delete mappedData.location_city;
+              delete mappedData.location_department;
+              delete mappedData.theme_id;
 
-                // Si on clique sur Accepter, on passe le statut à accepted
-                if (eventData.status === 'accepted') {
-                  await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent.id);
-                  setShowForm(false);
-                  await fetchPendingEvents();
-                  await fetchAcceptedEvents();
-                  toast({ title: "Événement accepté", description: "L'événement a été accepté." });
-                  return true;
-                } else if (eventData.status === 'rejected') {
-                  await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent.id);
-                  setShowForm(false);
-                  await fetchPendingEvents();
-                  await fetchAcceptedEvents();
-                  toast({ title: "Événement refusé", description: "L'événement a été refusé." });
-                  return true;
-                } else {
-                  // Edition classique
-                  await handleSaveEvent({ ...eventData, id: currentEvent.id });
-                  return true;
-                }
-              }}
-              onCancel={() => setShowForm(false)}
-              showValidationActions={currentEvent.status === 'pending'}
-              themes={themes}
-            />
-          )}
+              // Si on clique sur Accepter, on passe le statut à accepted
+              if (eventData.status === 'accepted') {
+                await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent?.id);
+                setShowForm(false);
+                await fetchPendingEvents();
+                await fetchAcceptedEvents();
+                toast({ title: "Événement accepté", description: "L'événement a été accepté." });
+                return true;
+              } else if (eventData.status === 'rejected') {
+                await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent?.id);
+                setShowForm(false);
+                await fetchPendingEvents();
+                await fetchAcceptedEvents();
+                toast({ title: "Événement refusé", description: "L'événement a été refusé." });
+                return true;
+              } else {
+                // Edition classique ou ajout
+                await handleSaveEvent({ ...(currentEvent ?? emptyEvent), ...eventData, id: currentEvent?.id });
+                return true;
+              }
+            }}
+            onCancel={() => setShowForm(false)}
+            showValidationActions={currentEvent?.status === 'pending'}
+            themes={themes}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

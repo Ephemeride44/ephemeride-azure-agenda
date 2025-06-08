@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Event, Theme } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
@@ -13,33 +13,50 @@ import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
+type Event = Database["public"]["Tables"]["events"]["Row"];
+type Theme = Database["public"]["Tables"]["themes"]["Row"];
+
+type EventFormValues = {
+  id?: string;
+  datetime: string;
+  date: string;
+  end_time?: string | null;
+  name: string;
+  location_place?: string;
+  location_city: string;
+  location_department?: string;
+  price?: string | null;
+  audience?: string | null;
+  emoji?: string | null;
+  url?: string | null;
+  theme_id?: string | null;
+  cover_url?: string | null;
+};
+
 interface EventFormProps {
-  event?: Event;
-  onSave: (event: Omit<Event, 'id'> & { id?: string }) => void;
+  event?: Partial<Event>;
+  onSave: (event: Partial<Event>) => void;
   onCancel: () => void;
   showValidationActions?: boolean;
   themes?: Theme[];
   theme?: 'light' | 'dark';
 }
 
-type EventFormValues = Omit<Event, 'id'> & { id?: string };
-
 const defaultValues: EventFormValues = {
   id: '',
   datetime: '',
   date: '',
-  endTime: '',
+  end_time: '',
   name: '',
-  location: {
-    place: '',
-    city: '',
-    department: '',
-  },
+  location_place: '',
+  location_city: '',
+  location_department: '',
   price: '',
   audience: '',
   emoji: '',
   url: '',
   theme_id: null,
+  cover_url: '',
 };
 
 const fetchThemes = async (): Promise<Theme[]> => {
@@ -72,12 +89,8 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   useEffect(() => {
     if (event) {
       reset({
+        ...defaultValues,
         ...event,
-        endTime: event.endTime || '',
-        emoji: event.emoji || '',
-        url: event.url || '',
-        theme_id: event.theme_id || null,
-        date: event.date || '',
       });
     } else {
       reset(defaultValues);
@@ -105,8 +118,8 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     disabled: isUploading,
   });
 
-  const onSubmit = async (data: EventFormValues) => {
-    if (!data.datetime || !data.name || !data.location.city) {
+  const onSubmit = async (data: Partial<Event>) => {
+    if (!data.datetime || !data.name || !data.location_city) {
       toast({
         title: "Erreur de validation",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -225,20 +238,20 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                       />
                     )}
                   />
-                  {errors.date && (
+                  {errors.date && typeof errors.date.message === 'string' && (
                     <p className="text-xs text-red-500 mt-1">{errors.date.message}</p>
                   )}
                   <p className="text-xs text-white/60">Permet un tri fiable par date</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endTime">Heure de fin (optionnel)</Label>
+                  <Label htmlFor="end_time">Heure de fin (optionnel)</Label>
                   <Controller
-                    name="endTime"
+                    name="end_time"
                     control={control}
                     render={({ field }) => (
                       <Input
                         {...field}
-                        id="endTime"
+                        id="end_time"
                         placeholder="ex: 19h00"
                         className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                       />
@@ -250,14 +263,14 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="location.place">Nom du lieu (optionnel)</Label>
+                    <Label htmlFor="location_place">Nom du lieu (optionnel)</Label>
                     <Controller
-                      name="location.place"
+                      name="location_place"
                       control={control}
                       render={({ field }) => (
                         <Input
                           {...field}
-                          id="location.place"
+                          id="location_place"
                           placeholder="ex: La Solid'"
                           className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />
@@ -265,14 +278,14 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location.city">Ville</Label>
+                    <Label htmlFor="location_city">Ville</Label>
                     <Controller
-                      name="location.city"
+                      name="location_city"
                       control={control}
                       render={({ field }) => (
                         <Input
                           {...field}
-                          id="location.city"
+                          id="location_city"
                           placeholder="ex: CLISSON"
                           className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />
@@ -280,14 +293,14 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location.department">Département (optionnel)</Label>
+                    <Label htmlFor="location_department">Département (optionnel)</Label>
                     <Controller
-                      name="location.department"
+                      name="location_department"
                       control={control}
                       render={({ field }) => (
                         <Input
                           {...field}
-                          id="location.department"
+                          id="location_department"
                           placeholder="ex: 44"
                           className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                         />

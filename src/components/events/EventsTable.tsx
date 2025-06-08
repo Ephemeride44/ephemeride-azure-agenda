@@ -1,4 +1,5 @@
-import { Event } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
+type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 
@@ -25,7 +26,7 @@ const EventsTable = ({ events, onEdit, onDelete, theme }: EventsTableProps) => (
           <tr key={event.id} className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
             <td className="px-6 py-4">{event.datetime}</td>
             <td className="px-6 py-4">{event.name}</td>
-            <td className="px-6 py-4">{event.location.place}<br/>{event.location.city}</td>
+            <td className="px-6 py-4">{event.location_place}<br/>{event.location_city}</td>
             <td className="px-6 py-4">
               <div className="flex gap-2">
                 <Button

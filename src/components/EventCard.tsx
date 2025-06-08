@@ -1,5 +1,5 @@
-
-import { Event } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
+type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Euro } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -33,15 +33,15 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   const { day, month, year } = getDateParts();
 
   // Format location
-  const locationString = `${event.location.place}${event.location.city ? ` — ${event.location.city}` : ''}${event.location.department ? ` (${event.location.department})` : ''}`;
+  const locationString = `${event.location_place || ''}${event.location_city ? ` — ${event.location_city}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
   
   // Format time display
   const formatTimeDisplay = () => {
     // Extract time from datetime string
     const timeMatch = event.datetime.match(/(\d{1,2}h\d{2})/);
     if (timeMatch) {
-      if (event.endTime) {
-        return `${timeMatch[1]} — ${event.endTime}`;
+      if (event.end_time) {
+        return `${timeMatch[1]} — ${event.end_time}`;
       }
       return timeMatch[1];
     }
