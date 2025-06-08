@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useTheme } from "@/components/ThemeProvider";
+import { ThemeToggle } from "../ThemeToggle";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -37,6 +39,17 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             >
               <Link to="/">Voir le site</Link>
             </Button>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="outline-none focus:ring-2 focus:ring-ring rounded-md">
+                    <ThemeToggle />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Changer le thème
+                </TooltipContent>
+              </Tooltip>
             <Button
               asChild
               variant="outline"

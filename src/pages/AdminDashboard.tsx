@@ -74,6 +74,10 @@ const AdminDashboard = () => {
   }, [navigate, page, debouncedSearch, showPastEvents]);
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     // Charger les thèmes au montage
     const fetchThemes = async () => {
       const { data, error } = await supabase.from("themes").select("*").order("name");
@@ -111,17 +115,15 @@ const AdminDashboard = () => {
     } else {
       query = query.lt('date', today).order('date', { ascending: false });
     }
-    // Appliquer le filtre de recherche AVANT la pagination
+    query = query
+      .order('datetime', { ascending: false })
+      .range(from, to);
     if (search) {
       const lower = debouncedSearch.toLowerCase();
       query = query.or(
         `name.ilike.%${lower}%,datetime.ilike.%${lower}%,location_place.ilike.%${lower}%,location_city.ilike.%${lower}%,location_department.ilike.%${lower}%`
       );
     }
-    // Appliquer la pagination en dernier
-    query = query
-      .order('datetime', { ascending: false })
-      .range(from, to);
     const { data, error, count } = await query;
     if (error) {
       console.error('Erreur lors du chargement des événements acceptés :', error);

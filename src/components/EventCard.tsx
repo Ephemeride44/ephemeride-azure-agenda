@@ -79,17 +79,40 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
     }
   };
 
+  // Vérifie si la date de l'événement est aujourd'hui
+  const isToday = () => {
+    if (!event.date) return false;
+    const today = new Date();
+    const eventDate = new Date(event.date);
+    return (
+      today.getFullYear() === eventDate.getFullYear() &&
+      today.getMonth() === eventDate.getMonth() &&
+      today.getDate() === eventDate.getDate()
+    );
+  };
+
   const cardContent = (
     <div className="flex h-full">
       {/* Date block à gauche */}
       <div className={`${getDateBlockColor()} text-white flex flex-col items-center justify-center px-4 py-6 min-w-[120px] ${isPast ? 'opacity-60' : ''}`}>
-        <div className="text-2xl font-bold leading-none">{day}</div>
-        <div className="text-sm font-medium mt-1">{month}</div>
-        <div className="text-lg font-bold mt-1">{year}</div>
-        {formatTimeDisplay() && (
+        {isToday() ? (
           <>
-            <div className="w-8 border-t border-white/30 my-2"></div>
-            <div className="text-xs font-medium">{formatTimeDisplay()}</div>
+            <div className="text-lg font-bold leading-none mb-1">Aujourd'hui</div>
+            {formatTimeDisplay() && (
+              <div className="text-xs font-medium mt-2">à {formatTimeDisplay().replace(/\s*—.*/, '')}</div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold leading-none">{day}</div>
+            <div className="text-sm font-medium mt-1">{month}</div>
+            <div className="text-lg font-bold mt-1">{year}</div>
+            {formatTimeDisplay() && (
+              <>
+                <div className="w-8 border-t border-white/30 my-2"></div>
+                <div className="text-xs font-medium">{formatTimeDisplay()}</div>
+              </>
+            )}
           </>
         )}
       </div>
