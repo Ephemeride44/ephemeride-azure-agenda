@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { getDayOfWeek, daysOfWeek, monthNames, monthNamesShort, getDateBlockColor } from "@/lib/utils";
 
 interface EventListProps {
   events: Event[];
@@ -28,8 +29,6 @@ const EventList = ({ events }: EventListProps) => {
     // Use current date/time when the component loads or events change
     // This reflects when the categorization of events (upcoming vs past) was last calculated
     const now = new Date();
-    const daysOfWeek = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
     const dayName = daysOfWeek[now.getDay()];
     const day = now.getDate();
     const month = monthNames[now.getMonth()];
@@ -70,21 +69,6 @@ const EventList = ({ events }: EventListProps) => {
 
   // Group events by month then by day
   const groupEventsByMonthAndDay = (eventList: Event[]) => {
-    const monthMap: {[key: string]: string} = {
-      'janvier': 'JANVIER',
-      'février': 'FÉVRIER', 
-      'mars': 'MARS', 
-      'avril': 'AVRIL',
-      'mai': 'MAI', 
-      'juin': 'JUIN', 
-      'juillet': 'JUILLET', 
-      'août': 'AOÛT',
-      'septembre': 'SEPTEMBRE', 
-      'octobre': 'OCTOBRE', 
-      'novembre': 'NOVEMBRE', 
-      'décembre': 'DÉCEMBRE'
-    };
-    
     const grouped: Record<string, Record<string, Event[]>> = {};
     
     eventList.forEach(event => {
@@ -93,8 +77,8 @@ const EventList = ({ events }: EventListProps) => {
       let monthKey = "";
       // dateKey = YYYY-MM-DD
       const [year, month, day] = event.date.split("-");
-      dateKey = `${day} ${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]].toLowerCase()} ${year}`;
-      monthKey = `${monthMap[Object.keys(monthMap)[parseInt(month, 10)-1]]} ${year}`;
+      dateKey = `${day} ${monthNames[parseInt(month, 10)-1].toLowerCase()} ${year}`;
+      monthKey = `${monthNames[parseInt(month, 10)-1]} ${year}`;
       if (monthKey) {
         if (!grouped[monthKey]) {
           grouped[monthKey] = {};
@@ -208,16 +192,26 @@ const EventList = ({ events }: EventListProps) => {
               <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
             </div>
             
-            {Object.entries(dayEvents).map(([date, events]) => (
-              <div key={date} className="mb-6">
-                <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
-                <div className="space-y-4">
-                  {events.map(event => (
-                    <EventCard key={event.id} event={event} isPast={false} />
-                  ))}
+            {Object.entries(dayEvents).map(([date, events]) => {
+              const firstEvent = events[0];
+              let dayOfWeek = "";
+              if (firstEvent && firstEvent.date) {
+                dayOfWeek = getDayOfWeek(firstEvent.date);
+              }
+              const stickyBg = theme === "light" ? "bg-[#faf3ec]" : "bg-[#1B263B]";
+              return (
+                <div key={date} className="mb-6">
+                  <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass} sticky top-[168px] md:top-32 z-10 ${stickyBg}`}>
+                    {dayOfWeek && <span className="capitalize">{dayOfWeek}</span>} {date}
+                  </h3>
+                  <div className="space-y-4">
+                    {events.map(event => (
+                      <EventCard key={event.id} event={event} isPast={false} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
@@ -258,16 +252,26 @@ const EventList = ({ events }: EventListProps) => {
                   <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
                 </div>
                 
-                {Object.entries(dayEvents).map(([date, events]) => (
-                  <div key={date} className="mb-6">
-                    <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>{date}</h3>
-                    <div className="space-y-4">
-                      {events.map(event => (
-                        <EventCard key={event.id} event={event} isPast={true} />
-                      ))}
+                {Object.entries(dayEvents).map(([date, events]) => {
+                  // On récupère la date ISO de l'événement pour le jour de la semaine
+                  const firstEvent = events[0];
+                  let dayOfWeek = "";
+                  if (firstEvent && firstEvent.date) {
+                    dayOfWeek = getDayOfWeek(firstEvent.date);
+                  }
+                  return (
+                    <div key={date} className="mb-6">
+                      <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>
+                        {dayOfWeek && <span className="capitalize">{dayOfWeek}</span>} {date}
+                      </h3>
+                      <div className="space-y-4">
+                        {events.map(event => (
+                          <EventCard key={event.id} event={event} isPast={true} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </CollapsibleContent>

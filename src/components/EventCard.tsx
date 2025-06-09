@@ -6,6 +6,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { getDayOfWeek, getDateBlockColor, monthNamesShort, getDateParts, formatTimeDisplay, isToday } from "@/lib/utils";
 
 interface EventCardProps {
   event: Event;
@@ -16,90 +17,20 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   const [openDialog, setOpenDialog] = useState(false);
   const { theme } = useTheme();
 
-  // Extract date parts from event.date (YYYY-MM-DD format)
-  const getDateParts = () => {
-    if (!event.date) return { day: "", month: "", year: "" };
-    
-    const [year, month, day] = event.date.split("-");
-    const monthNames = ["JAN.", "FÉV.", "MAR.", "AVR.", "MAI", "JUIN", "JUIL.", "AOÛT", "SEP.", "OCT.", "NOV.", "DÉC."];
-    
-    return {
-      day: parseInt(day, 10).toString().padStart(2, '0'),
-      month: monthNames[parseInt(month, 10) - 1] || "",
-      year: year
-    };
-  };
-
-  const { day, month, year } = getDateParts();
+  const { day, month, year } = getDateParts(event);
 
   // Format location
   const locationString = `${event.location_place || ''}${event.location_city ? ` — ${event.location_city}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
   
-  // Format time display
-  const formatTimeDisplay = () => {
-    // Extract time from datetime string
-    const timeMatch = event.datetime.match(/(\d{1,2}h\d{2})/);
-    if (timeMatch) {
-      if (event.end_time) {
-        return `${timeMatch[1]} — ${event.end_time}`;
-      }
-      return timeMatch[1];
-    }
-    return "";
-  };
-
-  // Get day of week for color
-  const getDayOfWeek = () => {
-    if (!event.date) return "lundi";
-    const d = new Date(event.date);
-    const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    return days[d.getDay()];
-  };
-  
-  // Get background color based on day of week
-  const getDateBlockColor = () => {
-    const day = getDayOfWeek();
-    switch (day) {
-      case "lundi":
-        return "bg-[#8B9DC3]"; // Bleu ardoise doux
-      case "mardi":
-        return "bg-[#D4A574]"; // Jaune ocre pastel
-      case "mercredi":
-        return "bg-[#9CAF88]"; // Vert sauge
-      case "jeudi":
-        return "bg-[#A8B5C8]"; // Bleu gris doux
-      case "vendredi":
-        return "bg-[#C89B7B]"; // Rouge brique doux
-      case "samedi":
-        return "bg-[#B8A9D9]"; // Lavande désaturée
-      case "dimanche":
-        return "bg-[#D4A5A5]"; // Rose terreux
-      default:
-        return "bg-gray-400";
-    }
-  };
-
-  // Vérifie si la date de l'événement est aujourd'hui
-  const isToday = () => {
-    if (!event.date) return false;
-    const today = new Date();
-    const eventDate = new Date(event.date);
-    return (
-      today.getFullYear() === eventDate.getFullYear() &&
-      today.getMonth() === eventDate.getMonth() &&
-      today.getDate() === eventDate.getDate()
-    );
-  };
-
   const cardContent = (
     <div className="flex h-full">
       {/* Date block à gauche */}
-      <div className={`${getDateBlockColor()} text-white flex flex-col items-center justify-center px-4 py-6 min-w-[120px] ${isPast ? 'opacity-60' : ''}`}>
-        {isToday() ? (
+      <div className={`${getDateBlockColor(event.date ? getDayOfWeek(event.date) : "lundi")} text-white flex flex-col items-center justify-center px-4 py-6 min-w-[120px] ${isPast ? 'opacity-60' : ''}`}>
+        {isToday(event) ? (
           <>
             <div className="text-lg font-bold leading-none mb-1">Aujourd'hui</div>
-            {formatTimeDisplay() && (
-              <div className="text-xs font-medium mt-2">à {formatTimeDisplay().replace(/\s*—.*/, '')}</div>
+            {formatTimeDisplay(event) && (
+              <div className="text-xs font-medium mt-2">à {formatTimeDisplay(event).replace(/\s*—.*/, '')}</div>
             )}
           </>
         ) : (
@@ -107,10 +38,10 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
             <div className="text-2xl font-bold leading-none">{day}</div>
             <div className="text-sm font-medium mt-1">{month}</div>
             <div className="text-lg font-bold mt-1">{year}</div>
-            {formatTimeDisplay() && (
+            {formatTimeDisplay(event) && (
               <>
                 <div className="w-8 border-t border-white/30 my-2"></div>
-                <div className="text-xs font-medium">{formatTimeDisplay()}</div>
+                <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
               </>
             )}
           </>
