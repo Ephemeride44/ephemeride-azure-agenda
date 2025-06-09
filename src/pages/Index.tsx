@@ -74,17 +74,231 @@ const Index = () => {
     };
   }, []);
 
+  // Function to add new events
+  const addNewEvents = async () => {
+    const newEvents = [
+      {
+        name: "Supertramp",
+        datetime: "samedi 14 juin 2025 de 20h30 à 22h30",
+        date: "2025-06-14",
+        end_time: "22h30",
+        location_place: "La Quintaine",
+        location_city: "SAINT-JULIEN-DE-CONCELLES",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/supertramp/",
+        status: "accepted"
+      },
+      {
+        name: "Fête de la musique",
+        datetime: "samedi 14 juin 2025 de 18h00 à 00h00",
+        date: "2025-06-14",
+        end_time: "00h00",
+        location_place: "centre-ville",
+        location_city: "CLISSON",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/fete-de-la-musique-5/",
+        status: "accepted"
+      },
+      {
+        name: "Alinéa autour d'un livre",
+        datetime: "samedi 14 juin 2025 de 16h00 à 18h00",
+        date: "2025-06-14",
+        end_time: "18h00",
+        location_place: "Médiathèque le Passe Muraille",
+        location_city: "SAINT-JULIEN-DE-CONCELLES",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/alinea-autour-dun-livre-a-la-mediatheque-le-passe-muraille-a-saint-julien-de-concelles/",
+        status: "accepted"
+      },
+      {
+        name: "Concert Cocodri",
+        datetime: "samedi 14 juin 2025 de 19h00 à 20h00",
+        date: "2025-06-14",
+        end_time: "20h00",
+        location_place: "La Pierre Percée",
+        location_city: "DIVATTE-SUR-LOIRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/concert-cocodri-a-la-pierre-percee/",
+        status: "accepted"
+      },
+      {
+        name: "Concert Fó da Garoa",
+        datetime: "samedi 14 juin 2025 de 20h30 à 22h00",
+        date: "2025-06-14",
+        end_time: "22h00",
+        location_place: "La Pierre Percée",
+        location_city: "DIVATTE-SUR-LOIRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/concert-fo-da-garoa/",
+        status: "accepted"
+      },
+      {
+        name: "Escape Game à Pont Caffino",
+        datetime: "samedi 14 juin 2025 de 14h00 à 18h00",
+        date: "2025-06-14",
+        end_time: "18h00",
+        location_place: "Carrière",
+        location_city: "MAISDON-SUR-SEVRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/escape-game-a-pont-caffino-3/",
+        status: "accepted"
+      },
+      {
+        name: "Fête de la fleur de Vigne",
+        datetime: "dimanche 15 juin 2025 de 10h00 à 18h00",
+        date: "2025-06-15",
+        end_time: "18h00",
+        location_place: "Château de la Frémoire",
+        location_city: "VERTOU",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/fete-de-la-fleur-de-vigne/",
+        status: "accepted"
+      },
+      {
+        name: "Les secrets de la Loire",
+        datetime: "dimanche 15 juin 2025 de 10h30 à 12h30",
+        date: "2025-06-15",
+        end_time: "12h30",
+        location_place: "La Chebuette",
+        location_city: "SAINT-JULIEN-DE-CONCELLES",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/les-secrets-de-la-loire-au-depart-de-saint-julien-de-concelles/",
+        status: "accepted"
+      },
+      {
+        name: "Visite guidée – Les Secrets de la Loire",
+        datetime: "dimanche 15 juin 2025 de 15h00 à 17h00",
+        date: "2025-06-15",
+        end_time: "17h00",
+        location_place: "Pierre-Perçée",
+        location_city: "DIVATTE-SUR-LOIRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/visite-guidee-les-secrets-de-la-loire-dans-le-cadre-de-debord-de-loire-au-depart-de-la-pierre-percee-a-divatte-sur-loire/",
+        status: "accepted"
+      },
+      {
+        name: "Les Dimanches au Port",
+        datetime: "dimanche 15 juin 2025 de 11h00 à 17h00",
+        date: "2025-06-15",
+        end_time: "17h00",
+        location_place: "Port communal",
+        location_city: "LA HAIE-FOUASSIERE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/les-dimanches-au-port-12/",
+        status: "accepted"
+      },
+      {
+        name: "Sanseverino & Lise Cabaret",
+        datetime: "dimanche 15 juin 2025 de 18h00 à 20h00",
+        date: "2025-06-15",
+        end_time: "20h00",
+        location_place: "La Pierre Percée",
+        location_city: "DIVATTE-SUR-LOIRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/sanseverino-lise-cabaret/",
+        status: "accepted"
+      },
+      {
+        name: "Présentation des techniques ancestrales ligériennes de pêche",
+        datetime: "dimanche 15 juin 2025 de 10h00 à 12h00",
+        date: "2025-06-15",
+        end_time: "12h00",
+        location_place: "Bords de Loire",
+        location_city: "DIVATTE-SUR-LOIRE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/presentation-des-techniques-ancestrales-ligeriennes-de-peche/",
+        status: "accepted"
+      },
+      {
+        name: "La Nature nous émerveille",
+        datetime: "dimanche 15 juin 2025 de 10h00 à 17h00",
+        date: "2025-06-15",
+        end_time: "17h00",
+        location_city: "HAUTE-GOULAINE",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/la-nature-nous-emerveille-5/",
+        status: "accepted"
+      },
+      {
+        name: "Débord de Loire",
+        datetime: "dimanche 15 juin 2025 de 12h00 à 18h00",
+        date: "2025-06-15",
+        end_time: "18h00",
+        location_place: "Quai",
+        location_city: "SAINT-JULIEN-DE-CONCELLES",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/debord-de-loire/",
+        status: "accepted"
+      },
+      {
+        name: "Couleurs de Loire",
+        datetime: "du mardi 10 juin au dimanche 15 juin 2025 de 10h00 à 18h00",
+        date: "2025-06-10",
+        end_time: "18h00",
+        location_city: "SAINT-JULIEN-DE-CONCELLES",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/couleurs-de-loire-3/",
+        status: "accepted"
+      },
+      {
+        name: "Fest Deiz",
+        datetime: "dimanche 15 juin 2025 de 15h00 à 17h00",
+        date: "2025-06-15",
+        end_time: "17h00",
+        location_place: "Musée du Vignoble Nantais",
+        location_city: "LE PALLET",
+        location_department: "44",
+        url: "https://www.levignobledenantes-tourisme.com/agenda/fest-deiz/",
+        status: "accepted"
+      }
+    ];
+
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert(newEvents);
+      
+      if (error) {
+        console.error('Erreur lors de l\'ajout des événements :', error);
+      } else {
+        console.log('Événements ajoutés avec succès');
+        // Refresh the events list
+        const { data: updatedEvents, error: fetchError } = await supabase
+          .from('events')
+          .select('*, theme:theme_id(*)')
+          .eq('status', 'accepted')
+          .order('date', { nullsFirst: false })
+          .order('datetime');
+        
+        if (!fetchError && updatedEvents) {
+          setEvents(updatedEvents as Event[]);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur :', error);
+    }
+  };
+
+  // Add events when component mounts (you can remove this after first load)
+  useEffect(() => {
+    // Only add events if there are no events for June 2025
+    const hasJuneEvents = events.some(event => event.date?.startsWith('2025-06'));
+    if (!hasJuneEvents && events.length > 0) {
+      addNewEvents();
+    }
+  }, [events]);
+
   return (
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
       <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-10 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              {/* Logos encore plus gros */}
+              {/* Logos considérablement plus gros */}
               <img 
                 src={theme === 'light' ? '/lovable-uploads/276e159d-8434-4c77-947f-731eaf4b8606.png' : '/lovable-uploads/5bf9022e-e505-4018-a848-1c576760dd26.png'}
                 alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-36 md:h-40'}`}
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-28' : 'h-48 md:h-52'}`}
               />
             </div>
             <div className="flex gap-4 items-center">
@@ -137,7 +351,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-36 md:mt-28' : ''}`}>
+      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-44 md:mt-36' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <EventList events={events} />
         </div>
