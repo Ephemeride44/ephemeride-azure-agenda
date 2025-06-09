@@ -1,30 +1,27 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import EventList from "@/components/EventList";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTheme } from "@/components/ThemeProvider";
-import type { Database } from "@/lib/database.types";
-import { supabase as baseSupabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import EventProposalForm from "@/components/EventProposalForm";
 import BackToTop from "@/components/BackToTop";
-import { Shield } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import EventList from "@/components/EventList";
+import EventProposalForm from "@/components/EventProposalForm";
+import { useTheme } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase as baseSupabase } from "@/integrations/supabase/client";
+import type { Database } from "@/lib/database.types";
 import type { SupabaseClient, User } from '@supabase/supabase-js';
+import { Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-// HACK : cast temporaire pour ignorer le typage strict de Supabase
 const supabase: SupabaseClient = baseSupabase;
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
-type Theme = Database["public"]["Tables"]["themes"]["Row"];
 
 const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [eventsAdded, setEventsAdded] = useState(false);
   const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
