@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ const Index = () => {
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [eventsAdded, setEventsAdded] = useState(false);
   const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
@@ -76,6 +76,8 @@ const Index = () => {
 
   // Function to add new events
   const addNewEvents = async () => {
+    if (eventsAdded) return; // Éviter d'ajouter plusieurs fois
+
     const newEvents = [
       {
         name: "Supertramp",
@@ -254,6 +256,7 @@ const Index = () => {
     ];
 
     try {
+      console.log('Début de l\'ajout des événements...');
       const { data, error } = await supabase
         .from('events')
         .insert(newEvents);
@@ -262,6 +265,7 @@ const Index = () => {
         console.error('Erreur lors de l\'ajout des événements :', error);
       } else {
         console.log('Événements ajoutés avec succès');
+        setEventsAdded(true);
         // Refresh the events list
         const { data: updatedEvents, error: fetchError } = await supabase
           .from('events')
@@ -279,14 +283,16 @@ const Index = () => {
     }
   };
 
-  // Add events when component mounts (you can remove this after first load)
+  // Add events when component mounts
   useEffect(() => {
-    // Only add events if there are no events for June 2025
-    const hasJuneEvents = events.some(event => event.date?.startsWith('2025-06'));
-    if (!hasJuneEvents && events.length > 0) {
-      addNewEvents();
+    if (events.length > 0 && !eventsAdded) {
+      // Vérifie s'il y a déjà des événements de juin 2025
+      const hasJuneEvents = events.some(event => event.date?.startsWith('2025-06'));
+      if (!hasJuneEvents) {
+        addNewEvents();
+      }
     }
-  }, [events]);
+  }, [events, eventsAdded]);
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
@@ -294,11 +300,11 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              {/* Logos considérablement plus gros */}
+              {/* Logos encore plus gros */}
               <img 
                 src={theme === 'light' ? '/lovable-uploads/276e159d-8434-4c77-947f-731eaf4b8606.png' : '/lovable-uploads/5bf9022e-e505-4018-a848-1c576760dd26.png'}
                 alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-28' : 'h-48 md:h-52'}`}
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-32' : 'h-56 md:h-60'}`}
               />
             </div>
             <div className="flex gap-4 items-center">
@@ -351,7 +357,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-44 md:mt-36' : ''}`}>
+      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <EventList events={events} />
         </div>

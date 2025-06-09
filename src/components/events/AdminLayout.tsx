@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <img 
               src={theme === 'light' ? '/lovable-uploads/276e159d-8434-4c77-947f-731eaf4b8606.png' : '/lovable-uploads/5bf9022e-e505-4018-a848-1c576760dd26.png'} 
               alt="Ephemeride" 
-              className="h-32"
+              className="h-36"
             />
           </Link>
           <div className="flex items-center gap-4">
