@@ -10,7 +10,6 @@ import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventProposalForm from "@/components/EventProposalForm";
 import BackToTop from "@/components/BackToTop";
-import TipeeeSupport from "@/components/TipeeeSupport";
 import { Shield } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { SupabaseClient, User } from '@supabase/supabase-js';
@@ -81,11 +80,11 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              {/* Logos plus gros pour light et dark themes */}
+              {/* Logos encore plus gros */}
               <img 
                 src={theme === 'light' ? '/lovable-uploads/276e159d-8434-4c77-947f-731eaf4b8606.png' : '/lovable-uploads/5bf9022e-e505-4018-a848-1c576760dd26.png'}
                 alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-32'}`}
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-20' : 'h-36 md:h-40'}`}
               />
             </div>
             <div className="flex gap-4 items-center">
@@ -138,7 +137,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-32 md:mt-24' : ''}`}>
+      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-36 md:mt-28' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <EventList events={events} />
         </div>
@@ -160,9 +159,6 @@ const Index = () => {
           <EventProposalForm onClose={() => setIsProposalDialogOpen(false)} />
         </DialogContent>
       </Dialog>
-
-      {/* Support Tipeee discret sur le côté */}
-      <TipeeeSupport />
 
       {/* Add Back to Top button */}
       <BackToTop />
