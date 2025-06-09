@@ -10,7 +10,8 @@ import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EventProposalForm from "@/components/EventProposalForm";
 import BackToTop from "@/components/BackToTop";
-import { Shield, X } from "lucide-react";
+import TipeeeSupport from "@/components/TipeeeSupport";
+import { Shield } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
@@ -25,7 +26,6 @@ const Index = () => {
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [isTipeeeVisible, setIsTipeeeVisible] = useState(true);
   const { theme } = useTheme();
 
   // Add scroll event listener to detect when to make the header sticky
@@ -81,11 +81,11 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
             <div className="flex justify-start">
-              {/* Use new logos for light and dark themes */}
+              {/* Logos plus gros pour light et dark themes */}
               <img 
                 src={theme === 'light' ? '/lovable-uploads/276e159d-8434-4c77-947f-731eaf4b8606.png' : '/lovable-uploads/5bf9022e-e505-4018-a848-1c576760dd26.png'}
                 alt="Ephemeride" 
-                className={`transition-all duration-300 ${isHeaderSticky ? 'h-12' : 'h-20 md:h-24'}`}
+                className={`transition-all duration-300 ${isHeaderSticky ? 'h-16' : 'h-28 md:h-32'}`}
               />
             </div>
             <div className="flex gap-4 items-center">
@@ -138,40 +138,7 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Tipeee support banner */}
-      {isTipeeeVisible && (
-        <div className={`relative bg-gradient-to-r ${theme === 'light' ? 'from-pink-50 to-purple-50 border-pink-200' : 'from-pink-900/20 to-purple-900/20 border-pink-700/30'} border-b px-4 py-3 ${isHeaderSticky ? 'mt-20 md:mt-16' : ''}`}>
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <a 
-                href="https://fr.tipeee.com/ephemeride" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              >
-                <img 
-                  src="/lovable-uploads/c797c39f-25e0-4264-b65c-1ea1a517408b.png" 
-                  alt="Tipeee" 
-                  className="h-6"
-                />
-                <span className={`text-sm font-medium ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
-                  Soutenez Ephemeride sur Tipeee
-                </span>
-              </a>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsTipeeeVisible(false)}
-              className={`${theme === 'light' ? 'text-gray-500 hover:text-gray-700' : 'text-gray-400 hover:text-gray-200'} p-1`}
-            >
-              <X size={16} />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? (isTipeeeVisible ? 'mt-40 md:mt-32' : 'mt-32 md:mt-24') : (isTipeeeVisible ? 'mt-12' : '')}`}>
+      <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-32 md:mt-24' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <EventList events={events} />
         </div>
@@ -193,6 +160,9 @@ const Index = () => {
           <EventProposalForm onClose={() => setIsProposalDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* Support Tipeee discret sur le côté */}
+      <TipeeeSupport />
 
       {/* Add Back to Top button */}
       <BackToTop />
