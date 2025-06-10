@@ -1,3 +1,4 @@
+
 import type { Database } from "@/lib/database.types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,22 +89,30 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
 
         {/* Lieu */}
         <div className="flex items-center text-sm mb-2">
-          <img 
-            src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
-            alt="Lieu" 
-            className={`w-4 h-4 mr-2 ${
-              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
-            }`} 
-          />
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
+            theme === 'dark' ? 'bg-white' : 'bg-black'
+          }`}>
+            <img 
+              src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
+              alt="Lieu" 
+              className={`w-4 h-4 ${
+                theme === 'dark' ? 'brightness-0' : 'brightness-0 invert'
+              }`} 
+            />
+          </div>
           {locationString}
         </div>
 
         {/* Prix avec icône euro */}
         {!isPast && event.price && (
           <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-            <Euro className={`w-4 h-4 mr-1 ${
-              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
-            }`} />
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
+              theme === 'dark' ? 'bg-white' : 'bg-black'
+            }`}>
+              <Euro className={`w-4 h-4 ${
+                theme === 'dark' ? 'text-black' : 'text-white'
+              }`} />
+            </div>
             {event.price}
           </div>
         )}
