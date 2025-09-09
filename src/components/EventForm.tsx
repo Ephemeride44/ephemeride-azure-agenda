@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/integrations/supabase/types";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { useEffect, useState } from "react";
@@ -29,6 +29,7 @@ type EventFormValues = {
   audience?: string | null;
   emoji?: string | null;
   url?: string | null;
+  ticketing_url?: string | null;
   theme_id?: string | null;
   cover_url?: string | null;
 };
@@ -55,6 +56,7 @@ const defaultValues: EventFormValues = {
   audience: '',
   emoji: '',
   url: '',
+  ticketing_url: '',
   theme_id: null,
   cover_url: '',
 };
@@ -369,6 +371,24 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                       id="url"
                       type="url"
                       placeholder="ex: https://www.monevenement.com"
+                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
+                    />
+                  )}
+                />
+              </div>
+
+              {/* Champ URL billeterie (optionnel) */}
+              <div className="space-y-2">
+                <Label htmlFor="ticketing_url">Lien billeterie (optionnel)</Label>
+                <Controller
+                  name="ticketing_url"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="ticketing_url"
+                      type="url"
+                      placeholder="ex: https://billetterie.exemple.com"
                       className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                     />
                   )}

@@ -1,7 +1,7 @@
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Euro } from "lucide-react";
+import { ArrowRight, Euro, Ticket } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -115,39 +115,77 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
           </div>
         )}
 
-        {/* Bouton plus d'infos / flèche en bas à droite */}
-        {event.url && (
-          <div className="absolute bottom-4 right-4">
-            {!isPast ? (
+        {/* Boutons billeterie et plus d'infos */}
+        {(event.ticketing_url || event.url) && (
+          <div className="absolute bottom-4 right-4 flex items-center gap-2">
+            {/* Bouton billeterie */}
+            {event.ticketing_url && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button className={`px-4 py-2 text-xs font-medium border transition-colors ${
-                    theme === 'dark' 
-                      ? 'border-white/20 text-white hover:bg-white/10' 
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}>
-                    PLUS D'INFOS
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="text-xs">
-                  Accéder au site de l'événement
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-pointer">
-                    <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${
+                  <a
+                    href={event.ticketing_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cursor-pointer"
+                  >
+                    <Ticket className={`w-5 h-5 transition-transform hover:scale-110 ${
                       theme === 'dark' 
                         ? 'text-white/70 hover:text-white' 
                         : 'text-gray-600 hover:text-gray-800'
                     }`} />
-                  </span>
+                  </a>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="text-xs">
-                  Accéder au site de l'événement
+                  Accéder à la billeterie
                 </TooltipContent>
               </Tooltip>
+            )}
+
+            {/* Bouton plus d'infos */}
+            {event.url && (
+              <>
+                {!isPast ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`px-4 py-2 text-xs font-medium border transition-colors ${
+                          theme === 'dark' 
+                            ? 'border-white/20 text-white hover:bg-white/10' 
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        PLUS D'INFOS
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs">
+                      Accéder au site de l'événement
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer"
+                      >
+                        <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${
+                          theme === 'dark' 
+                            ? 'text-white/70 hover:text-white' 
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`} />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs">
+                      Accéder au site de l'événement
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </>
             )}
           </div>
         )}
