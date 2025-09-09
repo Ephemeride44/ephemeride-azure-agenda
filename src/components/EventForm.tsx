@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useUserRoleContext } from "@/components/UserRoleProvider";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
@@ -32,6 +33,7 @@ type EventFormValues = {
   ticketing_url?: string | null;
   theme_id?: string | null;
   cover_url?: string | null;
+  organization_id?: string | null;
 };
 
 interface EventFormProps {
@@ -59,6 +61,7 @@ const defaultValues: EventFormValues = {
   ticketing_url: '',
   theme_id: null,
   cover_url: '',
+  organization_id: null,
 };
 
 const fetchThemes = async (): Promise<Theme[]> => {
@@ -69,6 +72,7 @@ const fetchThemes = async (): Promise<Theme[]> => {
 
 const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp }: EventFormProps) => {
   const { toast } = useToast();
+  const { currentOrganization, isSuperAdmin, organizations } = useUserRoleContext();
   const isEditing = !!event;
   const [coverPreview, setCoverPreview] = useState<string | null>(event?.cover_url || null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -149,8 +153,25 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       }
       setIsUploading(false);
     }
+    // Gestion de l'organization_id
+    let organization_id = data.organization_id;
+    
+    if (isSuperAdmin) {
+      // Super admin : utiliser l'organisation sélectionnée dans le formulaire (peut être null)
+      organization_id = data.organization_id && data.organization_id !== 'none' ? data.organization_id : null;
+    } else if (organizations.length > 1) {
+      // Utilisateur avec plusieurs organisations : utiliser la sélection du formulaire
+      organization_id = data.organization_id && data.organization_id !== 'none' ? data.organization_id : null;
+    } else if (organizations.length === 1) {
+      // Utilisateur avec une seule organisation : assignation automatique
+      organization_id = organizations[0].organization_id;
+    } else if (!isEditing && currentOrganization) {
+      // Fallback : utiliser l'organisation courante
+      organization_id = currentOrganization.organization_id;
+    }
+    
     try {
-      await onSave({ ...data, cover_url });
+      await onSave({ ...data, cover_url, organization_id });
     } catch (e) {
       console.error('[EventForm] onSave error', e);
     }
@@ -207,6 +228,57 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                   />
                 </div>
               </div>
+
+              {/* Sélecteur d'organisation - visible si super admin ou plusieurs organisations */}
+              {(isSuperAdmin || organizations.length > 1) && (
+                <div className="space-y-2">
+                  <Label htmlFor="organization_id">Organisation</Label>
+                  <Controller
+                    name="organization_id"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || 'none'}
+                        onValueChange={value => field.onChange(value === 'none' ? null : value)}
+                        disabled={organizations.length === 0}
+                      >
+                        <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
+                          <SelectValue placeholder={
+                            organizations.length === 0 ? "Aucune organisation disponible" :
+                            organizations.length === 1 ? organizations[0].organization_name :
+                            "Sélectionner une organisation"
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Option "Aucune organisation" seulement pour les super admins */}
+                          {isSuperAdmin && (
+                            <SelectItem value="none">Aucune organisation</SelectItem>
+                          )}
+                          {organizations.map(org => (
+                            <SelectItem key={org.organization_id} value={org.organization_id}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{org.organization_name}</span>
+                                {org.role && (
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    ({org.role === 'organization_admin' ? 'Admin' : 
+                                      org.role === 'organization_member' ? 'Membre' : 
+                                      org.role === 'super_admin' ? 'Super Admin' : org.role})
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {organizations.length === 1 && !isSuperAdmin && (
+                    <p className="text-xs text-muted-foreground">
+                      Événement automatiquement assigné à votre organisation
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">

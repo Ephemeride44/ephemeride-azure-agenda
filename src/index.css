@@ -21,7 +21,7 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 55%; /* Plus visible en mode clair */
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
@@ -53,7 +53,7 @@
     --secondary-foreground: 32 33% 96%; /* Same as #faf3ec */
 
     --muted: 210 40% 20%;
-    --muted-foreground: 32 33% 96%; /* 65% opacity of #faf3ec */
+    --muted-foreground: 32 33% 75%; /* Plus subtil pour les placeholders */
 
     --accent: 210 40% 20%;
     --accent-foreground: 32 33% 96%; /* Same as #faf3ec */

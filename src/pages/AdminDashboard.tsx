@@ -1,9 +1,12 @@
 import EventForm from "@/components/EventForm";
-import AdminLayout from "@/components/events/AdminLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import EventsHeader from "@/components/events/EventsHeader";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventsTable from "@/components/events/EventsTable";
 import { useTheme } from "@/components/ThemeProvider";
+import { useUserRoleContext } from "@/components/UserRoleProvider";
+import { OrganizationSelector } from "@/components/OrganizationSelector";
+import { NoOrganizationScreen } from "@/components/NoOrganizationScreen";
 import {
   Dialog,
   DialogContent,
@@ -13,9 +16,14 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/integrations/supabase/types";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Building2, Eye } from "lucide-react";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type ThemeRow = Database["public"]["Tables"]["themes"]["Row"];
@@ -38,6 +46,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { user, currentOrganization, isSuperAdmin, organizations } = useUserRoleContext();
 
   const emptyEvent: EventRow = {
     id: '',
@@ -57,19 +66,18 @@ const AdminDashboard = () => {
     status: 'pending',
     createdby: null,
     updated_at: '',
+    organization_id: null,
+    ticketing_url: null,
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/admin");
-      } else {
-        fetchPendingEvents();
-        fetchAcceptedEvents();
-      }
-    });
+    // Ne charger les événements que si l'utilisateur a accès à des organisations ou est super admin
+    if (user && (isSuperAdmin || currentOrganization || organizations.length > 0)) {
+      fetchPendingEvents();
+      fetchAcceptedEvents();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, page, debouncedSearch, showPastEvents]);
+  }, [page, debouncedSearch, showPastEvents, currentOrganization, isSuperAdmin, user]);
 
   useEffect(() => {
     setPage(1);
@@ -85,12 +93,27 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchPendingEvents = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('events')
       .select('*, theme:theme_id(*)')
-      .eq('status', 'pending')
+      .eq('status', 'pending');
+
+    // Filtrer par organisation selon le type d'utilisateur
+    if (currentOrganization) {
+      // Organisation spécifique sélectionnée
+      query = query.eq('organization_id', currentOrganization.organization_id);
+    } else if (!isSuperAdmin) {
+      // Utilisateur normal avec "Toutes mes organisations" - filtrer par ses organisations
+      const userOrgIds = organizations.map(org => org.organization_id);
+      query = query.in('organization_id', userOrgIds);
+    }
+    // Super admin avec "Toutes les organisations" - pas de filtre
+
+    query = query
       .order('date', { ascending: false })
       .order('datetime', { ascending: false });
+
+    const { data, error } = await query;
     if (error) {
       console.error('Erreur lors du chargement des événements en attente :', error);
       return;
@@ -105,6 +128,17 @@ const AdminDashboard = () => {
       .from('events')
       .select('*, theme:theme_id(*)', { count: 'exact' })
       .eq('status', 'accepted');
+
+    // Filtrer par organisation selon le type d'utilisateur
+    if (currentOrganization) {
+      // Organisation spécifique sélectionnée
+      query = query.eq('organization_id', currentOrganization.organization_id);
+    } else if (!isSuperAdmin) {
+      // Utilisateur normal avec "Toutes mes organisations" - filtrer par ses organisations
+      const userOrgIds = organizations.map(org => org.organization_id);
+      query = query.in('organization_id', userOrgIds);
+    }
+    // Super admin avec "Toutes les organisations" - pas de filtre
 
     const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
     // Filtrer sur la date si on ne veut pas les événements passés
@@ -235,42 +269,101 @@ const AdminDashboard = () => {
     return success;
   };
 
+  // Affichage d'un message si l'utilisateur n'a pas d'organisation et n'est pas super admin
+  if (!isSuperAdmin && organizations.length === 0) {
+    return (
+      <AdminLayout title="Aucune organisation" subtitle="Contactez un administrateur pour être ajouté">
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center">
+              <Building2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-2xl font-bold mb-2">Aucune organisation</h2>
+              <p className="text-muted-foreground">
+                Vous n'êtes membre d'aucune organisation. Contactez un administrateur pour être ajouté à une organisation.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </AdminLayout>
+    );
+  }
+
+  // Affichage de l'écran "aucune organisation" pour les utilisateurs sans organisation
+  if (!isSuperAdmin && organizations.length === 0) {
+    return <NoOrganizationScreen />;
+  }
+
+
   return (
-    <AdminLayout>
+    <AdminLayout title="Tableau de bord" subtitle="Gestion des événements">
+      <div className="space-y-6">
+
       {/* Section événements en attente */}
       {pendingEvents.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4 text-orange-600">Événements en attente de validation</h2>
-          <table className={`w-full text-left mb-4 rounded-lg overflow-hidden ${theme === 'light' ? 'bg-white text-[#1B263B] border border-[#f3e0c7]' : 'bg-ephemeride-light text-white border border-white/10'}`}>
-            <thead>
-              <tr className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
-                <th className="px-6 py-3 font-medium">Date</th>
-                <th className="px-6 py-3 font-medium">Nom</th>
-                <th className="px-6 py-3 font-medium">Lieu</th>
-                <th className="px-6 py-3 font-medium">Proposé par</th>
-                <th className="px-6 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingEvents.map(event => (
-                <tr key={event.id} className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
-                  <td className="px-6 py-4">{event.datetime}</td>
-                  <td className="px-6 py-4">{event.name}</td>
-                  <td className="px-6 py-4">{event.location_place}<br/>{event.location_city}</td>
-                  <td className="px-6 py-4">
-                    {event.createdby && typeof event.createdby === 'object' && 'name' in event.createdby ? (event.createdby as { name?: string }).name : ''}<br/>
-                    {event.createdby && typeof event.createdby === 'object' && 'email' in event.createdby ? (
-                      <a href={`mailto:${(event.createdby as { email?: string }).email}`} className="underline text-blue-600">{(event.createdby as { email?: string }).email}</a>
-                    ) : ''}
-                  </td>
-                  <td className="px-6 py-4 flex gap-2">
-                    <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={() => { setCurrentEvent(event); setShowForm(true); }}>Voir</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-orange-600">Événements en attente de validation</h2>
+              <Badge variant="outline" className="text-orange-600 border-orange-600">
+                {pendingEvents.length} en attente
+              </Badge>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Lieu</TableHead>
+                  <TableHead>Proposé par</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingEvents.map(event => (
+                  <TableRow key={event.id}>
+                    <TableCell className="font-medium">{event.datetime}</TableCell>
+                    <TableCell>
+                      <div className="max-w-xs">
+                        <p className="font-medium truncate">{event.name}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{event.location_place}</p>
+                        <p className="text-sm text-muted-foreground">{event.location_city}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        {event.createdby && typeof event.createdby === 'object' && 'name' in event.createdby ? (
+                          <p className="font-medium">{(event.createdby as { name?: string }).name}</p>
+                        ) : null}
+                        {event.createdby && typeof event.createdby === 'object' && 'email' in event.createdby ? (
+                          <a 
+                            href={`mailto:${(event.createdby as { email?: string }).email}`} 
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {(event.createdby as { email?: string }).email}
+                          </a>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => { setCurrentEvent(event); setShowForm(true); }}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Voir
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* Section événements acceptés */}
@@ -284,7 +377,7 @@ const AdminDashboard = () => {
         onTogglePastEvents={setShowPastEvents}
       />
       {/* Tableau principal des événements */}
-      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} theme={theme} />
+      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} />
       <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
@@ -348,6 +441,7 @@ const AdminDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </AdminLayout>
   );
 };

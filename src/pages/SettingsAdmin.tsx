@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import AdminLayout from "@/components/events/AdminLayout";
-import { Link } from "react-router-dom";
+import { AdminLayout } from "@/components/AdminLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUserRoleContext } from "@/components/UserRoleProvider";
 
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
 type ThemeFormValues = {
@@ -25,6 +26,24 @@ const fetchThemes = async (): Promise<Theme[]> => {
 };
 
 const SettingsAdmin = () => {
+  const { isSuperAdmin, isLoading: userLoading } = useUserRoleContext();
+  
+  // Protection : seuls les super admins peuvent accéder aux paramètres
+  if (!userLoading && !isSuperAdmin) {
+    return (
+      <AdminLayout title="Accès refusé" subtitle="Cette page est réservée aux super administrateurs">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2">Accès refusé</h2>
+            <p className="text-muted-foreground">
+              Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+            </p>
+          </CardContent>
+        </Card>
+      </AdminLayout>
+    );
+  }
+
   const queryClient = useQueryClient();
   const { data: themes, isLoading, error } = useQuery<Theme[]>({
     queryKey: ["themes"],
@@ -235,16 +254,22 @@ const SettingsAdmin = () => {
   };
 
   return (
-    <AdminLayout>   
-        <div className="max-w-2xl mx-auto py-8">
-            <div><Link to="/admin/dashboard">Retour</Link></div>
-            <h1 className="text-2xl font-bold mb-6">Paramètres du site</h1>
-            <section>
-                <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Thèmes</h2>
-                <Dialog open={open} onOpenChange={setOpen}>
+    <AdminLayout title="Paramètres" subtitle="Configuration et gestion des thèmes">
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-2xl font-bold">Configuration du site</h2>
+                <p className="text-muted-foreground">Gérez les thèmes et autres paramètres</p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Thèmes</CardTitle>
+                            <CardDescription>Gérez les thèmes visuels du site</CardDescription>
+                        </div>
+                        <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                    <Button variant="outline" className="text-white border-white/20">Ajouter un thème</Button>
+                    <Button>Ajouter un thème</Button>
                     </DialogTrigger>
                     <DialogContent>
                     <DialogHeader>
@@ -287,9 +312,10 @@ const SettingsAdmin = () => {
                         </div>
                     </form>
                     </DialogContent>
-                </Dialog>
-                </div>
-                <div className="bg-white/10 rounded-lg p-4 text-white">
+                        </Dialog>
+                    </div>
+                </CardHeader>
+                <CardContent>
                 {isLoading && <p>Chargement…</p>}
                 {error && <p className="text-red-400">Erreur lors du chargement des thèmes</p>}
                 {themes && themes.length === 0 && <p>Aucun thème pour l'instant.</p>}
@@ -330,7 +356,6 @@ const SettingsAdmin = () => {
                     ))}
                     </ul>
                 )}
-                </div>
                 {/* Dialog d'édition */}
                 <Dialog open={!!editTheme} onOpenChange={v => { if (!v) handleEditDialogClose(); }}>
                 <DialogContent>
@@ -375,7 +400,8 @@ const SettingsAdmin = () => {
                     </form>
                 </DialogContent>
                 </Dialog>
-            </section>
+                </CardContent>
+            </Card>
         </div>
     </AdminLayout>
   );

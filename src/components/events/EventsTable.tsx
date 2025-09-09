@@ -1,57 +1,67 @@
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Trash } from "lucide-react";
 
 interface EventsTableProps {
   events: Event[];
   onEdit: (event: Event) => void;
   onDelete: (id: string) => void;
-  theme?: 'light' | 'dark';
 }
 
-const EventsTable = ({ events, onEdit, onDelete, theme }: EventsTableProps) => (
-  <div className={theme === 'light' ? 'bg-white rounded-lg overflow-hidden border border-[#f3e0c7] text-[#1B263B]' : 'bg-ephemeride-light rounded-lg overflow-hidden border border-white/10 text-white'}>
-    <table className="w-full text-left">
-      <thead>
-        <tr className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
-          <th className="px-6 py-3 font-medium">Date</th>
-          <th className="px-6 py-3 font-medium">Nom</th>
-          <th className="px-6 py-3 font-medium">Lieu</th>
-          <th className="px-6 py-3 font-medium w-24">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {events.map((event) => (
-          <tr key={event.id} className={theme === 'light' ? 'border-b border-[#f3e0c7]' : 'border-b border-white/10'}>
-            <td className="px-6 py-4">{event.datetime}</td>
-            <td className="px-6 py-4">{event.name}</td>
-            <td className="px-6 py-4">{event.location_place}<br/>{event.location_city}</td>
-            <td className="px-6 py-4">
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className={theme === 'light' ? 'h-8 w-8 p-0 text-[#1B263B] hover:bg-[#ffe2b0]' : 'h-8 w-8 p-0 text-white hover:bg-white/10'}
-                  onClick={() => onEdit(event)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className={theme === 'light' ? 'h-8 w-8 p-0 text-[#1B263B] hover:bg-[#ffe2b0]' : 'h-8 w-8 p-0 text-white hover:bg-white/10'}
-                  onClick={() => onDelete(event.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+const EventsTable = ({ events, onEdit, onDelete }: EventsTableProps) => (
+  <Card>
+    <CardContent className="p-6">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Nom</TableHead>
+            <TableHead>Lieu</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {events.map((event) => (
+            <TableRow key={event.id}>
+              <TableCell className="font-medium">{event.datetime}</TableCell>
+              <TableCell>
+                <div className="max-w-xs">
+                  <p className="font-medium truncate">{event.name}</p>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div>
+                  <p className="font-medium">{event.location_place}</p>
+                  <p className="text-sm text-muted-foreground">{event.location_city}</p>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onEdit(event)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => onDelete(event.id)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
 );
 
 export default EventsTable; 

@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase as baseSupabase } from "@/integrations/supabase/client";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/integrations/supabase/types";
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useUserRoleContext } from "@/components/UserRoleProvider";
 
 const supabase: SupabaseClient = baseSupabase;
 
@@ -23,6 +24,7 @@ const Index = () => {
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const { theme } = useTheme();
+  const { user: contextUser, isSuperAdmin, organizations, isLoading } = useUserRoleContext();
 
   // Add scroll event listener to detect when to make the header sticky
   useEffect(() => {
@@ -42,12 +44,30 @@ const Index = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data, error } = await supabase
+      // Ne pas charger si les données utilisateur sont encore en cours de chargement
+      if (isLoading) return;
+
+      let query = supabase
         .from('events')
         .select('*, theme:theme_id(*)')
-        .eq('status', 'accepted')
+        .eq('status', 'accepted');
+
+      // Filtrer selon les organisations de l'utilisateur
+      if (contextUser && !isSuperAdmin && organizations.length > 0) {
+        // Utilisateur connecté membre d'organisations : récupérer uniquement les événements de ses organisations
+        const userOrgIds = organizations.map(org => org.organization_id);
+        query = query.in('organization_id', userOrgIds);
+      } else if (contextUser && isSuperAdmin) {
+        // Super admin : récupérer tous les événements (pas de filtre)
+      } else if (!contextUser) {
+        // Utilisateur non connecté : récupérer tous les événements publics
+      }
+
+      query = query
         .order('date', { nullsFirst: false })
         .order('datetime');
+
+      const { data, error } = await query;
       if (error) {
         console.error('Erreur lors du chargement des événements :', error);
         return;
@@ -57,7 +77,7 @@ const Index = () => {
       }
     };
     fetchEvents();
-  }, []);
+  }, [contextUser, isSuperAdmin, organizations, isLoading]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
