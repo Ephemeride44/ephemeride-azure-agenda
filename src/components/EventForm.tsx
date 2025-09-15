@@ -59,9 +59,9 @@ const defaultValues: EventFormValues = {
   emoji: '',
   url: '',
   ticketing_url: '',
-  theme_id: null,
+  theme_id: '',
   cover_url: '',
-  organization_id: null,
+  organization_id: '',
 };
 
 const fetchThemes = async (): Promise<Theme[]> => {
@@ -94,9 +94,17 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   // Remplir le formulaire si édition
   useEffect(() => {
     if (event) {
+      // Convertir les valeurs null en chaînes vides pour éviter les warnings React
+      const sanitizedEvent = Object.fromEntries(
+        Object.entries(event).map(([key, value]) => [
+          key, 
+          value === null ? '' : value
+        ])
+      );
+      
       reset({
         ...defaultValues,
-        ...event,
+        ...sanitizedEvent,
       });
     } else {
       reset(defaultValues);
@@ -133,7 +141,15 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       });
       return;
     }
-    let cover_url = data.cover_url || null;
+
+    // Nettoyer les données : convertir les chaînes vides en null pour la base de données
+    const cleanData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key, 
+        value === '' ? null : value
+      ])
+    ) as Partial<Event>;
+    let cover_url = cleanData.cover_url || null;
     if (coverFile) {
       setIsUploading(true);
       const filePath = `covers/${Date.now()}_${coverFile.name}`;
@@ -154,14 +170,14 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       setIsUploading(false);
     }
     // Gestion de l'organization_id
-    let organization_id = data.organization_id;
+    let organization_id = cleanData.organization_id;
     
     if (isSuperAdmin) {
       // Super admin : utiliser l'organisation sélectionnée dans le formulaire (peut être null)
-      organization_id = data.organization_id && data.organization_id !== 'none' ? data.organization_id : null;
+      organization_id = cleanData.organization_id && cleanData.organization_id !== 'none' ? cleanData.organization_id : null;
     } else if (organizations.length > 1) {
       // Utilisateur avec plusieurs organisations : utiliser la sélection du formulaire
-      organization_id = data.organization_id && data.organization_id !== 'none' ? data.organization_id : null;
+      organization_id = cleanData.organization_id && cleanData.organization_id !== 'none' ? cleanData.organization_id : null;
     } else if (organizations.length === 1) {
       // Utilisateur avec une seule organisation : assignation automatique
       organization_id = organizations[0].organization_id;
@@ -171,7 +187,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     }
     
     try {
-      await onSave({ ...data, cover_url, organization_id });
+      await onSave({ ...cleanData, cover_url, organization_id });
     } catch (e) {
       console.error('[EventForm] onSave error', e);
     }
@@ -523,8 +539,12 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
               <Button
                 type="button"
                 className="bg-green-600 text-white hover:bg-green-700"
-                disabled={isSubmitting || !!errors.date || !watch('date')}
-                onClick={handleSubmit((data) => onSave({ ...data, status: 'accepted' }))}
+                disabled={isSubmitting || !!errors.date || !watch('date') || !!errors.name || !watch('name')}
+                onClick={() => {
+                  handleSubmit((data) => {
+                    onSave({ ...data, status: 'accepted' });
+                  })();
+                }}
               >
                 Accepter
               </Button>
@@ -532,7 +552,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 type="button"
                 className="bg-red-600 text-white hover:bg-red-700"
                 disabled={isSubmitting}
-                onClick={handleSubmit((data) => onSave({ ...data, status: 'rejected' }))}
+                onClick={() => {
+                  handleSubmit((data) => {
+                    onSave({ ...data, status: 'rejected' });
+                  })();
+                }}
               >
                 Refuser
               </Button>
