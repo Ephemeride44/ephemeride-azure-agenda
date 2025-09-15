@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useForm, Controller } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDropzone } from "react-dropzone";
@@ -38,7 +37,7 @@ type EventFormValues = {
 
 interface EventFormProps {
   event?: Partial<Event>;
-  onSave: (event: Partial<Event>) => void;
+  onSave: (event: Partial<Event>) => Promise<boolean>;
   onCancel: () => void;
   showValidationActions?: boolean;
   themes?: Theme[];
@@ -77,19 +76,16 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   const [coverPreview, setCoverPreview] = useState<string | null>(event?.cover_url || null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [formData, setFormData] = useState<EventFormValues>(defaultValues);
+  const formDataRef = useRef<EventFormValues>(defaultValues);
   const { theme: contextTheme } = useTheme();
   const theme = themeProp || contextTheme;
-
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { isSubmitting, errors },
-    reset,
-  } = useForm<EventFormValues>({
-    defaultValues,
-  });
+  
+  // Synchroniser formData avec la ref
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   // Remplir le formulaire si édition
   useEffect(() => {
@@ -102,14 +98,18 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
         ])
       );
       
-      reset({
+      const newValues = {
         ...defaultValues,
         ...sanitizedEvent,
-      });
+      };
+      
+      setFormData(newValues);
+      formDataRef.current = newValues;
     } else {
-      reset(defaultValues);
+      setFormData(defaultValues);
+      formDataRef.current = defaultValues;
     }
-  }, [event, reset]);
+  }, [event]);
 
   const { data: themesData, isLoading: isLoadingThemes } = useQuery<Theme[]>({
     queryKey: ["themes"],
@@ -133,14 +133,8 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   });
 
   const onSubmit = async (data: Partial<Event>) => {
-    if (!data.datetime || !data.name || !data.location_city) {
-      toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('🔄 [EventForm] onSubmit appelée avec:', data);
+    // La validation est maintenant faite par React Hook Form
 
     // Nettoyer les données : convertir les chaînes vides en null pour la base de données
     const cleanData = Object.fromEntries(
@@ -149,6 +143,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
         value === '' ? null : value
       ])
     ) as Partial<Event>;
+    console.log('🧹 [EventForm] Données nettoyées:', cleanData);
     let cover_url = cleanData.cover_url || null;
     if (coverFile) {
       setIsUploading(true);
@@ -187,61 +182,115 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     }
     
     try {
-      await onSave({ ...cleanData, cover_url, organization_id });
+      console.log('💾 [EventForm] Appel de onSave avec:', { ...cleanData, cover_url, organization_id });
+      const success = await onSave({ ...cleanData, cover_url, organization_id });
+      console.log('📊 [EventForm] onSave a retourné:', success);
+      if (!success) {
+        console.log('❌ [EventForm] onSave a échoué, formulaire conservé');
+        // Si onSave retourne false, ne pas fermer le formulaire
+        return;
+      }
+      console.log('✅ [EventForm] onSave a réussi');
     } catch (e) {
-      console.error('[EventForm] onSave error', e);
+      console.error('💥 [EventForm] onSave error', e);
+      toast({
+        title: "Erreur de sauvegarde",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+        variant: "destructive",
+      });
     }
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Récupérer les valeurs actuelles depuis la ref (plus fiable)
+    const currentFormData = formDataRef.current;
+    
+    // Validation manuelle simple
+    const errors: string[] = [];
+    const fieldErrors: {[key: string]: string} = {};
+    
+    if (!currentFormData.name?.trim()) {
+      errors.push('Nom de l\'événement');
+      fieldErrors.name = 'Le nom de l\'événement est obligatoire';
+    }
+    if (!currentFormData.datetime?.trim()) {
+      errors.push('Date et heure');
+      fieldErrors.datetime = 'La date et heure sont obligatoires';
+    }
+    if (!currentFormData.date?.trim()) {
+      errors.push('Date réelle');
+      fieldErrors.date = 'La date réelle est obligatoire';
+    }
+    if (!currentFormData.location_city?.trim()) {
+      errors.push('Ville');
+      fieldErrors.location_city = 'La ville est obligatoire';
+    }
+    
+    if (errors.length > 0) {
+      setValidationErrors(fieldErrors);
+      toast({
+        title: "Champs obligatoires manquants",
+        description: `Veuillez remplir : ${errors.join(', ')}`,
+        variant: "destructive",
+      });
+      
+      // Restaurer les données après un délai pour éviter la réinitialisation
+      setTimeout(() => {
+        setFormData(formDataRef.current);
+      }, 100);
+      
+      return;
+    }
+    
+    // Nettoyer les erreurs si validation OK
+    setValidationErrors({});
+    
+    await onSubmit(currentFormData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleFormSubmit}>
       <div className="flex flex-col md:flex-row gap-6">
         <Card className={theme === 'light' ? 'w-full md:w-3/4 bg-[#fff7e6] border-[#f3e0c7] text-[#1B263B] shadow-lg py-5' : 'w-full md:w-3/4 bg-ephemeride-light border-none text-ephemeride-foreground shadow-lg py-5'}>
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2 md:col-span-3">
-                  <Label htmlFor="name">Nom de l'événement</Label>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="name"
-                        placeholder="ex: Atelier vélo Good'Huile"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Label htmlFor="name">Nom de l'événement *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="ex: Atelier vélo Good'Huile"
+                    className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.name ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.name && (
+                    <p className="text-red-500 text-sm">{validationErrors.name}</p>
+                  )}
                 </div>
                 <div className="space-y-2 md:col-span-1">
                   <Label htmlFor="theme_id">Thème visuel</Label>
-                  <Controller
-                    name="theme_id"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value || 'none'}
-                        onValueChange={value => field.onChange(value === 'none' ? null : value)}
-                      >
-                        <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
-                          <SelectValue placeholder={themes ? "Choisir un thème" : (isLoadingThemes ? "Chargement..." : "Choisir un thème") } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Aucun</SelectItem>
-                          {themeList.map(theme => (
-                            <SelectItem key={theme.id} value={theme.id}>
-                              <div className="flex items-center gap-2">
-                                {theme.image_url && <img src={theme.image_url} alt={theme.name} className="w-6 h-6 rounded object-cover" />}
-                                <span>{theme.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <Select
+                    value={formData.theme_id || 'none'}
+                    onValueChange={value => setFormData(prev => ({ ...prev, theme_id: value === 'none' ? null : value }))}
+                  >
+                    <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
+                      <SelectValue placeholder={themes ? "Choisir un thème" : (isLoadingThemes ? "Chargement..." : "Choisir un thème") } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      {themeList.map(theme => (
+                        <SelectItem key={theme.id} value={theme.id}>
+                          <div className="flex items-center gap-2">
+                            {theme.image_url && <img src={theme.image_url} alt={theme.name} className="w-6 h-6 rounded object-cover" />}
+                            <span>{theme.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -249,45 +298,39 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
               {(isSuperAdmin || organizations.length > 1) && (
                 <div className="space-y-2">
                   <Label htmlFor="organization_id">Organisation</Label>
-                  <Controller
-                    name="organization_id"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value || 'none'}
-                        onValueChange={value => field.onChange(value === 'none' ? null : value)}
-                        disabled={organizations.length === 0}
-                      >
-                        <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
-                          <SelectValue placeholder={
-                            organizations.length === 0 ? "Aucune organisation disponible" :
-                            organizations.length === 1 ? organizations[0].organization_name :
-                            "Sélectionner une organisation"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* Option "Aucune organisation" seulement pour les super admins */}
-                          {isSuperAdmin && (
-                            <SelectItem value="none">Aucune organisation</SelectItem>
-                          )}
-                          {organizations.map(org => (
-                            <SelectItem key={org.organization_id} value={org.organization_id}>
-                              <div className="flex items-center justify-between w-full">
-                                <span>{org.organization_name}</span>
-                                {org.role && (
-                                  <span className="text-xs text-muted-foreground ml-2">
-                                    ({org.role === 'organization_admin' ? 'Admin' : 
-                                      org.role === 'organization_member' ? 'Membre' : 
-                                      org.role === 'super_admin' ? 'Super Admin' : org.role})
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <Select
+                    value={formData.organization_id || 'none'}
+                    onValueChange={value => setFormData(prev => ({ ...prev, organization_id: value === 'none' ? null : value }))}
+                    disabled={organizations.length === 0}
+                  >
+                    <SelectTrigger className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}>
+                      <SelectValue placeholder={
+                        organizations.length === 0 ? "Aucune organisation disponible" :
+                        organizations.length === 1 ? organizations[0].organization_name :
+                        "Sélectionner une organisation"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Option "Aucune organisation" seulement pour les super admins */}
+                      {isSuperAdmin && (
+                        <SelectItem value="none">Aucune organisation</SelectItem>
+                      )}
+                      {organizations.map(org => (
+                        <SelectItem key={org.organization_id} value={org.organization_id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{org.organization_name}</span>
+                            {org.role && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                ({org.role === 'organization_admin' ? 'Admin' : 
+                                  org.role === 'organization_member' ? 'Membre' : 
+                                  org.role === 'super_admin' ? 'Super Admin' : org.role})
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {organizations.length === 1 && !isSuperAdmin && (
                     <p className="text-xs text-muted-foreground">
                       Événement automatiquement assigné à votre organisation
@@ -298,54 +341,43 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="datetime">Date et heure</Label>
-                  <Controller
-                    name="datetime"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="datetime"
-                        placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Label htmlFor="datetime">Date et heure *</Label>
+                  <Input
+                    id="datetime"
+                    value={formData.datetime || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, datetime: e.target.value }))}
+                    placeholder="ex: mercredi 21 mai 2025 à 16h30"
+                    className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.datetime ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
-                  <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
+                  {validationErrors.datetime ? (
+                    <p className="text-red-500 text-sm">{validationErrors.datetime}</p>
+                  ) : (
+                    <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date réelle</Label>
-                  <Controller
-                    name="date"
-                    control={control}
-                    rules={{ required: "La date réelle est obligatoire" }}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="date"
-                        type="date"
-                        className={theme === 'light' ? `border-[#f3e0c7] bg-white text-[#1B263B] ${errors.date ? 'border-red-500' : ''}` : `border-white/20 bg-white/10 text-white ${errors.date ? 'border-red-500' : ''}`}
-                      />
-                    )}
+                  <Label htmlFor="date">Date réelle *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.date ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
-                  {errors.date && typeof errors.date.message === 'string' && (
-                    <p className="text-xs text-red-500 mt-1">{errors.date.message}</p>
+                  {validationErrors.date ? (
+                    <p className="text-red-500 text-sm">{validationErrors.date}</p>
+                  ) : (
+                    <p className="text-xs text-white/60">Permet un tri fiable par date</p>
                   )}
-                  <p className="text-xs text-white/60">Permet un tri fiable par date</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="end_time">Heure de fin (optionnel)</Label>
-                  <Controller
-                    name="end_time"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="end_time"
-                        placeholder="ex: 19h00"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Input
+                    id="end_time"
+                    value={formData.end_time || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                    placeholder="ex: 19h00"
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                   />
                 </div>
               </div>
@@ -354,47 +386,35 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="location_place">Nom du lieu (optionnel)</Label>
-                    <Controller
-                      name="location_place"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="location_place"
-                          placeholder="ex: La Solid'"
-                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                        />
-                      )}
+                    <Input
+                      id="location_place"
+                      value={formData.location_place || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location_place: e.target.value }))}
+                      placeholder="ex: La Solid'"
+                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location_city">Ville</Label>
-                    <Controller
-                      name="location_city"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="location_city"
-                          placeholder="ex: CLISSON"
-                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                        />
-                      )}
+                    <Label htmlFor="location_city">Ville *</Label>
+                    <Input
+                      id="location_city"
+                      value={formData.location_city || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location_city: e.target.value }))}
+                      placeholder="ex: CLISSON"
+                      className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.location_city ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
+                    {validationErrors.location_city && (
+                      <p className="text-red-500 text-sm">{validationErrors.location_city}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location_department">Département (optionnel)</Label>
-                    <Controller
-                      name="location_department"
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="location_department"
-                          placeholder="ex: 44"
-                          className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                        />
-                      )}
+                    <Input
+                      id="location_department"
+                      value={formData.location_department || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location_department: e.target.value }))}
+                      placeholder="ex: 44"
+                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                     />
                   </div>
                 </div>
@@ -403,83 +423,58 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Prix (optionnel)</Label>
-                  <Controller
-                    name="price"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="price"
-                        placeholder="ex: 5-8€, gratuit, prix libre"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Input
+                    id="price"
+                    value={formData.price || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="ex: 5-8€, gratuit, prix libre"
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="audience">Public visé (optionnel)</Label>
-                  <Controller
-                    name="audience"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="audience"
-                        placeholder="ex: à partir de 3 ans, tout public"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Input
+                    id="audience"
+                    value={formData.audience || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, audience: e.target.value }))}
+                    placeholder="ex: à partir de 3 ans, tout public"
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="emoji">Emoji (optionnel)</Label>
-                  <Controller
-                    name="emoji"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="emoji"
-                        placeholder="ex: 📖, ❤️"
-                        className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                      />
-                    )}
+                  <Input
+                    id="emoji"
+                    value={formData.emoji || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, emoji: e.target.value }))}
+                    placeholder="ex: 📖, ❤️"
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                   />
                 </div>
               </div>
               {/* Champ URL (optionnel) */}
               <div className="space-y-2">
                 <Label htmlFor="url">Lien externe (optionnel)</Label>
-                <Controller
-                  name="url"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="url"
-                      type="url"
-                      placeholder="ex: https://www.monevenement.com"
-                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                    />
-                  )}
+                <Input
+                  id="url"
+                  type="url"
+                  value={formData.url || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                  placeholder="ex: https://www.monevenement.com"
+                  className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                 />
               </div>
 
               {/* Champ URL billeterie (optionnel) */}
               <div className="space-y-2">
                 <Label htmlFor="ticketing_url">Lien billeterie (optionnel)</Label>
-                <Controller
-                  name="ticketing_url"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="ticketing_url"
-                      type="url"
-                      placeholder="ex: https://billetterie.exemple.com"
-                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
-                    />
-                  )}
+                <Input
+                  id="ticketing_url"
+                  type="url"
+                  value={formData.ticketing_url || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ticketing_url: e.target.value }))}
+                  placeholder="ex: https://billetterie.exemple.com"
+                  className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                 />
               </div>
             </div>
@@ -530,7 +525,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
             onClick={onCancel}
             className={theme === 'light' ? 'border-[#f3e0c7] text-[#1B263B] hover:bg-[#ffe2b0]' : 'border-white/20 text-white hover:bg-white/10'}
             type="button"
-            disabled={isSubmitting}
+            disabled={false}
           >
             Annuler
           </Button>
@@ -539,24 +534,16 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
               <Button
                 type="button"
                 className="bg-green-600 text-white hover:bg-green-700"
-                disabled={isSubmitting || !!errors.date || !watch('date') || !!errors.name || !watch('name')}
-                onClick={() => {
-                  handleSubmit((data) => {
-                    onSave({ ...data, status: 'accepted' });
-                  })();
-                }}
+                disabled={false}
+                onClick={() => onSave({ ...formData, status: 'accepted' })}
               >
                 Accepter
               </Button>
               <Button
                 type="button"
                 className="bg-red-600 text-white hover:bg-red-700"
-                disabled={isSubmitting}
-                onClick={() => {
-                  handleSubmit((data) => {
-                    onSave({ ...data, status: 'rejected' });
-                  })();
-                }}
+                disabled={false}
+                onClick={() => onSave({ ...formData, status: 'rejected' })}
               >
                 Refuser
               </Button>
@@ -565,7 +552,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
             <Button
               type="submit"
               className={theme === 'light' ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] shadow-sm' : 'bg-white text-ephemeride hover:bg-white/80'}
-              disabled={isSubmitting}
+              disabled={false}
             >
               {isEditing ? "Mettre à jour" : "Créer l'événement"}
             </Button>

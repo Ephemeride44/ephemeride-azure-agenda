@@ -385,32 +385,43 @@ const AdminDashboard = () => {
             <DialogTitle>{currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
           </DialogHeader>
           <EventForm
-            event={currentEvent ?? emptyEvent}
+            event={currentEvent}
             onSave={async (eventData) => {
-              const mappedData = {
-                ...eventData,
-                updated_at: new Date().toISOString(),
-              } as EventRow & { theme: ThemeRow };
-              delete mappedData.theme;
+              try {
+                const mappedData = {
+                  ...eventData,
+                  updated_at: new Date().toISOString(),
+                } as EventRow & { theme: ThemeRow };
+                delete mappedData.theme;
 
-              if (eventData.status === 'accepted') {
-                await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent?.id);
-                setShowForm(false);
-                await fetchPendingEvents();
-                await fetchAcceptedEvents();
-                toast({ title: "Événement accepté", description: "L'événement a été accepté." });
-                return true;
-              } else if (eventData.status === 'rejected') {
-                await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent?.id);
-                setShowForm(false);
-                await fetchPendingEvents();
-                await fetchAcceptedEvents();
-                toast({ title: "Événement refusé", description: "L'événement a été refusé." });
-                return true;
-              } else {
-                // Edition classique ou ajout
-                await handleSaveEvent({ ...(currentEvent ?? emptyEvent), ...eventData, id: currentEvent?.id });
-                return true;
+                if (eventData.status === 'accepted') {
+                  const { error } = await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent?.id);
+                  if (error) throw error;
+                  setShowForm(false);
+                  await fetchPendingEvents();
+                  await fetchAcceptedEvents();
+                  toast({ title: "Événement accepté", description: "L'événement a été accepté." });
+                  return true;
+                } else if (eventData.status === 'rejected') {
+                  const { error } = await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent?.id);
+                  if (error) throw error;
+                  setShowForm(false);
+                  await fetchPendingEvents();
+                  await fetchAcceptedEvents();
+                  toast({ title: "Événement refusé", description: "L'événement a été refusé." });
+                  return true;
+                } else {
+                  // Edition classique ou ajout
+                  const success = await handleSaveEvent({ ...(currentEvent ?? emptyEvent), ...eventData, id: currentEvent?.id });
+                  return success;
+                }
+              } catch (error) {
+                toast({
+                  title: "Erreur de sauvegarde",
+                  description: "Une erreur est survenue lors de la sauvegarde de l'événement.",
+                  variant: "destructive",
+                });
+                return false;
               }
             }}
             onCancel={() => setShowForm(false)}
