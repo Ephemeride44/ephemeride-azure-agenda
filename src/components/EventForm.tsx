@@ -133,7 +133,6 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   });
 
   const onSubmit = async (data: Partial<Event>) => {
-    console.log('🔄 [EventForm] onSubmit appelée avec:', data);
     // La validation est maintenant faite par React Hook Form
 
     // Nettoyer les données : convertir les chaînes vides en null pour la base de données
@@ -143,7 +142,6 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
         value === '' ? null : value
       ])
     ) as Partial<Event>;
-    console.log('🧹 [EventForm] Données nettoyées:', cleanData);
     let cover_url = cleanData.cover_url || null;
     if (coverFile) {
       setIsUploading(true);
@@ -182,15 +180,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     }
     
     try {
-      console.log('💾 [EventForm] Appel de onSave avec:', { ...cleanData, cover_url, organization_id });
       const success = await onSave({ ...cleanData, cover_url, organization_id });
-      console.log('📊 [EventForm] onSave a retourné:', success);
       if (!success) {
-        console.log('❌ [EventForm] onSave a échoué, formulaire conservé');
         // Si onSave retourne false, ne pas fermer le formulaire
         return;
       }
-      console.log('✅ [EventForm] onSave a réussi');
     } catch (e) {
       console.error('💥 [EventForm] onSave error', e);
       toast({

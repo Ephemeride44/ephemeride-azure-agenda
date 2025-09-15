@@ -204,8 +204,9 @@ const AdminDashboard = () => {
 
   const handleSaveEvent = async (eventData: Omit<EventRow, 'id'> & { id?: string }) => {
     let success = false;
+    
     if (eventData.id) {
-      // Update existing event dans Supabase
+      // Update existing event
       const { error: updateError } = await supabase
         .from('events')
         .update({
@@ -213,6 +214,7 @@ const AdminDashboard = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventData.id);
+        
       if (updateError) {
         toast({
           title: "Erreur lors de la mise à jour",
@@ -227,25 +229,30 @@ const AdminDashboard = () => {
         success = true;
       }
     } else {
-      // Add new event dans Supabase
+      // Create new event
+      const organizationId = eventData.organization_id ?? currentOrganization?.organization_id ?? null;
+      
       const { error: insertError } = await supabase
         .from('events')
         .insert({
           datetime: eventData.datetime,
           date: eventData.date || null,
-          end_time: eventData.end_time ?? null,
+          end_time: eventData.end_time || null,
           name: eventData.name,
-          location_place: eventData.location_place ?? null,
-          location_city: eventData.location_city ?? null,
-          location_department: eventData.location_department ?? null,
-          price: eventData.price,
-          audience: eventData.audience,
-          url: eventData.url ?? null,
-          emoji: eventData.emoji ?? null,
-          theme_id: eventData.theme_id ?? null,
+          location_place: eventData.location_place || null,
+          location_city: eventData.location_city,
+          location_department: eventData.location_department || null,
+          price: eventData.price || null,
+          audience: eventData.audience || null,
+          url: eventData.url || null,
+          ticketing_url: eventData.ticketing_url || null,
+          emoji: eventData.emoji || null,
+          theme_id: eventData.theme_id || null,
+          organization_id: organizationId,
           updated_at: new Date().toISOString(),
           status: "accepted",
         });
+        
       if (insertError) {
         toast({
           title: "Erreur lors de la création",
@@ -260,12 +267,14 @@ const AdminDashboard = () => {
         success = true;
       }
     }
+    
     // Rafraîchir la liste
     if (success) {
       await fetchPendingEvents();
       await fetchAcceptedEvents();
       setShowForm(false);
     }
+    
     return success;
   };
 
@@ -412,7 +421,7 @@ const AdminDashboard = () => {
                   return true;
                 } else {
                   // Edition classique ou ajout
-                  const success = await handleSaveEvent({ ...(currentEvent ?? emptyEvent), ...eventData, id: currentEvent?.id });
+                  const success = await handleSaveEvent({ ...eventData, id: currentEvent?.id });
                   return success;
                 }
               } catch (error) {
