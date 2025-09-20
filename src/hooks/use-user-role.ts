@@ -161,8 +161,14 @@ export const useUserRole = (): UserContext => {
   useEffect(() => {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        await refreshUserData();
+      
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        setTimeout(() => {
+          refreshUserData();
+        }, 50);
+      }
+      else if (event === 'INITIAL_SESSION') {
+        refreshUserData();
       }
     });
 

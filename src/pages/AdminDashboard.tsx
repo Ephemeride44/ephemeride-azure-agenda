@@ -207,10 +207,15 @@ const AdminDashboard = () => {
     
     if (eventData.id) {
       // Update existing event
+      // Nettoyer les données pour éviter les UUID vides
+      const cleanData = { ...eventData };
+      if (cleanData.organization_id === '') cleanData.organization_id = null;
+      if (cleanData.theme_id === '') cleanData.theme_id = null;
+      
       const { error: updateError } = await supabase
         .from('events')
         .update({
-          ...eventData,
+          ...cleanData,
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventData.id);
@@ -404,7 +409,13 @@ const AdminDashboard = () => {
                 delete mappedData.theme;
 
                 if (eventData.status === 'accepted') {
-                  const { error } = await supabase.from('events').update({ ...mappedData, status: 'accepted' }).eq('id', currentEvent?.id);
+                  // Nettoyer les données pour éviter les UUID vides
+                  const cleanData = { ...mappedData, status: 'accepted' };
+                  // Convertir les chaînes vides en null pour les champs UUID
+                  if (cleanData.organization_id === '') cleanData.organization_id = null;
+                  if (cleanData.theme_id === '') cleanData.theme_id = null;
+                  
+                  const { error } = await supabase.from('events').update(cleanData).eq('id', currentEvent?.id);
                   if (error) throw error;
                   setShowForm(false);
                   await fetchPendingEvents();
@@ -421,7 +432,7 @@ const AdminDashboard = () => {
                   return true;
                 } else {
                   // Edition classique ou ajout
-                  const success = await handleSaveEvent({ ...eventData, id: currentEvent?.id });
+                  const success = await handleSaveEvent({ ...eventData, id: currentEvent?.id } as Omit<EventRow, 'id'> & { id?: string });
                   return success;
                 }
               } catch (error) {

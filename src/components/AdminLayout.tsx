@@ -15,7 +15,7 @@ import {
   Calendar,
   Crown
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,10 +32,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { isSuperAdmin, user, organizations } = useUserRoleContext();
+  const { signOut } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
+      navigate('/admin');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
