@@ -20,6 +20,8 @@ type Event = Database["public"]["Tables"]["events"]["Row"];
 
 const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [isPastEventsLoaded, setIsPastEventsLoaded] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -49,26 +51,18 @@ const Index = () => {
 
       const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
 
-      // Requête pour les événements futurs
+      // Requête pour les événements futurs uniquement
       let futureQuery = supabase
         .from('events')
         .select('*, theme:theme_id(*)')
         .eq('status', 'accepted')
         .gte('date', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
 
-      // Requête pour les événements passés (limité aux 200 derniers pour éviter de surcharger)
-      let pastQuery = supabase
-        .from('events')
-        .select('*, theme:theme_id(*)')
-        .eq('status', 'accepted')
-        .lt('date', today); // Filtrer uniquement les événements passés
-
       // Filtrer selon les organisations de l'utilisateur
       if (contextUser && !isSuperAdmin && organizations.length > 0) {
         // Utilisateur connecté membre d'organisations : récupérer uniquement les événements de ses organisations
         const userOrgIds = organizations.map(org => org.organization_id);
         futureQuery = futureQuery.in('organization_id', userOrgIds);
-        pastQuery = pastQuery.in('organization_id', userOrgIds);
       } else if (contextUser && isSuperAdmin) {
         // Super admin : récupérer tous les événements (pas de filtre)
       } else if (!contextUser) {
@@ -80,35 +74,58 @@ const Index = () => {
         .order('date', { nullsFirst: false })
         .order('datetime');
 
-      // Trier les événements passés par date décroissante (les plus récents en premier)
-      pastQuery = pastQuery
-        .order('date', { ascending: false, nullsFirst: false })
-        .order('datetime', { ascending: false })
-        .limit(200); // Limiter à 200 événements passés pour éviter de surcharger
+      const { data, error } = await futureQuery;
 
-      // Exécuter les deux requêtes en parallèle
-      const [futureResult, pastResult] = await Promise.all([
-        futureQuery,
-        pastQuery
-      ]);
-
-      if (futureResult.error) {
-        console.error('Erreur lors du chargement des événements futurs :', futureResult.error);
-      }
-      if (pastResult.error) {
-        console.error('Erreur lors du chargement des événements passés :', pastResult.error);
+      if (error) {
+        console.error('Erreur lors du chargement des événements futurs :', error);
+        return;
       }
 
-      // Combiner les résultats
-      const allEvents = [
-        ...(futureResult.data || []),
-        ...(pastResult.data || [])
-      ];
-
-      setEvents(allEvents as Event[]);
+      setEvents((data || []) as Event[]);
     };
     fetchEvents();
   }, [contextUser, isSuperAdmin, organizations, isLoading]);
+
+  const fetchPastEvents = async () => {
+    // Ne pas recharger si déjà chargé
+    if (isPastEventsLoaded) return;
+
+    const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
+
+    // Requête pour les événements passés (limité aux 200 derniers pour éviter de surcharger)
+    let pastQuery = supabase
+      .from('events')
+      .select('*, theme:theme_id(*)')
+      .eq('status', 'accepted')
+      .lt('date', today); // Filtrer uniquement les événements passés
+
+    // Filtrer selon les organisations de l'utilisateur
+    if (contextUser && !isSuperAdmin && organizations.length > 0) {
+      // Utilisateur connecté membre d'organisations : récupérer uniquement les événements de ses organisations
+      const userOrgIds = organizations.map(org => org.organization_id);
+      pastQuery = pastQuery.in('organization_id', userOrgIds);
+    } else if (contextUser && isSuperAdmin) {
+      // Super admin : récupérer tous les événements (pas de filtre)
+    } else if (!contextUser) {
+      // Utilisateur non connecté : récupérer tous les événements publics
+    }
+
+    // Trier les événements passés par date décroissante (les plus récents en premier)
+    pastQuery = pastQuery
+      .order('date', { ascending: false, nullsFirst: false })
+      .order('datetime', { ascending: false })
+      .limit(200); // Limiter à 200 événements passés pour éviter de surcharger
+
+    const { data, error } = await pastQuery;
+
+    if (error) {
+      console.error('Erreur lors du chargement des événements passés :', error);
+      return;
+    }
+
+    setPastEvents((data || []) as Event[]);
+    setIsPastEventsLoaded(true);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -186,7 +203,7 @@ const Index = () => {
 
       <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
         <div className="max-w-4xl mx-auto">
-          <EventList events={events} />
+          <EventList events={events} pastEvents={pastEvents} onLoadPastEvents={fetchPastEvents} />
         </div>
       </main>
 

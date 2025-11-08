@@ -10,11 +10,12 @@ import { getDayOfWeek, daysOfWeek, monthNames, monthNamesShort, getDateBlockColo
 
 interface EventListProps {
   events: Event[];
+  pastEvents?: Event[];
+  onLoadPastEvents?: () => void;
 }
 
-const EventList = ({ events }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   const { theme } = useTheme();
@@ -38,34 +39,30 @@ const EventList = ({ events }: EventListProps) => {
     setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
   }, [events]);
 
-  // Filter events into upcoming and past based on the current date
+  // Filter events into upcoming based on the current date
+  // Les événements passés sont maintenant passés directement en props
   useEffect(() => {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const upcoming: Event[] = [];
-    const past: Event[] = [];
 
     events.forEach(event => {
       if (event.date) {
         if (event.date >= todayStr) {
           upcoming.push(event);
-        } else {
-          past.push(event);
         }
-      } else {
-        past.push(event);
       }
     });
     
-    // Sort past events from most recent to oldest (descending order)
-    past.sort((a, b) => {
-      if (!a.date || !b.date) return 0;
-      return b.date.localeCompare(a.date);
-    });
-    
     setUpcomingEvents(upcoming);
-    setPastEvents(past);
   }, [events]);
+
+  // Déclencher le chargement des événements passés quand on ouvre la section
+  useEffect(() => {
+    if (isPastEventsOpen && onLoadPastEvents) {
+      onLoadPastEvents();
+    }
+  }, [isPastEventsOpen, onLoadPastEvents]);
 
   // Group events by month then by day
   const groupEventsByMonthAndDay = (eventList: Event[]) => {
@@ -217,31 +214,31 @@ const EventList = ({ events }: EventListProps) => {
       </div>
 
       {/* Past Events Section - Now collapsible */}
-      {Object.keys(groupedPastEvents).length > 0 && (
-        <Collapsible 
-          open={isPastEventsOpen} 
-          onOpenChange={setIsPastEventsOpen} 
-          className="space-y-8 mt-16"
-        >
-          <div className="flex items-center">
-            <h2 className={`text-2xl font-semibold ${textColorClass}`}>Événements passés</h2>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-4 p-0 hover:bg-transparent"
-                aria-label={isPastEventsOpen ? "Masquer les événements passés" : "Afficher les événements passés"}
-              >
-                {isPastEventsOpen ? (
-                  <ChevronUp className={`h-6 w-6 ${textColorClass}`} />
-                ) : (
-                  <ChevronDown className={`h-6 w-6 ${textColorClass}`} />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent className="space-y-8">
-            {Object.entries(groupedPastEvents).map(([month, dayEvents]) => (
+      <Collapsible 
+        open={isPastEventsOpen} 
+        onOpenChange={setIsPastEventsOpen} 
+        className="space-y-8 mt-16"
+      >
+        <div className="flex items-center">
+          <h2 className={`text-2xl font-semibold ${textColorClass}`}>Événements passés</h2>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-4 p-0 hover:bg-transparent"
+              aria-label={isPastEventsOpen ? "Masquer les événements passés" : "Afficher les événements passés"}
+            >
+              {isPastEventsOpen ? (
+                <ChevronUp className={`h-6 w-6 ${textColorClass}`} />
+              ) : (
+                <ChevronDown className={`h-6 w-6 ${textColorClass}`} />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="space-y-8">
+          {Object.keys(groupedPastEvents).length > 0 ? (
+            Object.entries(groupedPastEvents).map(([month, dayEvents]) => (
               <div key={month} className="mb-12">
                 {/* Month separator for past events - nouveau style divider with text */}
                 <div className="flex items-center w-full my-8">
@@ -273,10 +270,14 @@ const EventList = ({ events }: EventListProps) => {
                   );
                 })}
               </div>
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+            ))
+          ) : (
+            <p className={`text-center opacity-70 ${textColorClass}`}>
+              Chargement des événements passés...
+            </p>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
