@@ -11,12 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Crown, Shield } from 'lucide-react';
+import { Plus, Crown, Shield, Power, PowerOff, Trash2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type SuperAdmin = Database['public']['Tables']['super_admins']['Row'] & {
   user_email?: string;
   user_name?: string;
+  user_raw_user_meta_data?: any;
 };
 
 const SuperAdminsAdmin: React.FC = () => {
@@ -29,6 +30,8 @@ const SuperAdminsAdmin: React.FC = () => {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<SuperAdmin | null>(null);
+  const [showPermanentDeleteConfirm, setShowPermanentDeleteConfirm] = useState(false);
+  const [adminToPermanentDelete, setAdminToPermanentDelete] = useState<SuperAdmin | null>(null);
 
   const fetchSuperAdmins = async () => {
     try {
@@ -36,7 +39,7 @@ const SuperAdminsAdmin: React.FC = () => {
       
       // Récupérer les super admins avec les données utilisateur via RPC
       const { data, error } = await supabase
-        .rpc('get_super_admins_with_user_info');
+        .rpc('get_super_admins_with_user_info' as any);
 
       if (error) {
         console.error('Erreur détaillée super admins:', error);
@@ -44,7 +47,7 @@ const SuperAdminsAdmin: React.FC = () => {
       }
 
       // Enrichir les données avec les métadonnées utilisateur
-      const enrichedData: SuperAdmin[] = (data || []).map(admin => ({
+      const enrichedData: SuperAdmin[] = ((data as any) || []).map((admin: any) => ({
         ...admin,
         user_email: admin.user_email || 'Email non disponible',
         user_name: admin.user_raw_user_meta_data?.name || 
@@ -77,50 +80,125 @@ const SuperAdminsAdmin: React.FC = () => {
     }
 
     try {
-      // Ici on devrait d'abord vérifier si l'utilisateur existe
-      // et récupérer son user_id, mais pour simplifier on va juste
-      // laisser l'admin saisir l'email et on gérera cela côté backend
-      
-      toast({
-        title: "Information",
-        description: "La fonctionnalité d'ajout de super admin sera implémentée prochainement",
-        variant: "default",
+      // Valider le format de l'email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newUserEmail.trim())) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez saisir une adresse email valide",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Appeler l'Edge Function pour inviter le super admin
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour effectuer cette action",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const supabaseUrl = 'https://kgjvfuzdnbvgxkbndwfr.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/invite-super-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: newUserEmail.toLowerCase().trim(),
+        }),
       });
 
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'invitation');
+      }
+
+      // Succès
+      toast({
+        title: "Succès",
+        description: result.message || "Le super administrateur a été ajouté avec succès",
+      });
+
+      // Fermer le formulaire et réinitialiser
       setShowAddForm(false);
       setNewUserEmail('');
-    } catch (error) {
+
+      // Rafraîchir la liste des super admins
+      await fetchSuperAdmins();
+    } catch (error: any) {
       console.error('Erreur lors de l\'ajout du super admin:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter le super admin",
+        description: error.message || "Impossible d'ajouter le super admin",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteSuperAdmin = async (admin: SuperAdmin) => {
+  const handleToggleSuperAdminStatus = async (admin: SuperAdmin, activate: boolean) => {
     try {
       const { error } = await supabase
         .from('super_admins')
-        .update({ is_active: false })
+        .update({ is_active: activate })
         .eq('id', admin.id);
 
       if (error) throw error;
 
       toast({
-        title: "Super admin supprimé",
-        description: "Le super admin a été désactivé avec succès",
+        title: activate ? "Super admin réactivé" : "Super admin désactivé",
+        description: activate 
+          ? "Le super admin a été réactivé avec succès"
+          : "Le super admin a été désactivé avec succès",
       });
 
       setShowDeleteConfirm(false);
       setAdminToDelete(null);
       await fetchSuperAdmins();
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
+      console.error('Erreur lors de la modification du statut:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le super admin",
+        description: activate 
+          ? "Impossible de réactiver le super admin"
+          : "Impossible de désactiver le super admin",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSuperAdmin = async (admin: SuperAdmin) => {
+    await handleToggleSuperAdminStatus(admin, false);
+  };
+
+  const handlePermanentDeleteSuperAdmin = async (admin: SuperAdmin) => {
+    try {
+      const { error } = await supabase
+        .from('super_admins')
+        .delete()
+        .eq('id', admin.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Super admin supprimé définitivement",
+        description: "Le super administrateur a été supprimé définitivement de la base de données",
+      });
+
+      setShowPermanentDeleteConfirm(false);
+      setAdminToPermanentDelete(null);
+      await fetchSuperAdmins();
+    } catch (error) {
+      console.error('Erreur lors de la suppression définitive:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer définitivement le super admin",
         variant: "destructive",
       });
     }
@@ -180,6 +258,7 @@ const SuperAdminsAdmin: React.FC = () => {
                     <TableHead>Utilisateur</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Créé le</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -187,7 +266,10 @@ const SuperAdminsAdmin: React.FC = () => {
                     <TableRow key={admin.id}>
                       <TableCell>
                         <div>
-                          <div className="text-sm">{admin.user_email}</div>
+                          <div className="text-sm font-medium">{admin.user_email}</div>
+                          {admin.user_name && admin.user_name !== admin.user_email?.split('@')[0] && (
+                            <div className="text-xs text-muted-foreground">{admin.user_name}</div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -198,7 +280,48 @@ const SuperAdminsAdmin: React.FC = () => {
                       <TableCell>
                         {admin.created_at ? new Date(admin.created_at).toLocaleDateString('fr-FR') : '-'}
                       </TableCell>
-
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {admin.is_active ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setAdminToDelete(admin);
+                                setShowDeleteConfirm(true);
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <PowerOff className="w-4 h-4 mr-1" />
+                              Désactiver
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleSuperAdminStatus(admin, true)}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <Power className="w-4 h-4 mr-1" />
+                                Réactiver
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setAdminToPermanentDelete(admin);
+                                  setShowPermanentDeleteConfirm(true);
+                                }}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Supprimer
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -237,18 +360,30 @@ const SuperAdminsAdmin: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {/* Dialog de confirmation de désactivation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={(open) => {
+        setShowDeleteConfirm(open);
+        if (!open) {
+          setAdminToDelete(null);
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la désactivation</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir désactiver ce super administrateur ? 
-              Cette action peut être annulée en réactivant le compte.
+              Êtes-vous sûr de vouloir désactiver le super administrateur{' '}
+              <strong>{adminToDelete?.user_email}</strong> ?
+              <br />
+              <br />
+              Cette action peut être annulée en réactivant le compte. Le super administrateur perdra 
+              temporairement ses privilèges d'administration.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAdminToDelete(null)}>
+            <AlertDialogCancel onClick={() => {
+              setShowDeleteConfirm(false);
+              setAdminToDelete(null);
+            }}>
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
@@ -256,6 +391,46 @@ const SuperAdminsAdmin: React.FC = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Désactiver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de confirmation de suppression définitive */}
+      <AlertDialog open={showPermanentDeleteConfirm} onOpenChange={(open) => {
+        setShowPermanentDeleteConfirm(open);
+        if (!open) {
+          setAdminToPermanentDelete(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression définitive</AlertDialogTitle>
+            <AlertDialogDescription>
+              ⚠️ <strong>Attention : Cette action est irréversible !</strong>
+              <br />
+              <br />
+              Êtes-vous absolument sûr de vouloir supprimer définitivement le super administrateur{' '}
+              <strong>{adminToPermanentDelete?.user_email}</strong> ?
+              <br />
+              <br />
+              Cette action supprimera complètement l'entrée de la base de données. Le super administrateur 
+              devra être réinvité pour retrouver ses privilèges.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowPermanentDeleteConfirm(false);
+              setAdminToPermanentDelete(null);
+            }}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => adminToPermanentDelete && handlePermanentDeleteSuperAdmin(adminToPermanentDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer définitivement
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
