@@ -13,6 +13,8 @@ import SettingsAdmin from "./pages/SettingsAdmin";
 import { OrganizationsAdmin } from "./pages/OrganizationsAdmin";
 import SuperAdminsAdmin from "./pages/SuperAdminsAdmin";
 import { Signup } from "./pages/Signup";
+import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword";
 import PostHogProvider from "./components/PostHogProvider";
 import { CookiesProvider } from "react-cookie";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -52,7 +54,13 @@ const App = () => (
                       <SuperAdminsAdmin />
                     </ProtectedRoute>
                   } />
+                  <Route path="/admin/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </UserRoleProvider>

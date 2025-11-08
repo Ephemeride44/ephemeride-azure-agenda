@@ -6,6 +6,14 @@ import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   LayoutDashboard, 
   Settings, 
@@ -13,7 +21,9 @@ import {
   LogOut,
   Home,
   Calendar,
-  Crown
+  Crown,
+  User,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -41,6 +51,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.name) return user.user_metadata.name;
+    if (user?.user_metadata?.full_name) return user.user_metadata.full_name;
+    return user?.email?.split('@')[0] || 'Utilisateur';
+  };
+
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
   };
 
   const navItems = [
@@ -104,10 +129,59 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               
               <ThemeToggle />
               
-              <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-2">
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Déconnexion</span>
-              </Button>
+              {/* Menu utilisateur */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 h-auto py-2 px-3">
+                    {user?.user_metadata?.avatar_url ? (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                        {getUserInitials()}
+                      </div>
+                    )}
+                    <span className="hidden sm:inline font-medium">{getUserDisplayName()}</span>
+                    <ChevronDown className="w-4 h-4 hidden sm:inline" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex items-center space-x-3">
+                      {user?.user_metadata?.avatar_url ? (
+                        <img
+                          src={user.user_metadata.avatar_url}
+                          alt="Avatar"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                          {getUserInitials()}
+                        </div>
+                      )}
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{getUserDisplayName()}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/profile" className="flex items-center cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      Mon profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Se déconnecter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -124,18 +198,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   <OrganizationSelector compact />
                 </div>
               )}
-
-              {/* User info */}
-              <div className="pb-4 border-b">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{user?.email}</p>
-                  </div>
-                </div>
-              </div>
 
               {/* Navigation */}
               <nav className="space-y-2">
