@@ -47,10 +47,13 @@ const Index = () => {
       // Ne pas charger si les données utilisateur sont encore en cours de chargement
       if (isLoading) return;
 
+      const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
+
       let query = supabase
         .from('events')
         .select('*, theme:theme_id(*)')
-        .eq('status', 'accepted');
+        .eq('status', 'accepted')
+        .gte('date', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
 
       // Filtrer selon les organisations de l'utilisateur
       if (contextUser && !isSuperAdmin && organizations.length > 0) {
