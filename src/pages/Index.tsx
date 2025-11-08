@@ -49,35 +49,63 @@ const Index = () => {
 
       const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
 
-      let query = supabase
+      // Requête pour les événements futurs
+      let futureQuery = supabase
         .from('events')
         .select('*, theme:theme_id(*)')
         .eq('status', 'accepted')
         .gte('date', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
 
+      // Requête pour les événements passés (limité aux 200 derniers pour éviter de surcharger)
+      let pastQuery = supabase
+        .from('events')
+        .select('*, theme:theme_id(*)')
+        .eq('status', 'accepted')
+        .lt('date', today); // Filtrer uniquement les événements passés
+
       // Filtrer selon les organisations de l'utilisateur
       if (contextUser && !isSuperAdmin && organizations.length > 0) {
         // Utilisateur connecté membre d'organisations : récupérer uniquement les événements de ses organisations
         const userOrgIds = organizations.map(org => org.organization_id);
-        query = query.in('organization_id', userOrgIds);
+        futureQuery = futureQuery.in('organization_id', userOrgIds);
+        pastQuery = pastQuery.in('organization_id', userOrgIds);
       } else if (contextUser && isSuperAdmin) {
         // Super admin : récupérer tous les événements (pas de filtre)
       } else if (!contextUser) {
         // Utilisateur non connecté : récupérer tous les événements publics
       }
 
-      query = query
+      // Trier les événements futurs par date croissante
+      futureQuery = futureQuery
         .order('date', { nullsFirst: false })
         .order('datetime');
 
-      const { data, error } = await query;
-      if (error) {
-        console.error('Erreur lors du chargement des événements :', error);
-        return;
+      // Trier les événements passés par date décroissante (les plus récents en premier)
+      pastQuery = pastQuery
+        .order('date', { ascending: false, nullsFirst: false })
+        .order('datetime', { ascending: false })
+        .limit(200); // Limiter à 200 événements passés pour éviter de surcharger
+
+      // Exécuter les deux requêtes en parallèle
+      const [futureResult, pastResult] = await Promise.all([
+        futureQuery,
+        pastQuery
+      ]);
+
+      if (futureResult.error) {
+        console.error('Erreur lors du chargement des événements futurs :', futureResult.error);
       }
-      if (data) {
-        setEvents(data as Event[]);
+      if (pastResult.error) {
+        console.error('Erreur lors du chargement des événements passés :', pastResult.error);
       }
+
+      // Combiner les résultats
+      const allEvents = [
+        ...(futureResult.data || []),
+        ...(pastResult.data || [])
+      ];
+
+      setEvents(allEvents as Event[]);
     };
     fetchEvents();
   }, [contextUser, isSuperAdmin, organizations, isLoading]);
