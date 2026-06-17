@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/ThemeProvider";
+import { formatCityName, formatPrice } from "@/lib/utils";
 
 const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const { theme } = useTheme();
@@ -68,9 +69,9 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       datetime: formData.datetime,
       end_time: formData.endTime || null,
       location_place: formData.location.place || null,
-      location_city: formData.location.city || null,
+      location_city: formData.location.city ? formatCityName(formData.location.city) : null,
       location_department: formData.location.department || null,
-      price: formData.price || null,
+      price: formData.price ? formatPrice(formData.price) : null,
       audience: formData.audience || null,
       url: formData.url || null,
       status: 'pending',

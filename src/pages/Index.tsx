@@ -1,4 +1,5 @@
 import BackToTop from "@/components/BackToTop";
+import TipeeeSupport from "@/components/TipeeeSupport";
 import EventList from "@/components/EventList";
 import EventProposalForm from "@/components/EventProposalForm";
 import { useTheme } from "@/components/ThemeProvider";
@@ -226,6 +227,9 @@ const Index = () => {
 
       {/* Add Back to Top button */}
       <BackToTop />
+
+      {/* Widget de soutien Tipeee (affiché si activé dans l'admin) */}
+      <TipeeeSupport />
     </div>
   );
 };
