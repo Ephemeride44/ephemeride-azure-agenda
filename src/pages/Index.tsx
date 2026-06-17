@@ -22,6 +22,7 @@ type Event = Database["public"]["Tables"]["events"]["Row"];
 const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [isPastEventsLoaded, setIsPastEventsLoaded] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
@@ -83,6 +84,30 @@ const Index = () => {
       }
 
       setEvents((data || []) as Event[]);
+
+      // Récupérer la date de dernière création/modification d'un événement
+      // (tous statuts confondus pour refléter l'activité réelle d'édition de l'agenda)
+      let lastUpdatedQuery = supabase
+        .from('events')
+        .select('updated_at')
+        .eq('status', 'accepted');
+
+      if (contextUser && !isSuperAdmin && organizations.length > 0) {
+        const userOrgIds = organizations.map(org => org.organization_id);
+        lastUpdatedQuery = lastUpdatedQuery.in('organization_id', userOrgIds);
+      }
+
+      lastUpdatedQuery = lastUpdatedQuery
+        .order('updated_at', { ascending: false, nullsFirst: false })
+        .limit(1);
+
+      const { data: lastUpdatedData, error: lastUpdatedError } = await lastUpdatedQuery;
+
+      if (lastUpdatedError) {
+        console.error('Erreur lors du chargement de la date de dernière mise à jour :', lastUpdatedError);
+      } else {
+        setLastUpdatedAt(lastUpdatedData?.[0]?.updated_at ?? null);
+      }
     };
     fetchEvents();
   }, [contextUser, isSuperAdmin, organizations, isLoading]);
@@ -204,7 +229,7 @@ const Index = () => {
 
       <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
         <div className="max-w-4xl mx-auto">
-          <EventList events={events} pastEvents={pastEvents} onLoadPastEvents={fetchPastEvents} />
+          <EventList events={events} pastEvents={pastEvents} onLoadPastEvents={fetchPastEvents} lastUpdatedAt={lastUpdatedAt} />
         </div>
       </main>
 
