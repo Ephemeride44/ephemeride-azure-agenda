@@ -24,6 +24,7 @@ export type Database = {
           location_place: string | null
           name: string
           price: string | null
+          recurrence_id: string | null
           status: string
           theme_id: string | null
           updated_at: string
@@ -43,6 +44,7 @@ export type Database = {
           location_place?: string | null
           name: string
           price?: string | null
+          recurrence_id?: string | null
           status?: string
           theme_id?: string | null
           updated_at?: string
@@ -62,12 +64,20 @@ export type Database = {
           location_place?: string | null
           name?: string
           price?: string | null
+          recurrence_id?: string | null
           status?: string
           theme_id?: string | null
           updated_at?: string
           url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_recurrence_id_fkey"
+            columns: ["recurrence_id"]
+            isOneToOne: false
+            referencedRelation: "event_recurrences"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_theme_id_fkey"
             columns: ["theme_id"]
@@ -76,6 +86,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_recurrences: {
+        Row: {
+          created_at: string
+          end_date: string
+          frequency: string
+          id: string
+          interval: number
+          start_date: string
+          updated_at: string
+          weekdays: number[]
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          frequency?: string
+          id?: string
+          interval?: number
+          start_date: string
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          frequency?: string
+          id?: string
+          interval?: number
+          start_date?: string
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Relationships: []
       }
       themes: {
         Row: {

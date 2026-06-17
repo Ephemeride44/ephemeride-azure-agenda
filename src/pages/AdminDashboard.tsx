@@ -17,13 +17,14 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { buildRecurringEvents, type RecurrenceRule, type RecurringSharedFields } from "@/lib/recurrence";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Eye } from "lucide-react";
+import { Building2, Eye, Repeat } from "lucide-react";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type ThemeRow = Database["public"]["Tables"]["themes"]["Row"];
@@ -41,6 +42,7 @@ const AdminDashboard = () => {
   const debouncedSearch = useDebounce(search, 400);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventRow | null>(null);
+  const [deleteMode, setDeleteMode] = useState<'single' | 'series'>('single');
   const [showPastEvents, setShowPastEvents] = useState(false);
   
   const { toast } = useToast();
@@ -68,6 +70,7 @@ const AdminDashboard = () => {
     updated_at: '',
     organization_id: null,
     ticketing_url: null,
+    recurrence_id: null,
   };
 
   useEffect(() => {
@@ -179,11 +182,73 @@ const AdminDashboard = () => {
     const event = acceptedEvents.find(e => e.id === id);
     if (!event) return;
     setEventToDelete(event);
+    setDeleteMode('single');
     setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteSeries = (event: EventRow) => {
+    setEventToDelete(event);
+    setDeleteMode('series');
+    setShowDeleteConfirm(true);
+  };
+
+  // Validation groupée d'une proposition récurrente : passe toutes les occurrences
+  // en attente liées à la même récurrence en accepted/rejected.
+  const handleValidateSeries = async (event: EventRow, status: 'accepted' | 'rejected') => {
+    if (!event.recurrence_id) return;
+    const { error } = await supabase
+      .from('events')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('recurrence_id', event.recurrence_id)
+      .eq('status', 'pending');
+    if (error) {
+      toast({
+        title: "Erreur lors de la validation de la série",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: status === 'accepted' ? "Série acceptée" : "Série refusée",
+      description: status === 'accepted'
+        ? "Tous les événements de la série ont été acceptés."
+        : "Tous les événements de la série ont été refusés.",
+    });
+    await fetchPendingEvents();
+    await fetchAcceptedEvents();
   };
 
   const handleDeleteConfirmed = async () => {
     if (!eventToDelete) return;
+
+    // Suppression de la série complète : supprimer la récurrence supprime en
+    // cascade tous les événements liés.
+    if (deleteMode === 'series' && eventToDelete.recurrence_id) {
+      const { error: seriesError } = await supabase
+        .from('event_recurrences')
+        .delete()
+        .eq('id', eventToDelete.recurrence_id);
+      if (seriesError) {
+        toast({
+          title: "Erreur lors de la suppression de la série",
+          description: seriesError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Série supprimée",
+          description: "Tous les événements de la série ont été supprimés.",
+        });
+        await fetchPendingEvents();
+        await fetchAcceptedEvents();
+      }
+      setShowDeleteConfirm(false);
+      setEventToDelete(null);
+      setDeleteMode('single');
+      return;
+    }
+
     const { error: deleteError } = await supabase.from('events').delete().eq('id', eventToDelete.id);
     if (deleteError) {
       toast({
@@ -200,6 +265,7 @@ const AdminDashboard = () => {
     }
     setShowDeleteConfirm(false);
     setEventToDelete(null);
+    setDeleteMode('single');
   };
 
   const handleSaveEvent = async (eventData: Omit<EventRow, 'id'> & { id?: string }) => {
@@ -283,6 +349,75 @@ const AdminDashboard = () => {
     return success;
   };
 
+  // Création groupée d'un événement récurrent : 1 ligne event_recurrences + N events liés.
+  const handleSaveRecurringEvent = async (
+    rule: RecurrenceRule,
+    shared: RecurringSharedFields,
+  ): Promise<boolean> => {
+    const occurrences = buildRecurringEvents(rule, shared);
+    if (occurrences.length === 0) {
+      toast({
+        title: "Aucune occurrence",
+        description: "La récurrence ne génère aucun événement sur la période choisie.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // 1. Créer la règle de récurrence.
+    const { data: recurrenceData, error: recurrenceError } = await supabase
+      .from('event_recurrences')
+      .insert({
+        frequency: 'weekly',
+        interval: rule.interval,
+        weekdays: rule.weekdays,
+        start_date: rule.startDate,
+        end_date: rule.endDate,
+      })
+      .select()
+      .single();
+
+    if (recurrenceError || !recurrenceData) {
+      toast({
+        title: "Erreur lors de la création de la récurrence",
+        description: recurrenceError?.message ?? "Erreur inconnue",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // 2. Insérer les occurrences liées.
+    const now = new Date().toISOString();
+    const rows = occurrences.map((occ) => ({
+      ...occ,
+      recurrence_id: recurrenceData.id,
+      status: 'accepted',
+      updated_at: now,
+    }));
+
+    const { error: insertError } = await supabase.from('events').insert(rows);
+
+    if (insertError) {
+      // Rollback : supprimer la récurrence (cascade sur les events déjà insérés).
+      await supabase.from('event_recurrences').delete().eq('id', recurrenceData.id);
+      toast({
+        title: "Erreur lors de la création des événements",
+        description: insertError.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Événements créés",
+      description: `${rows.length} événements récurrents ont été créés.`,
+    });
+    await fetchPendingEvents();
+    await fetchAcceptedEvents();
+    setShowForm(false);
+    return true;
+  };
+
   // Affichage d'un message si l'utilisateur n'a pas d'organisation et n'est pas super admin
   if (!isSuperAdmin && organizations.length === 0) {
     return (
@@ -338,7 +473,15 @@ const AdminDashboard = () => {
                     <TableCell className="font-medium">{event.datetime}</TableCell>
                     <TableCell>
                       <div className="max-w-xs">
-                        <p className="font-medium truncate">{event.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{event.name}</p>
+                          {event.recurrence_id && (
+                            <Badge variant="secondary" className="gap-1 shrink-0">
+                              <Repeat className="h-3 w-3" />
+                              Récurrent
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -363,14 +506,34 @@ const AdminDashboard = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => { setCurrentEvent(event); setShowForm(true); }}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Voir
-                      </Button>
+                      <div className="flex justify-end gap-2 flex-wrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setCurrentEvent(event); setShowForm(true); }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Voir
+                        </Button>
+                        {event.recurrence_id && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 text-white hover:bg-green-700"
+                              onClick={() => handleValidateSeries(event, 'accepted')}
+                            >
+                              Accepter la série
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleValidateSeries(event, 'rejected')}
+                            >
+                              Refuser la série
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -391,7 +554,7 @@ const AdminDashboard = () => {
         onTogglePastEvents={setShowPastEvents}
       />
       {/* Tableau principal des événements */}
-      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} />
+      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} onDeleteSeries={confirmDeleteSeries} />
       <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
@@ -447,15 +610,20 @@ const AdminDashboard = () => {
             onCancel={() => setShowForm(false)}
             showValidationActions={currentEvent?.status === 'pending'}
             themes={themes}
+            onSaveRecurring={handleSaveRecurringEvent}
           />
         </DialogContent>
       </Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogTitle>{deleteMode === 'series' ? "Supprimer la série" : "Confirmer la suppression"}</DialogTitle>
           </DialogHeader>
-          <p>Voulez-vous vraiment supprimer l'événement <b>{eventToDelete?.name}</b> ?</p>
+          {deleteMode === 'series' ? (
+            <p>Voulez-vous vraiment supprimer <b>toute la série récurrente</b> de l'événement <b>{eventToDelete?.name}</b> ? Tous les événements liés seront supprimés.</p>
+          ) : (
+            <p>Voulez-vous vraiment supprimer l'événement <b>{eventToDelete?.name}</b> ?</p>
+          )}
           <div className="flex justify-end gap-2 mt-4">
             <button
               className="btn btn-secondary"

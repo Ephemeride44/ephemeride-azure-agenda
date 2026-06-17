@@ -30,6 +30,7 @@ export type Database = {
           name: string
           organization_id: string | null
           price: string | null
+          recurrence_id: string | null
           status: string
           theme_id: string | null
           ticketing_url: string | null
@@ -51,6 +52,7 @@ export type Database = {
           name: string
           organization_id?: string | null
           price?: string | null
+          recurrence_id?: string | null
           status?: string
           theme_id?: string | null
           ticketing_url?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           name?: string
           organization_id?: string | null
           price?: string | null
+          recurrence_id?: string | null
           status?: string
           theme_id?: string | null
           ticketing_url?: string | null
@@ -79,6 +82,13 @@ export type Database = {
           url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_recurrence_id_fkey"
+            columns: ["recurrence_id"]
+            isOneToOne: false
+            referencedRelation: "event_recurrences"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_organization_id_fkey"
             columns: ["organization_id"]
@@ -94,6 +104,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_recurrences: {
+        Row: {
+          created_at: string
+          end_date: string
+          frequency: string
+          id: string
+          interval: number
+          start_date: string
+          updated_at: string
+          weekdays: number[]
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          frequency?: string
+          id?: string
+          interval?: number
+          start_date: string
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          frequency?: string
+          id?: string
+          interval?: number
+          start_date?: string
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Relationships: []
       }
       organization_invitations: {
         Row: {
