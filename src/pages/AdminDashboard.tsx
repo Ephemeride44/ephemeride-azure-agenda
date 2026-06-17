@@ -17,14 +17,20 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { buildRecurringEvents, type RecurrenceRule, type RecurringSharedFields } from "@/lib/recurrence";
+import { buildRecurringEvents, describeRecurrenceFromEvent, type RecurrenceRule, type RecurringSharedFields } from "@/lib/recurrence";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Eye, Repeat } from "lucide-react";
+import { Building2, Eye, Repeat, Check, X, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type ThemeRow = Database["public"]["Tables"]["themes"]["Row"];
@@ -98,7 +104,7 @@ const AdminDashboard = () => {
   const fetchPendingEvents = async () => {
     let query = supabase
       .from('events')
-      .select('*, theme:theme_id(*)')
+      .select('*, theme:theme_id(*), recurrence:recurrence_id(*)')
       .eq('status', 'pending');
 
     // Filtrer par organisation selon le type d'utilisateur
@@ -129,7 +135,7 @@ const AdminDashboard = () => {
     const to = from + pageSize - 1;
     let query = supabase
       .from('events')
-      .select('*, theme:theme_id(*)', { count: 'exact' })
+      .select('*, theme:theme_id(*), recurrence:recurrence_id(*)', { count: 'exact' })
       .eq('status', 'accepted');
 
     // Filtrer par organisation selon le type d'utilisateur
@@ -214,6 +220,30 @@ const AdminDashboard = () => {
       description: status === 'accepted'
         ? "Tous les événements de la série ont été acceptés."
         : "Tous les événements de la série ont été refusés.",
+    });
+    await fetchPendingEvents();
+    await fetchAcceptedEvents();
+  };
+
+  // Validation individuelle d'une proposition : ne change que l'occurrence ciblée.
+  const handleValidateSingle = async (event: EventRow, status: 'accepted' | 'rejected') => {
+    const { error } = await supabase
+      .from('events')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', event.id);
+    if (error) {
+      toast({
+        title: "Erreur lors de la validation",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: status === 'accepted' ? "Événement accepté" : "Événement refusé",
+      description: status === 'accepted'
+        ? "L'événement a été accepté."
+        : "L'événement a été refusé.",
     });
     await fetchPendingEvents();
     await fetchAcceptedEvents();
@@ -482,6 +512,11 @@ const AdminDashboard = () => {
                             </Badge>
                           )}
                         </div>
+                        {event.recurrence_id && describeRecurrenceFromEvent(event) && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {describeRecurrenceFromEvent(event)}
+                          </p>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -515,24 +550,72 @@ const AdminDashboard = () => {
                           <Eye className="w-4 h-4 mr-2" />
                           Voir
                         </Button>
-                        {event.recurrence_id && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="bg-green-600 text-white hover:bg-green-700"
-                              onClick={() => handleValidateSeries(event, 'accepted')}
-                            >
-                              Accepter la série
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleValidateSeries(event, 'rejected')}
-                            >
-                              Refuser la série
-                            </Button>
-                          </>
-                        )}
+
+                        {/* Accepter : split button (action principale individuelle + menu série) */}
+                        <div className="flex">
+                          <Button
+                            size="sm"
+                            className={`bg-green-600 text-white hover:bg-green-700 ${event.recurrence_id ? 'rounded-r-none' : ''}`}
+                            title="Accepter cet événement"
+                            onClick={() => handleValidateSingle(event, 'accepted')}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Accepter
+                          </Button>
+                          {event.recurrence_id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 text-white hover:bg-green-700 rounded-l-none border-l border-green-700 px-2"
+                                  title="Plus d'options"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleValidateSeries(event, 'accepted')}>
+                                  <Repeat className="w-4 h-4 mr-2" />
+                                  Accepter la série
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+
+                        {/* Refuser : split button (action principale individuelle + menu série) */}
+                        <div className="flex">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className={event.recurrence_id ? 'rounded-r-none' : ''}
+                            title="Refuser cet événement"
+                            onClick={() => handleValidateSingle(event, 'rejected')}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Refuser
+                          </Button>
+                          {event.recurrence_id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="rounded-l-none border-l border-red-800 px-2"
+                                  title="Plus d'options"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleValidateSeries(event, 'rejected')}>
+                                  <Repeat className="w-4 h-4 mr-2" />
+                                  Refuser la série
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
