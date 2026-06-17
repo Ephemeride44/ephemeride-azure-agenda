@@ -11,6 +11,8 @@ import { formatCityName, formatPrice } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import RecurrenceFields from "@/components/RecurrenceFields";
 import { buildRecurringEvents, type RecurrenceRule } from "@/lib/recurrence";
+import { useDropzone } from "react-dropzone";
+import { X } from "lucide-react";
 
 const defaultRecurrence: RecurrenceRule = {
   interval: 1,
@@ -24,6 +26,9 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const { theme } = useTheme();
   const [eventType, setEventType] = useState<"single" | "recurring">("single");
   const [recurrence, setRecurrence] = useState<RecurrenceRule>(defaultRecurrence);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     date: "",
@@ -64,8 +69,44 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
+  // Dropzone pour l'affiche
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles && acceptedFiles[0]) {
+      setCoverFile(acceptedFiles[0]);
+      setCoverPreview(URL.createObjectURL(acceptedFiles[0]));
+    }
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    multiple: false,
+    disabled: isUploading,
+  });
+
+  // Upload l'affiche si une a été déposée. Retourne `undefined` en cas d'échec
+  // (l'appelant doit alors interrompre la soumission).
+  const uploadCoverIfNeeded = async (): Promise<string | null | undefined> => {
+    if (!coverFile) return null;
+    setIsUploading(true);
+    const filePath = `covers/${Date.now()}_${coverFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("event-assets")
+      .upload(filePath, coverFile, { upsert: true });
+    setIsUploading(false);
+    if (uploadError) {
+      toast({
+        title: "Erreur lors de l'upload de l'affiche",
+        description: uploadError.message,
+        variant: "destructive",
+      });
+      return undefined;
+    }
+    const { data: publicUrlData } = supabase.storage.from("event-assets").getPublicUrl(filePath);
+    return publicUrlData.publicUrl;
+  };
+
   // Champs partagés par toutes les occurrences (et utilisés en mode ponctuel).
-  const buildSharedFields = () => ({
+  const buildSharedFields = (coverUrl: string | null) => ({
     name: formData.name,
     location_place: formData.location.place || null,
     location_city: formData.location.city ? formatCityName(formData.location.city) : null,
@@ -73,6 +114,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     price: formData.price ? formatPrice(formData.price) : null,
     audience: formData.audience || null,
     url: formData.url || null,
+    cover_url: coverUrl,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,7 +140,10 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
         return;
       }
 
-      const occurrences = buildRecurringEvents(recurrence, buildSharedFields());
+      const coverUrl = await uploadCoverIfNeeded();
+      if (coverUrl === undefined) return;
+
+      const occurrences = buildRecurringEvents(recurrence, buildSharedFields(coverUrl));
       if (occurrences.length === 0) {
         toast({
           title: "Aucune occurrence",
@@ -167,8 +212,11 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       return;
     }
 
+    const coverUrl = await uploadCoverIfNeeded();
+    if (coverUrl === undefined) return;
+
     const { error } = await supabase.from("events").insert({
-      ...buildSharedFields(),
+      ...buildSharedFields(coverUrl),
       start_at: `${formData.date}T${formData.startTime}:00`,
       end_at: formData.endTime ? `${formData.date}T${formData.endTime}:00` : null,
       status: "pending",
@@ -376,6 +424,42 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
                 className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1 min-h-[100px]' : 'border-white/20 bg-white/10 text-white mt-1 min-h-[100px]'}
               />
             </div>
+
+            <div>
+              <Label className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Affiche (optionnel)</Label>
+              <div className="mt-1 relative group">
+                {coverPreview ? (
+                  <div
+                    {...getRootProps()}
+                    className="w-full h-48 p-2 flex items-center justify-center rounded cursor-pointer bg-white/10 overflow-hidden"
+                  >
+                    <input {...getInputProps()} />
+                    <img src={coverPreview} alt="Aperçu affiche" className="rounded shadow max-h-40 object-contain w-full" />
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => { e.stopPropagation(); setCoverPreview(null); setCoverFile(null); }}
+                      tabIndex={-1}
+                      aria-label="Supprimer l'affiche"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    {...getRootProps()}
+                    className={`w-full h-48 flex flex-col items-center justify-center rounded border-2 border-dashed transition-colors cursor-pointer ${isDragActive ? 'border-green-400 bg-green-50/10' : (theme === 'light' ? 'border-[#f3e0c7] bg-white' : 'border-white/20 bg-white/10')}`}
+                    style={{ outline: 'none' }}
+                  >
+                    <input {...getInputProps()} />
+                    <span className={theme === 'light' ? 'text-[#1B263B]/40 text-center px-2' : 'text-white/40 text-center px-2'}>
+                      {isDragActive ? "Déposez l'image ici..." : "Glissez-déposez ou cliquez pour choisir une image"}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {isUploading && <span className="text-xs text-white/60">Upload en cours...</span>}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -423,6 +507,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
         </Button>
         <Button
           type="submit"
+          disabled={isUploading}
           className={theme === 'light' ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] shadow-sm' : 'bg-white text-ephemeride hover:bg-white/90'}
         >
           Proposer l'événement
