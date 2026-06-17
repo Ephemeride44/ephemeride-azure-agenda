@@ -12,32 +12,36 @@ interface EventListProps {
   events: Event[];
   pastEvents?: Event[];
   onLoadPastEvents?: () => void;
+  lastUpdatedAt?: string | null;
 }
 
-const EventList = ({ events, pastEvents = [], onLoadPastEvents }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   const { theme } = useTheme();
 
-  // Get formatted current date and time for "dernière mise à jour"
+  // Formate la date de la dernière création/modification d'un événement
   useEffect(() => {
-    if (!events || events.length === 0) {
+    if (!lastUpdatedAt) {
       setLastUpdated("");
       return;
     }
-    
-    // Use current date/time when the component loads or events change
-    // This reflects when the categorization of events (upcoming vs past) was last calculated
-    const now = new Date();
-    const dayName = daysOfWeek[now.getDay()];
-    const day = now.getDate();
-    const month = monthNames[now.getMonth()];
-    const year = now.getFullYear();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
+
+    const updated = new Date(lastUpdatedAt);
+    if (Number.isNaN(updated.getTime())) {
+      setLastUpdated("");
+      return;
+    }
+
+    const dayName = daysOfWeek[updated.getDay()];
+    const day = updated.getDate();
+    const month = monthNames[updated.getMonth()];
+    const year = updated.getFullYear();
+    const hours = updated.getHours().toString().padStart(2, '0');
+    const minutes = updated.getMinutes().toString().padStart(2, '0');
     setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
-  }, [events]);
+  }, [lastUpdatedAt]);
 
   // Filter events into upcoming based on the current date
   // Les événements passés sont maintenant passés directement en props
