@@ -12,6 +12,7 @@ import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
+import { formatCityName, formatPrice } from "@/lib/utils";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
@@ -240,8 +241,15 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     
     // Nettoyer les erreurs si validation OK
     setValidationErrors({});
-    
-    await onSubmit(currentFormData);
+
+    // Uniformiser ville (majuscules) et prix (première lettre en majuscule) avant l'enregistrement
+    const normalizedFormData = {
+      ...currentFormData,
+      location_city: formatCityName(currentFormData.location_city),
+      price: currentFormData.price ? formatPrice(currentFormData.price) : currentFormData.price,
+    };
+
+    await onSubmit(normalizedFormData);
   };
 
   return (

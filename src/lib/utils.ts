@@ -7,6 +7,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Normalise le nom d'une ville en majuscules (ex : "nantes" -> "NANTES").
+ * Utilisé à l'affichage et à la saisie pour uniformiser les villes.
+ */
+export function formatCityName(city?: string | null): string {
+  if (!city) return "";
+  return city.trim().toUpperCase();
+}
+
+/**
+ * Uniformise un texte de prix en mettant la première lettre en majuscule
+ * (ex : "gratuit" -> "Gratuit", "entrée libre" -> "Entrée libre").
+ */
+export function formatPrice(price?: string | null): string {
+  if (!price) return "";
+  const trimmed = price.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 export const daysOfWeek = [
   "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"
 ];

@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
+import TipeeeSettingsCard from "@/components/settings/TipeeeSettingsCard";
 
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
 type ThemeFormValues = {
@@ -402,6 +403,7 @@ const SettingsAdmin = () => {
                 </Dialog>
                 </CardContent>
             </Card>
+            <TipeeeSettingsCard />
         </div>
     </AdminLayout>
   );

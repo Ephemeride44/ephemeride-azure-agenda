@@ -6,7 +6,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useState } from "react";
-import { getDayOfWeek, getDateBlockColor, monthNamesShort, getDateParts, formatTimeDisplay, isToday } from "@/lib/utils";
+import { getDayOfWeek, getDateBlockColor, monthNamesShort, getDateParts, formatTimeDisplay, isToday, formatCityName, formatPrice } from "@/lib/utils";
 
 interface EventCardProps {
   event: Event;
@@ -20,7 +20,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   const { day, month, year } = getDateParts(event);
 
   // Format location
-  const locationString = `${event.location_place || ''}${event.location_city ? ` — ${event.location_city}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
+  const locationString = `${event.location_place || ''}${event.location_city ? ` — ${formatCityName(event.location_city)}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
   
   const cardContent = (
     <div className="flex h-full">
@@ -104,7 +104,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
             <Euro className={`w-4 h-4 mr-1 ${
               theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
             }`} />
-            {event.price}
+            {formatPrice(event.price)}
           </div>
         )}
 
