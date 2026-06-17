@@ -8,9 +8,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/ThemeProvider";
 import { formatCityName, formatPrice } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import RecurrenceFields from "@/components/RecurrenceFields";
+import { buildRecurringEvents, type RecurrenceRule } from "@/lib/recurrence";
+
+const defaultRecurrence: RecurrenceRule = {
+  interval: 1,
+  weekdays: [],
+  startDate: "",
+  endDate: "",
+  startTime: "",
+};
 
 const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const { theme } = useTheme();
+  const [eventType, setEventType] = useState<"single" | "recurring">("single");
+  const [recurrence, setRecurrence] = useState<RecurrenceRule>(defaultRecurrence);
   const [formData, setFormData] = useState({
     name: "",
     datetime: "",
@@ -50,10 +63,101 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
+  // Champs partagés par toutes les occurrences (et utilisés en mode ponctuel).
+  const buildSharedFields = () => ({
+    name: formData.name,
+    end_time: formData.endTime || null,
+    location_place: formData.location.place || null,
+    location_city: formData.location.city ? formatCityName(formData.location.city) : null,
+    location_department: formData.location.department || null,
+    price: formData.price ? formatPrice(formData.price) : null,
+    audience: formData.audience || null,
+    url: formData.url || null,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form
+
+    const createdby = { name: formData.proposerName, email: formData.proposerEmail };
+
+    if (eventType === "recurring") {
+      // Validation de la récurrence
+      if (
+        !formData.name ||
+        !recurrence.startDate ||
+        !recurrence.endDate ||
+        !recurrence.startTime ||
+        !recurrence.weekdays.length ||
+        recurrence.endDate < recurrence.startDate
+      ) {
+        toast({
+          title: "Informations manquantes",
+          description: "Veuillez compléter le nom et les informations de récurrence (dates, heure, jours).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const occurrences = buildRecurringEvents(recurrence, buildSharedFields());
+      if (occurrences.length === 0) {
+        toast({
+          title: "Aucune occurrence",
+          description: "La récurrence ne génère aucun événement sur la période choisie.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 1. Créer la règle de récurrence.
+      const { data: recurrenceData, error: recurrenceError } = await supabase
+        .from("event_recurrences")
+        .insert({
+          frequency: "weekly",
+          interval: recurrence.interval,
+          weekdays: recurrence.weekdays,
+          start_date: recurrence.startDate,
+          end_date: recurrence.endDate,
+        })
+        .select()
+        .single();
+
+      if (recurrenceError || !recurrenceData) {
+        toast({
+          title: "Erreur lors de la proposition",
+          description: recurrenceError?.message ?? "Erreur inconnue",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2. Insérer les occurrences en attente, liées à la récurrence.
+      const rows = occurrences.map((occ) => ({
+        ...occ,
+        status: "pending",
+        createdby,
+        recurrence_id: recurrenceData.id,
+      }));
+      const { error: insertError } = await supabase.from("events").insert(rows);
+
+      if (insertError) {
+        await supabase.from("event_recurrences").delete().eq("id", recurrenceData.id);
+        toast({
+          title: "Erreur lors de la proposition",
+          description: insertError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Proposition envoyée !",
+        description: `${rows.length} occurrences proposées. Merci pour votre contribution !`,
+      });
+      onClose();
+      return;
+    }
+
+    // Mode ponctuel
     if (!formData.name || !formData.datetime) {
       toast({
         title: "Informations manquantes",
@@ -63,19 +167,11 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       return;
     }
 
-    // Insertion dans Supabase avec statut 'pending' et createdby
-    const { error } = await supabase.from('events').insert({
-      name: formData.name,
+    const { error } = await supabase.from("events").insert({
+      ...buildSharedFields(),
       datetime: formData.datetime,
-      end_time: formData.endTime || null,
-      location_place: formData.location.place || null,
-      location_city: formData.location.city ? formatCityName(formData.location.city) : null,
-      location_department: formData.location.department || null,
-      price: formData.price ? formatPrice(formData.price) : null,
-      audience: formData.audience || null,
-      url: formData.url || null,
-      status: 'pending',
-      createdby: { name: formData.proposerName, email: formData.proposerEmail },
+      status: "pending",
+      createdby,
     });
     if (error) {
       toast({
@@ -85,14 +181,11 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       });
       return;
     }
-    
-    // Show success message
+
     toast({
       title: "Proposition envoyée !",
       description: "Merci pour votre contribution à l'agenda culturel",
     });
-    
-    // Close modal
     onClose();
   };
 
@@ -102,8 +195,25 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       <Card className={theme === 'light' ? 'border-[#f3e0c7] bg-[#fff7e6]' : 'border-white/20 bg-ephemeride-light/50'}>
         <CardContent className="pt-6">
           <h3 className={theme === 'light' ? 'text-[#1B263B] text-lg font-medium mb-4' : 'text-[#faf3ec] text-lg font-medium mb-4'}>Informations générales</h3>
-          
+
           <div className="space-y-4">
+            <div>
+              <Label className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Type d'événement</Label>
+              <RadioGroup
+                value={eventType}
+                onValueChange={(value) => setEventType(value as 'single' | 'recurring')}
+                className="flex flex-col sm:flex-row gap-4 mt-1"
+              >
+                <label htmlFor="proposal-type-single" className={`flex items-center gap-2 cursor-pointer ${theme === 'light' ? 'text-[#1B263B]' : 'text-white'}`}>
+                  <RadioGroupItem id="proposal-type-single" value="single" />
+                  <span>Événement ponctuel</span>
+                </label>
+                <label htmlFor="proposal-type-recurring" className={`flex items-center gap-2 cursor-pointer ${theme === 'light' ? 'text-[#1B263B]' : 'text-white'}`}>
+                  <RadioGroupItem id="proposal-type-recurring" value="recurring" />
+                  <span>Événement récurrent</span>
+                </label>
+              </RadioGroup>
+            </div>
             <div>
               <Label htmlFor="name" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Nom de l'événement *</Label>
               <Input
@@ -117,31 +227,43 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="datetime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Date et heure *</Label>
-                <Input
-                  id="datetime"
-                  name="datetime"
-                  required
-                  placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                  value={formData.datetime}
-                  onChange={handleChange}
-                  className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
+            {eventType === 'recurring' ? (
+              <div className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>
+                <RecurrenceFields
+                  value={recurrence}
+                  onChange={setRecurrence}
+                  endTime={formData.endTime}
+                  onEndTimeChange={(value) => setFormData(prev => ({ ...prev, endTime: value }))}
+                  theme={theme}
                 />
               </div>
-              <div>
-                <Label htmlFor="endTime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Heure de fin (optionnel)</Label>
-                <Input
-                  id="endTime"
-                  name="endTime"
-                  placeholder="ex: 19h00"
-                  value={formData.endTime}
-                  onChange={handleChange}
-                  className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
-                />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="datetime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Date et heure *</Label>
+                  <Input
+                    id="datetime"
+                    name="datetime"
+                    required
+                    placeholder="ex: mercredi 21 mai 2025 à 16h30"
+                    value={formData.datetime}
+                    onChange={handleChange}
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Heure de fin (optionnel)</Label>
+                  <Input
+                    id="endTime"
+                    name="endTime"
+                    placeholder="ex: 19h00"
+                    value={formData.endTime}
+                    onChange={handleChange}
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <Label htmlFor="url" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Lien externe (optionnel)</Label>
               <Input

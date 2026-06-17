@@ -3,15 +3,17 @@ type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Edit, Trash } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash, Repeat } from "lucide-react";
 
 interface EventsTableProps {
   events: Event[];
   onEdit: (event: Event) => void;
   onDelete: (id: string) => void;
+  onDeleteSeries?: (event: Event) => void;
 }
 
-const EventsTable = ({ events, onEdit, onDelete }: EventsTableProps) => (
+const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries }: EventsTableProps) => (
   <Card>
     <CardContent className="p-6">
       <Table>
@@ -29,7 +31,15 @@ const EventsTable = ({ events, onEdit, onDelete }: EventsTableProps) => (
               <TableCell className="font-medium">{event.datetime}</TableCell>
               <TableCell>
                 <div className="max-w-xs">
-                  <p className="font-medium truncate">{event.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{event.name}</p>
+                    {event.recurrence_id && (
+                      <Badge variant="secondary" className="gap-1 shrink-0">
+                        <Repeat className="h-3 w-3" />
+                        Récurrent
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </TableCell>
               <TableCell>
@@ -54,6 +64,17 @@ const EventsTable = ({ events, onEdit, onDelete }: EventsTableProps) => (
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
+                  {event.recurrence_id && onDeleteSeries && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      title="Supprimer toute la série"
+                      onClick={() => onDeleteSeries(event)}
+                    >
+                      <Repeat className="h-4 w-4 mr-1" />
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
