@@ -147,7 +147,6 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       newValues.date = start ? `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}` : '';
       newValues.start_time = start ? toTime(start) : '';
       newValues.end_time = end ? toTime(end) : '';
-      delete newValues.datetime;
       delete newValues.start_at;
       delete newValues.end_at;
 

@@ -147,8 +147,6 @@ export function describeRecurrenceFromEvent(
   event: {
     start_at?: string | null;
     end_at?: string | null;
-    date?: string | null;
-    datetime?: string | null;
     recurrence?: { interval: number; weekdays: number[] } | null;
   },
   opts?: { includeTime?: boolean; withPrefix?: boolean },

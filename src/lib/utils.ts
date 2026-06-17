@@ -81,9 +81,6 @@ export function getMonthNameShort(index: number): string {
 export type EventTimeFields = {
   start_at?: string | null;
   end_at?: string | null;
-  date?: string | null;
-  datetime?: string | null;
-  end_time?: string | null;
 };
 
 /**
@@ -103,21 +100,9 @@ export function parseLocalDateTime(value?: string | null): Date | null {
   );
 }
 
-/**
- * Date+heure de début d'un événement. Utilise `start_at` en priorité ; à défaut
- * (données legacy non migrées) reconstruit depuis `date` + l'heure extraite du
- * texte `datetime`. Retourne null si aucune date n'est disponible.
- */
+/** Date+heure de début d'un événement (null si `start_at` absent). */
 export function getEventStart(event: EventTimeFields): Date | null {
-  const fromStartAt = parseLocalDateTime(event.start_at);
-  if (fromStartAt) return fromStartAt;
-  if (!event.date) return null;
-  const [year, month, day] = event.date.split("-").map((n) => parseInt(n, 10));
-  const t = event.datetime?.match(/(\d{1,2})h(\d{0,2})/);
-  // Midi par défaut quand aucune heure n'est connue (n'affecte que la partie date).
-  const hh = t ? parseInt(t[1], 10) : 12;
-  const mi = t && t[2] ? parseInt(t[2], 10) : 0;
-  return new Date(year, month - 1, day, hh, mi, 0, 0);
+  return parseLocalDateTime(event.start_at);
 }
 
 /** Date+heure de fin (optionnelle). */
@@ -143,7 +128,7 @@ export function formatFrDateLabel(date: Date): string {
  */
 export function formatEventDateTimeLabel(event: EventTimeFields): string {
   const start = getEventStart(event);
-  if (!start) return event.datetime ?? "";
+  if (!start) return "";
   const time = formatTimeDisplay(event);
   const label = formatFrDateLabel(start);
   return time ? `${label} à ${time}` : label;
@@ -161,21 +146,13 @@ export function getDateParts(event: Event) {
 
 export function formatTimeDisplay(event: EventTimeFields) {
   const start = getEventStart(event);
-  // Chemin nominal : start_at est une vraie date+heure.
-  if (parseLocalDateTime(event.start_at) && start) {
-    const end = getEventEnd(event);
-    // 00:00 = heure non renseignée (events legacy backfillés) : on n'affiche rien.
-    if (start.getHours() === 0 && start.getMinutes() === 0 && !end) return "";
-    const startLabel = formatFrTime(start);
-    return end ? `${startLabel} — ${formatFrTime(end)}` : startLabel;
-  }
-  // Fallback legacy : extraction par regex sur le texte `datetime`.
-  if (!event.datetime) return "";
-  const timeMatch = event.datetime.match(/(\d{1,2}h\d{0,2})/);
-  if (timeMatch) {
-    return event.end_time ? `${timeMatch[1]} — ${event.end_time}` : timeMatch[1];
-  }
-  return "";
+  if (!start) return "";
+  const end = getEventEnd(event);
+  // 00:00 sans heure de fin = heure non renseignée (events legacy backfillés) :
+  // on n'affiche rien.
+  if (start.getHours() === 0 && start.getMinutes() === 0 && !end) return "";
+  const startLabel = formatFrTime(start);
+  return end ? `${startLabel} — ${formatFrTime(end)}` : startLabel;
 }
 
 export function isToday(event: Event) {
