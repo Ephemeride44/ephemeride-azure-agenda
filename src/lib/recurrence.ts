@@ -53,7 +53,7 @@ function toISODate(date: Date): string {
 /**
  * Construit le datetime français attendu par l'app, ex :
  * "mercredi 21 mai 2025 à 16h30". L'heure y est incluse au format `16h30`
- * (cf. `formatTimeDisplay` dans utils.ts qui l'extrait par regex `\d{1,2}h\d{2}`).
+ * (cf. `formatTimeDisplay` dans utils.ts qui l'extrait par regex `\d{1,2}h\d{0,2}`).
  */
 export function buildDatetimeString(dateISO: string, startTime: string): string {
   const d = parseISODate(dateISO);
@@ -117,7 +117,7 @@ const WEEKDAY_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
  */
 export function describeRecurrence(
   rule: { interval: number; weekdays: number[] },
-  opts?: { startTime?: string | null; endTime?: string | null },
+  opts?: { startTime?: string | null; endTime?: string | null; withPrefix?: boolean },
 ): string {
   const parts: string[] = [];
 
@@ -145,7 +145,12 @@ export function describeRecurrence(
     parts.push(`à ${start}`);
   }
 
-  return `Se répète ${parts.join(", ")}`;
+  const sentence = parts.join(", ");
+  if (opts?.withPrefix === false) {
+    // Sans préfixe : on capitalise la première lettre (« Toutes les… »).
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  }
+  return `Se répète ${sentence}`;
 }
 
 /**
@@ -153,14 +158,20 @@ export function describeRecurrence(
  * horaires (l'heure de début est extraite du `datetime`). Retourne null si
  * l'événement n'est pas récurrent.
  */
-export function describeRecurrenceFromEvent(event: {
-  datetime?: string | null;
-  end_time?: string | null;
-  recurrence?: { interval: number; weekdays: number[] } | null;
-}): string | null {
+export function describeRecurrenceFromEvent(
+  event: {
+    datetime?: string | null;
+    end_time?: string | null;
+    recurrence?: { interval: number; weekdays: number[] } | null;
+  },
+  opts?: { includeTime?: boolean; withPrefix?: boolean },
+): string | null {
   if (!event.recurrence) return null;
-  const startTime = event.datetime?.match(/\d{1,2}h\d{2}/)?.[0] ?? null;
-  return describeRecurrence(event.recurrence, { startTime, endTime: event.end_time });
+  // Côté front, l'horaire est déjà affiché ailleurs : on peut l'omettre.
+  const includeTime = opts?.includeTime !== false;
+  const startTime = includeTime ? (event.datetime?.match(/\d{1,2}h\d{0,2}/)?.[0] ?? null) : null;
+  const endTime = includeTime ? event.end_time : null;
+  return describeRecurrence(event.recurrence, { startTime, endTime, withPrefix: opts?.withPrefix });
 }
 
 /**

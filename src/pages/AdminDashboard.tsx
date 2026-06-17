@@ -44,6 +44,7 @@ const AdminDashboard = () => {
   const pageSize = 25;
   const [showForm, setShowForm] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<EventRow | undefined>(undefined);
+  const [duplicateMode, setDuplicateMode] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -176,11 +177,21 @@ const AdminDashboard = () => {
 
   const handleAddEvent = () => {
     setCurrentEvent(undefined);
+    setDuplicateMode(false);
     setShowForm(true);
   };
 
   const handleEditEvent = (event: EventRow) => {
     setCurrentEvent(event);
+    setDuplicateMode(false);
+    setShowForm(true);
+  };
+
+  // Duplication : ouvre le formulaire de création pré-rempli avec l'événement
+  // source (et sa récurrence si applicable).
+  const handleDuplicateEvent = (event: EventRow) => {
+    setCurrentEvent(event);
+    setDuplicateMode(true);
     setShowForm(true);
   };
 
@@ -545,7 +556,7 @@ const AdminDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { setCurrentEvent(event); setShowForm(true); }}
+                          onClick={() => { setCurrentEvent(event); setDuplicateMode(false); setShowForm(true); }}
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Voir
@@ -637,12 +648,12 @@ const AdminDashboard = () => {
         onTogglePastEvents={setShowPastEvents}
       />
       {/* Tableau principal des événements */}
-      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} onDeleteSeries={confirmDeleteSeries} />
+      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} onDeleteSeries={confirmDeleteSeries} onDuplicate={handleDuplicateEvent} />
       <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
           <DialogHeader>
-            <DialogTitle>{currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
+            <DialogTitle>{duplicateMode ? "Dupliquer un événement" : currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
           </DialogHeader>
           <EventForm
             event={currentEvent}
@@ -677,8 +688,9 @@ const AdminDashboard = () => {
                   toast({ title: "Événement refusé", description: "L'événement a été refusé." });
                   return true;
                 } else {
-                  // Edition classique ou ajout
-                  const success = await handleSaveEvent({ ...eventData, id: currentEvent?.id } as Omit<EventRow, 'id'> & { id?: string });
+                  // Edition classique, ajout, ou duplication (création : pas d'id source)
+                  const idToSave = duplicateMode ? undefined : currentEvent?.id;
+                  const success = await handleSaveEvent({ ...eventData, id: idToSave } as Omit<EventRow, 'id'> & { id?: string });
                   return success;
                 }
               } catch (error) {
@@ -691,9 +703,10 @@ const AdminDashboard = () => {
               }
             }}
             onCancel={() => setShowForm(false)}
-            showValidationActions={currentEvent?.status === 'pending'}
+            showValidationActions={currentEvent?.status === 'pending' && !duplicateMode}
             themes={themes}
             onSaveRecurring={handleSaveRecurringEvent}
+            duplicate={duplicateMode}
           />
         </DialogContent>
       </Dialog>

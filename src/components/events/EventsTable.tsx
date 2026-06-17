@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash, Repeat } from "lucide-react";
+import { Edit, Trash, Repeat, Copy } from "lucide-react";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 
 interface EventsTableProps {
@@ -12,9 +12,10 @@ interface EventsTableProps {
   onEdit: (event: Event) => void;
   onDelete: (id: string) => void;
   onDeleteSeries?: (event: Event) => void;
+  onDuplicate?: (event: Event) => void;
 }
 
-const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries }: EventsTableProps) => (
+const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries, onDuplicate }: EventsTableProps) => (
   <Card>
     <CardContent className="p-6">
       <Table>
@@ -63,6 +64,16 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries }: EventsTablePr
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  {onDuplicate && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title="Dupliquer cet événement"
+                      onClick={() => onDuplicate(event)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="destructive"

@@ -26,3 +26,6 @@ dist-ssr
 .yarn/
 
 yarn.lock
+
+# Supabase CLI
+supabase/.temp/
