@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash, Repeat } from "lucide-react";
+import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 
 interface EventsTableProps {
   events: Event[];
@@ -40,6 +41,11 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries }: EventsTablePr
                       </Badge>
                     )}
                   </div>
+                  {event.recurrence_id && describeRecurrenceFromEvent(event) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {describeRecurrenceFromEvent(event)}
+                    </p>
+                  )}
                 </div>
               </TableCell>
               <TableCell>

@@ -107,6 +107,62 @@ export function computeOccurrenceDates(rule: RecurrenceRule): string[] {
   return dates;
 }
 
+// Ordre d'affichage des jours (lundi → dimanche), exprimé en valeurs getDay().
+const WEEKDAY_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * Produit une description lisible d'une récurrence, ex :
+ * « Se répète toutes les 2 semaines, le mercredi et jeudi, de 18h à 22h ».
+ * Les horaires sont optionnels (extraits de l'événement, pas de la règle).
+ */
+export function describeRecurrence(
+  rule: { interval: number; weekdays: number[] },
+  opts?: { startTime?: string | null; endTime?: string | null },
+): string {
+  const parts: string[] = [];
+
+  // Rythme
+  const interval = Math.max(1, Math.floor(rule.interval) || 1);
+  parts.push(interval === 1 ? "toutes les semaines" : `toutes les ${interval} semaines`);
+
+  // Jours (triés dans l'ordre de la semaine)
+  const days = WEEKDAY_DISPLAY_ORDER
+    .filter((d) => rule.weekdays?.includes(d))
+    .map((d) => daysOfWeek[d]);
+  if (days.length === 1) {
+    parts.push(`le ${days[0]}`);
+  } else if (days.length > 1) {
+    const last = days[days.length - 1];
+    parts.push(`le ${days.slice(0, -1).join(", ")} et ${last}`);
+  }
+
+  // Horaires
+  const start = opts?.startTime?.trim();
+  const end = opts?.endTime?.trim();
+  if (start && end) {
+    parts.push(`de ${start} à ${end}`);
+  } else if (start) {
+    parts.push(`à ${start}`);
+  }
+
+  return `Se répète ${parts.join(", ")}`;
+}
+
+/**
+ * Décrit la récurrence d'un événement à partir de la règle jointe et de ses
+ * horaires (l'heure de début est extraite du `datetime`). Retourne null si
+ * l'événement n'est pas récurrent.
+ */
+export function describeRecurrenceFromEvent(event: {
+  datetime?: string | null;
+  end_time?: string | null;
+  recurrence?: { interval: number; weekdays: number[] } | null;
+}): string | null {
+  if (!event.recurrence) return null;
+  const startTime = event.datetime?.match(/\d{1,2}h\d{2}/)?.[0] ?? null;
+  return describeRecurrence(event.recurrence, { startTime, endTime: event.end_time });
+}
+
 /**
  * Combine une règle de récurrence et les champs partagés en un tableau d'objets
  * prêts à insérer dans la table `events` (chacun avec son `date` et son `datetime`).
