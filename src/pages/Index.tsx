@@ -80,7 +80,7 @@ const Index = () => {
         .from('events')
         .select('*, theme:theme_id(*), recurrence:recurrence_id(*)')
         .eq('status', 'accepted')
-        .gte('date', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
+        .gte('start_at', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
 
       // Filtrer selon les organisations de l'utilisateur
       if (contextUser && !isSuperAdmin && organizations.length > 0) {
@@ -96,10 +96,9 @@ const Index = () => {
       // Appliquer les filtres actifs (département, etc.) côté serveur
       futureQuery = applyFiltersToQuery(futureQuery, filterValues);
 
-      // Trier les événements futurs par date croissante
+      // Trier les événements futurs par date+heure croissante (start_at)
       futureQuery = futureQuery
-        .order('date', { nullsFirst: false })
-        .order('datetime');
+        .order('start_at', { nullsFirst: false });
 
       const { data, error } = await futureQuery;
 
@@ -157,7 +156,7 @@ const Index = () => {
       .from('events')
       .select('*, theme:theme_id(*)')
       .eq('status', 'accepted')
-      .lt('date', today); // Filtrer uniquement les événements passés
+      .lt('start_at', today); // Filtrer uniquement les événements passés
 
     // Filtrer selon les organisations de l'utilisateur
     if (contextUser && !isSuperAdmin && organizations.length > 0) {
@@ -173,10 +172,9 @@ const Index = () => {
     // Appliquer les filtres actifs (département, etc.) côté serveur
     pastQuery = applyFiltersToQuery(pastQuery, filterValues);
 
-    // Trier les événements passés par date décroissante (les plus récents en premier)
+    // Trier les événements passés par date+heure décroissante (les plus récents en premier)
     pastQuery = pastQuery
-      .order('date', { ascending: false, nullsFirst: false })
-      .order('datetime', { ascending: false })
+      .order('start_at', { ascending: false, nullsFirst: false })
       .limit(200); // Limiter à 200 événements passés pour éviter de surcharger
 
     const { data, error } = await pastQuery;

@@ -17,8 +17,6 @@ const WEEKDAYS: { label: string; value: number }[] = [
 interface RecurrenceFieldsProps {
   value: RecurrenceRule;
   onChange: (value: RecurrenceRule) => void;
-  endTime: string;
-  onEndTimeChange: (value: string) => void;
   theme?: "light" | "dark";
   errors?: { [key: string]: string };
 }
@@ -26,8 +24,6 @@ interface RecurrenceFieldsProps {
 const RecurrenceFields = ({
   value,
   onChange,
-  endTime,
-  onEndTimeChange,
   theme = "dark",
   errors = {},
 }: RecurrenceFieldsProps) => {
@@ -78,9 +74,9 @@ const RecurrenceFields = ({
           <Label htmlFor="recurrence_start_time">Heure de début *</Label>
           <Input
             id="recurrence_start_time"
+            type="time"
             value={value.startTime || ""}
             onChange={(e) => update({ startTime: e.target.value })}
-            placeholder="ex: 14h00"
             className={`${inputClass} ${errors.startTime ? "border-red-500 focus:border-red-500" : ""}`}
           />
           {errors.startTime && <p className="text-red-500 text-sm">{errors.startTime}</p>}
@@ -89,9 +85,9 @@ const RecurrenceFields = ({
           <Label htmlFor="recurrence_end_time">Heure de fin (optionnel)</Label>
           <Input
             id="recurrence_end_time"
-            value={endTime || ""}
-            onChange={(e) => onEndTimeChange(e.target.value)}
-            placeholder="ex: 19h00"
+            type="time"
+            value={value.endTime || ""}
+            onChange={(e) => update({ endTime: e.target.value })}
             className={inputClass}
           />
         </div>

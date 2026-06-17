@@ -26,7 +26,8 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const [recurrence, setRecurrence] = useState<RecurrenceRule>(defaultRecurrence);
   const [formData, setFormData] = useState({
     name: "",
-    datetime: "",
+    date: "",
+    startTime: "",
     endTime: "",
     location: {
       place: "",
@@ -66,7 +67,6 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   // Champs partagés par toutes les occurrences (et utilisés en mode ponctuel).
   const buildSharedFields = () => ({
     name: formData.name,
-    end_time: formData.endTime || null,
     location_place: formData.location.place || null,
     location_city: formData.location.city ? formatCityName(formData.location.city) : null,
     location_department: formData.location.department || null,
@@ -158,10 +158,10 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     }
 
     // Mode ponctuel
-    if (!formData.name || !formData.datetime) {
+    if (!formData.name || !formData.date || !formData.startTime) {
       toast({
         title: "Informations manquantes",
-        description: "Veuillez remplir tous les champs obligatoires",
+        description: "Veuillez remplir le nom, la date et l'heure de début",
         variant: "destructive",
       });
       return;
@@ -169,7 +169,8 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
 
     const { error } = await supabase.from("events").insert({
       ...buildSharedFields(),
-      datetime: formData.datetime,
+      start_at: `${formData.date}T${formData.startTime}:00`,
+      end_at: formData.endTime ? `${formData.date}T${formData.endTime}:00` : null,
       status: "pending",
       createdby,
     });
@@ -232,21 +233,31 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
                 <RecurrenceFields
                   value={recurrence}
                   onChange={setRecurrence}
-                  endTime={formData.endTime}
-                  onEndTimeChange={(value) => setFormData(prev => ({ ...prev, endTime: value }))}
                   theme={theme}
                 />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="datetime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Date et heure *</Label>
+                  <Label htmlFor="date" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Date *</Label>
                   <Input
-                    id="datetime"
-                    name="datetime"
+                    id="date"
+                    name="date"
+                    type="date"
                     required
-                    placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                    value={formData.datetime}
+                    value={formData.date}
+                    onChange={handleChange}
+                    className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="startTime" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Heure de début *</Label>
+                  <Input
+                    id="startTime"
+                    name="startTime"
+                    type="time"
+                    required
+                    value={formData.startTime}
                     onChange={handleChange}
                     className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
                   />
@@ -256,7 +267,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
                   <Input
                     id="endTime"
                     name="endTime"
-                    placeholder="ex: 19h00"
+                    type="time"
                     value={formData.endTime}
                     onChange={handleChange}
                     className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}

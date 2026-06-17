@@ -12,7 +12,7 @@ import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
-import { formatCityName, formatPrice } from "@/lib/utils";
+import { formatCityName, formatPrice, getEventStart, getEventEnd } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import RecurrenceFields from "@/components/RecurrenceFields";
 import type { RecurrenceRule, RecurringSharedFields } from "@/lib/recurrence";
@@ -22,9 +22,9 @@ type Theme = Database["public"]["Tables"]["themes"]["Row"];
 
 type EventFormValues = {
   id?: string;
-  datetime: string;
-  date: string;
-  end_time?: string | null;
+  date: string;        // YYYY-MM-DD
+  start_time: string;  // HH:MM
+  end_time?: string | null; // HH:MM
   name: string;
   location_place?: string;
   location_city: string;
@@ -67,12 +67,13 @@ const defaultRecurrence: RecurrenceRule = {
   startDate: '',
   endDate: '',
   startTime: '',
+  endTime: '',
 };
 
 const defaultValues: EventFormValues = {
   id: '',
-  datetime: '',
   date: '',
+  start_time: '',
   end_time: '',
   name: '',
   location_place: '',
@@ -134,7 +135,21 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       const newValues = {
         ...defaultValues,
         ...sanitizedEvent,
-      };
+      } as EventFormValues & Record<string, unknown>;
+
+      // Dériver date / heures depuis start_at / end_at (avec fallback legacy
+      // géré par les helpers). On retire les champs qui ne sont pas des entrées
+      // de formulaire pour ne pas les renvoyer tels quels à la sauvegarde.
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const toTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const start = getEventStart(event);
+      const end = getEventEnd(event);
+      newValues.date = start ? `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}` : '';
+      newValues.start_time = start ? toTime(start) : '';
+      newValues.end_time = end ? toTime(end) : '';
+      delete newValues.datetime;
+      delete newValues.start_at;
+      delete newValues.end_at;
 
       // En duplication : on crée un nouvel événement, donc pas d'id ni de lien
       // de récurrence hérités.
@@ -143,19 +158,19 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
         newValues.recurrence_id = null;
       }
 
-      setFormData(newValues);
-      formDataRef.current = newValues;
+      setFormData(newValues as EventFormValues);
+      formDataRef.current = newValues as EventFormValues;
 
       // Duplication d'un événement récurrent : pré-remplir la récurrence.
       if (duplicate && event.recurrence) {
-        const startTime = event.datetime?.match(/\d{1,2}h\d{2}/)?.[0] ?? '';
         setEventType('recurring');
         setRecurrence({
           interval: event.recurrence.interval,
           weekdays: event.recurrence.weekdays,
           startDate: event.recurrence.start_date,
           endDate: event.recurrence.end_date,
-          startTime,
+          startTime: start ? toTime(start) : '',
+          endTime: end ? toTime(end) : '',
         });
       } else {
         setEventType('single');
@@ -223,6 +238,16 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     return selectedOrgId ?? null;
   };
 
+  // Transforme les champs de formulaire en payload de colonnes : combine
+  // date + heures en start_at / end_at et écarte les champs propres au formulaire
+  // (date, start_time, end_time) qui ne sont pas des colonnes de la table.
+  const toEventPayload = (values: EventFormValues): Partial<Event> => {
+    const { date, start_time, end_time, ...rest } = values;
+    const start_at = date && start_time ? `${date}T${start_time}:00` : null;
+    const end_at = date && end_time ? `${date}T${end_time}:00` : null;
+    return { ...rest, start_at, end_at };
+  };
+
   const onSubmit = async (data: Partial<Event>) => {
     // Nettoyer les données : convertir les chaînes vides en null pour la base de données
     const cleanData = Object.fromEntries(
@@ -285,7 +310,6 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
 
     const shared: RecurringSharedFields = {
       name: currentFormData.name,
-      end_time: currentFormData.end_time || null,
       location_place: currentFormData.location_place || null,
       location_city: formatCityName(currentFormData.location_city),
       location_department: currentFormData.location_department || null,
@@ -331,13 +355,13 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       errors.push('Nom de l\'événement');
       fieldErrors.name = 'Le nom de l\'événement est obligatoire';
     }
-    if (!currentFormData.datetime?.trim()) {
-      errors.push('Date et heure');
-      fieldErrors.datetime = 'La date et heure sont obligatoires';
-    }
     if (!currentFormData.date?.trim()) {
-      errors.push('Date réelle');
-      fieldErrors.date = 'La date réelle est obligatoire';
+      errors.push('Date');
+      fieldErrors.date = 'La date est obligatoire';
+    }
+    if (!currentFormData.start_time?.trim()) {
+      errors.push('Heure de début');
+      fieldErrors.start_time = "L'heure de début est obligatoire";
     }
     if (!currentFormData.location_city?.trim()) {
       errors.push('Ville');
@@ -370,7 +394,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       price: currentFormData.price ? formatPrice(currentFormData.price) : currentFormData.price,
     };
 
-    await onSubmit(normalizedFormData);
+    await onSubmit(toEventPayload(normalizedFormData));
   };
 
   return (
@@ -485,30 +509,13 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 <RecurrenceFields
                   value={recurrence}
                   onChange={setRecurrence}
-                  endTime={formData.end_time || ''}
-                  onEndTimeChange={(value) => setFormData(prev => ({ ...prev, end_time: value }))}
                   theme={theme}
                   errors={validationErrors}
                 />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="datetime">Date et heure *</Label>
-                    <Input
-                      id="datetime"
-                      value={formData.datetime || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, datetime: e.target.value }))}
-                      placeholder="ex: mercredi 21 mai 2025 à 16h30"
-                      className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.datetime ? 'border-red-500 focus:border-red-500' : ''}`}
-                    />
-                    {validationErrors.datetime ? (
-                      <p className="text-red-500 text-sm">{validationErrors.datetime}</p>
-                    ) : (
-                      <p className="text-xs text-white/60">Format : jour date mois année à/de heure</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date réelle *</Label>
+                    <Label htmlFor="date">Date *</Label>
                     <Input
                       id="date"
                       type="date"
@@ -516,19 +523,30 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                       onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                       className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.date ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
-                    {validationErrors.date ? (
+                    {validationErrors.date && (
                       <p className="text-red-500 text-sm">{validationErrors.date}</p>
-                    ) : (
-                      <p className="text-xs text-white/60">Permet un tri fiable par date</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="start_time">Heure de début *</Label>
+                    <Input
+                      id="start_time"
+                      type="time"
+                      value={formData.start_time || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                      className={`${theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'} ${validationErrors.start_time ? 'border-red-500 focus:border-red-500' : ''}`}
+                    />
+                    {validationErrors.start_time && (
+                      <p className="text-red-500 text-sm">{validationErrors.start_time}</p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="end_time">Heure de fin (optionnel)</Label>
                     <Input
                       id="end_time"
+                      type="time"
                       value={formData.end_time || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
-                      placeholder="ex: 19h00"
                       className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
                     />
                   </div>
@@ -688,7 +706,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 type="button"
                 className="bg-green-600 text-white hover:bg-green-700"
                 disabled={false}
-                onClick={() => onSave({ ...formData, status: 'accepted' })}
+                onClick={() => onSave({ ...toEventPayload(formData), status: 'accepted' })}
               >
                 Accepter
               </Button>
@@ -696,7 +714,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 type="button"
                 className="bg-red-600 text-white hover:bg-red-700"
                 disabled={false}
-                onClick={() => onSave({ ...formData, status: 'rejected' })}
+                onClick={() => onSave({ ...toEventPayload(formData), status: 'rejected' })}
               >
                 Refuser
               </Button>
