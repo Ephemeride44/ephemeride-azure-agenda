@@ -14,11 +14,8 @@ export type Database = {
           audience: string | null
           cover_url: string | null
           createdby: Json | null
-          date: string | null
-          datetime: string | null
           emoji: string | null
           end_at: string | null
-          end_time: string | null
           id: string
           start_at: string | null
           location_city: string | null
@@ -36,11 +33,8 @@ export type Database = {
           audience?: string | null
           cover_url?: string | null
           createdby?: Json | null
-          date?: string | null
-          datetime?: string | null
           emoji?: string | null
           end_at?: string | null
-          end_time?: string | null
           id?: string
           start_at?: string | null
           location_city?: string | null
@@ -58,11 +52,8 @@ export type Database = {
           audience?: string | null
           cover_url?: string | null
           createdby?: Json | null
-          date?: string | null
-          datetime?: string | null
           emoji?: string | null
           end_at?: string | null
-          end_time?: string | null
           id?: string
           start_at?: string | null
           location_city?: string | null
