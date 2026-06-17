@@ -85,7 +85,8 @@ export function getDateParts(event: Event) {
 
 export function formatTimeDisplay(event: Event) {
   if (!event.datetime) return "";
-  const timeMatch = event.datetime.match(/(\d{1,2}h\d{2})/);
+  // Les minutes sont optionnelles : on accepte « 14h » comme « 14h30 ».
+  const timeMatch = event.datetime.match(/(\d{1,2}h\d{0,2})/);
   if (timeMatch) {
     if (event.end_time) {
       return `${timeMatch[1]} — ${event.end_time}`;

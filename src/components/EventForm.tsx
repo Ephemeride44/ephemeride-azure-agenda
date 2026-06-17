@@ -39,14 +39,26 @@ type EventFormValues = {
   organization_id?: string | null;
 };
 
+// Règle de récurrence telle que jointe depuis la table event_recurrences.
+type JoinedRecurrence = {
+  interval: number;
+  weekdays: number[];
+  start_date: string;
+  end_date: string;
+} | null;
+
+type EventFormEvent = Partial<Event> & { recurrence?: JoinedRecurrence };
+
 interface EventFormProps {
-  event?: Partial<Event>;
+  event?: EventFormEvent;
   onSave: (event: Partial<Event>) => Promise<boolean>;
   onCancel: () => void;
   showValidationActions?: boolean;
   themes?: Theme[];
   theme?: 'light' | 'dark';
   onSaveRecurring?: (rule: RecurrenceRule, shared: RecurringSharedFields) => Promise<boolean>;
+  // Mode duplication : pré-remplit le formulaire mais reste en création.
+  duplicate?: boolean;
 }
 
 const defaultRecurrence: RecurrenceRule = {
@@ -82,10 +94,11 @@ const fetchThemes = async (): Promise<Theme[]> => {
   return data as Theme[];
 };
 
-const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp, onSaveRecurring }: EventFormProps) => {
+const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp, onSaveRecurring, duplicate }: EventFormProps) => {
   const { toast } = useToast();
   const { currentOrganization, isSuperAdmin, organizations } = useUserRoleContext();
-  const isEditing = !!event;
+  // En duplication, on pré-remplit depuis un événement source mais on reste en création.
+  const isEditing = !!event && !duplicate;
   // Le mode récurrent n'est proposé qu'à la création (et si un handler est fourni).
   const canRecur = !isEditing && !!onSaveRecurring;
   const [eventType, setEventType] = useState<'single' | 'recurring'>('single');
@@ -104,29 +117,55 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     formDataRef.current = formData;
   }, [formData]);
 
-  // Remplir le formulaire si édition
+  // Remplir le formulaire si édition / duplication
   useEffect(() => {
     if (event) {
-      // Convertir les valeurs null en chaînes vides pour éviter les warnings React
+      // Convertir les valeurs null en chaînes vides pour éviter les warnings React.
+      // On écarte les champs joints (theme, recurrence) qui ne sont pas des colonnes.
       const sanitizedEvent = Object.fromEntries(
-        Object.entries(event).map(([key, value]) => [
-          key, 
-          value === null ? '' : value
-        ])
+        Object.entries(event)
+          .filter(([key]) => !['recurrence', 'theme'].includes(key))
+          .map(([key, value]) => [
+            key,
+            value === null ? '' : value
+          ])
       );
-      
+
       const newValues = {
         ...defaultValues,
         ...sanitizedEvent,
       };
-      
+
+      // En duplication : on crée un nouvel événement, donc pas d'id ni de lien
+      // de récurrence hérités.
+      if (duplicate) {
+        newValues.id = '';
+        newValues.recurrence_id = null;
+      }
+
       setFormData(newValues);
       formDataRef.current = newValues;
+
+      // Duplication d'un événement récurrent : pré-remplir la récurrence.
+      if (duplicate && event.recurrence) {
+        const startTime = event.datetime?.match(/\d{1,2}h\d{2}/)?.[0] ?? '';
+        setEventType('recurring');
+        setRecurrence({
+          interval: event.recurrence.interval,
+          weekdays: event.recurrence.weekdays,
+          startDate: event.recurrence.start_date,
+          endDate: event.recurrence.end_date,
+          startTime,
+        });
+      } else {
+        setEventType('single');
+        setRecurrence(defaultRecurrence);
+      }
     } else {
       setFormData(defaultValues);
       formDataRef.current = defaultValues;
     }
-  }, [event]);
+  }, [event, duplicate]);
 
   const { data: themesData, isLoading: isLoadingThemes } = useQuery<Theme[]>({
     queryKey: ["themes"],

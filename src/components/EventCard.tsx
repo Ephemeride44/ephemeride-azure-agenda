@@ -1,36 +1,87 @@
 import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Euro, Ticket } from "lucide-react";
+import { ArrowRight, Euro, Ticket, Pencil, Repeat } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useUserRoleContext } from "@/components/UserRoleProvider";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import EventForm from "@/components/EventForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { getDayOfWeek, getDateBlockColor, monthNamesShort, getDateParts, formatTimeDisplay, isToday, formatCityName, formatPrice } from "@/lib/utils";
+import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 
 interface EventCardProps {
   event: Event;
   isPast?: boolean;
 }
 
-const EventCard = ({ event, isPast = false }: EventCardProps) => {
+const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const [openDialog, setOpenDialog] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  // Copie locale de l'événement : permet de refléter une modification admin
+  // sans recharger la page (on reste exactement au même endroit).
+  const [event, setEvent] = useState(eventProp);
   const { theme } = useTheme();
+  const { toast } = useToast();
+  const { isSuperAdmin, isOrganizationAdmin } = useUserRoleContext();
+  const canEdit = isSuperAdmin || isOrganizationAdmin;
+
+  useEffect(() => {
+    setEvent(eventProp);
+  }, [eventProp]);
+
+  const handleSaveEvent = async (data: Partial<typeof event>): Promise<boolean> => {
+    // Nettoyer les données avant l'update (retirer la relation jointe et l'id,
+    // convertir les UUID vides en null).
+    const cleanData = { ...data } as Record<string, unknown>;
+    delete cleanData.theme;
+    delete cleanData.recurrence;
+    delete cleanData.id;
+    if (cleanData.organization_id === '') cleanData.organization_id = null;
+    if (cleanData.theme_id === '') cleanData.theme_id = null;
+
+    const updated = { ...cleanData, updated_at: new Date().toISOString() };
+    const { error } = await supabase.from('events').update(updated).eq('id', event.id);
+
+    if (error) {
+      toast({
+        title: "Erreur lors de la mise à jour",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setEvent(prev => ({ ...prev, ...updated }) as typeof event);
+    toast({
+      title: "Événement mis à jour",
+      description: "L'événement a été mis à jour avec succès",
+    });
+    setShowEdit(false);
+    return true;
+  };
 
   const { day, month, year } = getDateParts(event);
+  const recurrenceLabel = describeRecurrenceFromEvent(event, { includeTime: false, withPrefix: false });
 
   // Format location
   const locationString = `${event.location_place || ''}${event.location_city ? ` — ${formatCityName(event.location_city)}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
-  
+
   const cardContent = (
     <div className="flex h-full">
       {/* Date block à gauche */}
-      <div className={`${getDateBlockColor(event.date ? getDayOfWeek(event.date) : "lundi")} text-white flex flex-col items-center justify-center px-4 py-6 min-w-[120px] ${isPast ? 'opacity-60' : ''}`}>
+      <div className={`${getDateBlockColor(event.date ? getDayOfWeek(event.date) : "lundi")} text-white flex flex-col items-center justify-center px-4 py-6 w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
         {isToday(event) ? (
           <>
             <div className="text-lg font-bold leading-none mb-1">Aujourd'hui</div>
             {formatTimeDisplay(event) && (
-              <div className="text-xs font-medium mt-2">à {formatTimeDisplay(event).replace(/\s*—.*/, '')}</div>
+              <>
+                <div className="w-8 border-t border-white/30 my-2"></div>
+                <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
+              </>
             )}
           </>
         ) : (
@@ -83,17 +134,60 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
 
       {/* Contenu principal */}
       <div className="flex-1 p-6 relative">
+        {/* Bouton Modifier (admins uniquement) */}
+        {canEdit && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowEdit(true);
+                }}
+                aria-label="Modifier l'événement"
+                className={`absolute top-4 right-4 z-10 p-2 rounded-full border transition-colors ${theme === 'dark'
+                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  }`}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs">
+              Modifier l'événement
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Dialog d'édition (admins) : s'ouvre sur place, la fermeture ne déplace pas la page */}
+        {canEdit && (
+          <Dialog open={showEdit} onOpenChange={setShowEdit}>
+            <DialogContent
+              className={`w-3/4 max-w-4xl mx-auto max-h-[90vh] overflow-y-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`}
+            >
+              <DialogHeader>
+                <DialogTitle>Modifier l'événement</DialogTitle>
+              </DialogHeader>
+              <EventForm
+                event={event}
+                onSave={handleSaveEvent}
+                onCancel={() => setShowEdit(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
         {/* Nom de l'événement */}
-        <h3 className="text-xl font-bold mb-3 leading-tight">{event.name}</h3>
+        <h3 className={`text-xl font-bold mb-3 leading-tight ${canEdit ? 'pr-10' : ''}`}>{event.name}</h3>
 
         {/* Lieu */}
         <div className="flex items-center text-sm mb-2">
-          <img 
-            src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png" 
-            alt="Lieu" 
-            className={`w-4 h-4 mr-2 ${
-              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
-            }`} 
+          <img
+            src="/lovable-uploads/680f536f-accd-4c50-8dd4-82707544fbe1.png"
+            alt="Lieu"
+            className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
+              }`}
           />
           {locationString}
         </div>
@@ -101,10 +195,17 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         {/* Prix avec icône euro */}
         {!isPast && event.price && (
           <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-            <Euro className={`w-4 h-4 mr-1 ${
-              theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
-            }`} />
+            <Euro className={`w-4 h-4 mr-1 ${theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'
+              }`} />
             {formatPrice(event.price)}
+          </div>
+        )}
+
+        {/* Récurrence avec icône (même style que le prix) */}
+        {recurrenceLabel && (
+          <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+            <Repeat className={`w-4 h-4 mr-1 shrink-0 ${theme === 'dark' ? 'brightness-0 invert' : 'brightness-0'}`} />
+            {recurrenceLabel}
           </div>
         )}
 
@@ -128,11 +229,10 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
                     rel="noopener noreferrer"
                     className="cursor-pointer"
                   >
-                    <Ticket className={`w-5 h-5 transition-transform hover:scale-110 ${
-                      theme === 'dark' 
-                        ? 'text-white/70 hover:text-white' 
+                    <Ticket className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
+                        ? 'text-white/70 hover:text-white'
                         : 'text-gray-600 hover:text-gray-800'
-                    }`} />
+                      }`} />
                   </a>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="text-xs">
@@ -151,11 +251,10 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
                         href={event.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`px-4 py-2 text-xs font-medium border transition-colors ${
-                          theme === 'dark' 
-                            ? 'border-white/20 text-white hover:bg-white/10' 
+                        className={`px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
+                            ? 'border-white/20 text-white hover:bg-white/10'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         PLUS D'INFOS
                       </a>
@@ -173,11 +272,10 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
                         rel="noopener noreferrer"
                         className="cursor-pointer"
                       >
-                        <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${
-                          theme === 'dark' 
-                            ? 'text-white/70 hover:text-white' 
+                        <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
+                            ? 'text-white/70 hover:text-white'
                             : 'text-gray-600 hover:text-gray-800'
-                        }`} />
+                          }`} />
                       </a>
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">

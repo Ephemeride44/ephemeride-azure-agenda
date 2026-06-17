@@ -78,7 +78,7 @@ const Index = () => {
       // Requête pour les événements futurs uniquement
       let futureQuery = supabase
         .from('events')
-        .select('*, theme:theme_id(*)')
+        .select('*, theme:theme_id(*), recurrence:recurrence_id(*)')
         .eq('status', 'accepted')
         .gte('date', today); // Filtrer uniquement les événements futurs ou d'aujourd'hui
 
