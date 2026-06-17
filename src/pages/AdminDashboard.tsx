@@ -356,6 +356,7 @@ const AdminDashboard = () => {
           ticketing_url: eventData.ticketing_url || null,
           emoji: eventData.emoji || null,
           theme_id: eventData.theme_id || null,
+          cover_url: eventData.cover_url || null,
           organization_id: organizationId,
           updated_at: new Date().toISOString(),
           status: "accepted",
