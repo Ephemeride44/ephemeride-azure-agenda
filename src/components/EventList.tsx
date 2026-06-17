@@ -7,15 +7,25 @@ import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide
 import { useTheme } from "@/components/ThemeProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getDayOfWeek, daysOfWeek, monthNames, monthNamesShort, getDateBlockColor } from "@/lib/utils";
+import EventFilters from "@/components/events/EventFilters";
+import type { FilterValues } from "@/lib/eventFilters";
 
 interface EventListProps {
   events: Event[];
   pastEvents?: Event[];
   onLoadPastEvents?: () => void;
   lastUpdatedAt?: string | null;
+  /** Options disponibles par filtre (chargées en amont, indépendamment des filtres actifs). */
+  filterOptions: Record<string, string[]>;
+  /** Valeurs de filtre courantes (portées par l'URL). */
+  filterValues: FilterValues;
+  /** Met à jour les filtres. */
+  onFilterChange: (values: FilterValues) => void;
+  /** Réinitialise les filtres. */
+  onFilterReset: () => void;
 }
 
-const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, filterOptions, filterValues, onFilterChange, onFilterReset }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
@@ -94,6 +104,8 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt }:
     return grouped;
   };
 
+  // Le filtrage est désormais effectué côté serveur (requête Supabase) :
+  // les listes reçues sont déjà filtrées.
   const groupedUpcomingEvents = groupEventsByMonthAndDay(upcomingEvents);
   const groupedPastEvents = groupEventsByMonthAndDay(pastEvents);
 
@@ -178,10 +190,24 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt }:
         </div>
       </div>
       
+      {/* Barre de filtres (extensible : voir src/lib/eventFilters.ts) */}
+      <EventFilters
+        options={filterOptions}
+        values={filterValues}
+        onChange={onFilterChange}
+        onReset={onFilterReset}
+      />
+
       {/* Upcoming Events Section */}
       <div className="space-y-8 mb-12">
         <h2 className={`text-2xl font-semibold mb-8 ${textColorClass}`}>Événements à venir</h2>
-        
+
+        {upcomingEvents.length === 0 && (
+          <p className={`opacity-70 ${textColorClass}`}>
+            Aucun événement à venir ne correspond à votre recherche.
+          </p>
+        )}
+
         {Object.entries(groupedUpcomingEvents).map(([month, dayEvents]) => (
           <div key={month} className="mb-12">
             {/* Month separator */}
