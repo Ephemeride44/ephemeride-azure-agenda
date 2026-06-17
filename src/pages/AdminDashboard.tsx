@@ -663,12 +663,15 @@ const AdminDashboard = () => {
                 delete mappedData.theme;
 
                 if (eventData.status === 'accepted') {
-                  // Nettoyer les données pour éviter les UUID vides
-                  const cleanData = { ...mappedData, status: 'accepted' };
-                  // Convertir les chaînes vides en null pour les champs UUID
-                  if (cleanData.organization_id === '') cleanData.organization_id = null;
-                  if (cleanData.theme_id === '') cleanData.theme_id = null;
-                  
+                  // Convertir les chaînes vides en null : les colonnes UUID
+                  // (organization_id, theme_id, recurrence_id) rejettent "".
+                  const cleanData = Object.fromEntries(
+                    Object.entries({ ...mappedData, status: 'accepted' }).map(([key, value]) => [
+                      key,
+                      value === '' ? null : value,
+                    ])
+                  ) as typeof mappedData;
+
                   const { error } = await supabase.from('events').update(cleanData).eq('id', currentEvent?.id);
                   if (error) throw error;
                   setShowForm(false);
