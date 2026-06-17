@@ -73,33 +73,115 @@ export function getMonthNameShort(index: number): string {
   return monthNamesShort[index] || "";
 }
 
+/**
+ * Sous-ensemble des champs d'un événement nécessaires au calcul date/heure.
+ * Permet d'appeler les helpers depuis du code qui ne manipule qu'un événement
+ * partiel (ex : recurrence.ts).
+ */
+export type EventTimeFields = {
+  start_at?: string | null;
+  end_at?: string | null;
+  date?: string | null;
+  datetime?: string | null;
+  end_time?: string | null;
+};
+
+/**
+ * Parse un timestamp naïf Postgres (`timestamp` sans fuseau), ex
+ * "2025-05-21T16:30:00" ou "2025-05-21 16:30:00", en `Date` interprétée en
+ * heure LOCALE. On ne fait jamais `new Date(value)` directement, qui
+ * interpréterait une chaîne ISO sans `Z` de façon ambiguë selon le moteur.
+ */
+export function parseLocalDateTime(value?: string | null): Date | null {
+  if (!value) return null;
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi, s] = m;
+  return new Date(
+    parseInt(y, 10), parseInt(mo, 10) - 1, parseInt(d, 10),
+    parseInt(h, 10), parseInt(mi, 10), s ? parseInt(s, 10) : 0, 0,
+  );
+}
+
+/**
+ * Date+heure de début d'un événement. Utilise `start_at` en priorité ; à défaut
+ * (données legacy non migrées) reconstruit depuis `date` + l'heure extraite du
+ * texte `datetime`. Retourne null si aucune date n'est disponible.
+ */
+export function getEventStart(event: EventTimeFields): Date | null {
+  const fromStartAt = parseLocalDateTime(event.start_at);
+  if (fromStartAt) return fromStartAt;
+  if (!event.date) return null;
+  const [year, month, day] = event.date.split("-").map((n) => parseInt(n, 10));
+  const t = event.datetime?.match(/(\d{1,2})h(\d{0,2})/);
+  // Midi par défaut quand aucune heure n'est connue (n'affecte que la partie date).
+  const hh = t ? parseInt(t[1], 10) : 12;
+  const mi = t && t[2] ? parseInt(t[2], 10) : 0;
+  return new Date(year, month - 1, day, hh, mi, 0, 0);
+}
+
+/** Date+heure de fin (optionnelle). */
+export function getEventEnd(event: EventTimeFields): Date | null {
+  return parseLocalDateTime(event.end_at);
+}
+
+/** Formate une heure en français : "16h30", ou "16h" pour une heure pile. */
+export function formatFrTime(date: Date): string {
+  const h = date.getHours();
+  const m = date.getMinutes();
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+
+/** Libellé de date long en français : "mercredi 21 mai 2025". */
+export function formatFrDateLabel(date: Date): string {
+  return `${daysOfWeek[date.getDay()]} ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * Libellé complet date + heure pour les tableaux (admin), ex
+ * "mercredi 21 mai 2025 à 16h30". Fallback sur le texte legacy `datetime`.
+ */
+export function formatEventDateTimeLabel(event: EventTimeFields): string {
+  const start = getEventStart(event);
+  if (!start) return event.datetime ?? "";
+  const time = formatTimeDisplay(event);
+  const label = formatFrDateLabel(start);
+  return time ? `${label} à ${time}` : label;
+}
+
 export function getDateParts(event: Event) {
-  if (!event.date) return { day: "", month: "", year: "" };
-  const [year, month, day] = event.date.split("-");
+  const d = getEventStart(event);
+  if (!d) return { day: "", month: "", year: "" };
   return {
-    day: parseInt(day, 10).toString().padStart(2, '0'),
-    month: monthNamesShort[parseInt(month, 10) - 1] || "",
-    year: year
+    day: d.getDate().toString().padStart(2, "0"),
+    month: monthNamesShort[d.getMonth()] || "",
+    year: d.getFullYear().toString(),
   };
 }
 
-export function formatTimeDisplay(event: Event) {
+export function formatTimeDisplay(event: EventTimeFields) {
+  const start = getEventStart(event);
+  // Chemin nominal : start_at est une vraie date+heure.
+  if (parseLocalDateTime(event.start_at) && start) {
+    const end = getEventEnd(event);
+    // 00:00 = heure non renseignée (events legacy backfillés) : on n'affiche rien.
+    if (start.getHours() === 0 && start.getMinutes() === 0 && !end) return "";
+    const startLabel = formatFrTime(start);
+    return end ? `${startLabel} — ${formatFrTime(end)}` : startLabel;
+  }
+  // Fallback legacy : extraction par regex sur le texte `datetime`.
   if (!event.datetime) return "";
-  // Les minutes sont optionnelles : on accepte « 14h » comme « 14h30 ».
   const timeMatch = event.datetime.match(/(\d{1,2}h\d{0,2})/);
   if (timeMatch) {
-    if (event.end_time) {
-      return `${timeMatch[1]} — ${event.end_time}`;
-    }
-    return timeMatch[1];
+    return event.end_time ? `${timeMatch[1]} — ${event.end_time}` : timeMatch[1];
   }
   return "";
 }
 
 export function isToday(event: Event) {
-  if (!event.date) return false;
+  const eventDate = getEventStart(event);
+  if (!eventDate) return false;
   const today = new Date();
-  const eventDate = new Date(event.date);
   return (
     today.getFullYear() === eventDate.getFullYear() &&
     today.getMonth() === eventDate.getMonth() &&

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { getDayOfWeek, daysOfWeek, monthNames, monthNamesShort, getDateBlockColor } from "@/lib/utils";
+import { daysOfWeek, monthNames, monthNamesShort, getDateBlockColor, getEventStart } from "@/lib/utils";
 import EventFilters from "@/components/events/EventFilters";
 import type { FilterValues } from "@/lib/eventFilters";
 
@@ -58,16 +58,18 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
   useEffect(() => {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const pad = (n: number) => String(n).padStart(2, "0");
     const upcoming: Event[] = [];
 
     events.forEach(event => {
-      if (event.date) {
-        if (event.date >= todayStr) {
-          upcoming.push(event);
-        }
+      const start = getEventStart(event);
+      if (!start) return;
+      const startStr = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+      if (startStr >= todayStr) {
+        upcoming.push(event);
       }
     });
-    
+
     setUpcomingEvents(upcoming);
   }, [events]);
 
@@ -83,22 +85,18 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
     const grouped: Record<string, Record<string, Event[]>> = {};
     
     eventList.forEach(event => {
-      if (!event.date) return;
-      let dateKey = event.datetime.split(" à ")[0].split(" de ")[0];
-      let monthKey = "";
-      // dateKey = YYYY-MM-DD
-      const [year, month, day] = event.date.split("-");
-      dateKey = `${day} ${monthNames[parseInt(month, 10)-1].toLowerCase()} ${year}`;
-      monthKey = `${monthNames[parseInt(month, 10)-1]} ${year}`;
-      if (monthKey) {
-        if (!grouped[monthKey]) {
-          grouped[monthKey] = {};
-        }
-        if (!grouped[monthKey][dateKey]) {
-          grouped[monthKey][dateKey] = [];
-        }
-        grouped[monthKey][dateKey].push(event);
+      const start = getEventStart(event);
+      if (!start) return;
+      const monthName = monthNames[start.getMonth()];
+      const dateKey = `${start.getDate()} ${monthName.toLowerCase()} ${start.getFullYear()}`;
+      const monthKey = `${monthName} ${start.getFullYear()}`;
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = {};
       }
+      if (!grouped[monthKey][dateKey]) {
+        grouped[monthKey][dateKey] = [];
+      }
+      grouped[monthKey][dateKey].push(event);
     });
     
     return grouped;
@@ -221,10 +219,8 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
             
             {Object.entries(dayEvents).map(([date, events]) => {
               const firstEvent = events[0];
-              let dayOfWeek = "";
-              if (firstEvent && firstEvent.date) {
-                dayOfWeek = getDayOfWeek(firstEvent.date);
-              }
+              const firstStart = firstEvent ? getEventStart(firstEvent) : null;
+              const dayOfWeek = firstStart ? daysOfWeek[firstStart.getDay()] : "";
               const stickyBg = theme === "light" ? "bg-[#faf3ec]" : "bg-[#1B263B]";
               return (
                 <div key={date} className="mb-6">
@@ -280,12 +276,10 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
                 </div>
                 
                 {Object.entries(dayEvents).map(([date, events]) => {
-                  // On récupère la date ISO de l'événement pour le jour de la semaine
+                  // Jour de la semaine dérivé de la date+heure de début.
                   const firstEvent = events[0];
-                  let dayOfWeek = "";
-                  if (firstEvent && firstEvent.date) {
-                    dayOfWeek = getDayOfWeek(firstEvent.date);
-                  }
+                  const firstStart = firstEvent ? getEventStart(firstEvent) : null;
+                  const dayOfWeek = firstStart ? daysOfWeek[firstStart.getDay()] : "";
                   return (
                     <div key={date} className="mb-6">
                       <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>

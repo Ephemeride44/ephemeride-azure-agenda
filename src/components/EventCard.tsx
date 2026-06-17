@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import EventForm from "@/components/EventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getDayOfWeek, getDateBlockColor, monthNamesShort, getDateParts, formatTimeDisplay, isToday, formatCityName, formatPrice } from "@/lib/utils";
+import { daysOfWeek, getDateBlockColor, getDateParts, getEventStart, formatTimeDisplay, isToday, formatCityName, formatPrice } from "@/lib/utils";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 
 interface EventCardProps {
@@ -65,6 +65,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   };
 
   const { day, month, year } = getDateParts(event);
+  const eventStart = getEventStart(event);
+  const dayName = eventStart ? daysOfWeek[eventStart.getDay()] : "lundi";
   const recurrenceLabel = describeRecurrenceFromEvent(event, { includeTime: false, withPrefix: false });
 
   // Format location
@@ -73,7 +75,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const cardContent = (
     <div className="flex h-full">
       {/* Date block à gauche */}
-      <div className={`${getDateBlockColor(event.date ? getDayOfWeek(event.date) : "lundi")} text-white flex flex-col items-center justify-center px-4 py-6 w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
+      <div className={`${getDateBlockColor(dayName)} text-white flex flex-col items-center justify-center px-4 py-6 w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
         {isToday(event) ? (
           <>
             <div className="text-lg font-bold leading-none mb-1">Aujourd'hui</div>

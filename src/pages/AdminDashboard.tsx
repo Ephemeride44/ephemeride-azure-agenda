@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { buildRecurringEvents, describeRecurrenceFromEvent, type RecurrenceRule, type RecurringSharedFields } from "@/lib/recurrence";
+import { formatEventDateTimeLabel } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,8 @@ const AdminDashboard = () => {
   const emptyEvent: EventRow = {
     id: '',
     name: '',
+    start_at: null,
+    end_at: null,
     datetime: '',
     date: '',
     end_time: null,
@@ -120,8 +123,7 @@ const AdminDashboard = () => {
     // Super admin avec "Toutes les organisations" - pas de filtre
 
     query = query
-      .order('date', { ascending: false })
-      .order('datetime', { ascending: false });
+      .order('start_at', { ascending: false, nullsFirst: false });
 
     const { data, error } = await query;
     if (error) {
@@ -153,17 +155,15 @@ const AdminDashboard = () => {
     const today = new Date().toISOString().slice(0, 10); // format YYYY-MM-DD
     // Filtrer sur la date si on ne veut pas les événements passés
     if (!showPastEvents) {
-      query = query.gte('date', today).order('date', { ascending: true });
+      query = query.gte('start_at', today).order('start_at', { ascending: true, nullsFirst: false });
     } else {
-      query = query.lt('date', today).order('date', { ascending: false });
+      query = query.lt('start_at', today).order('start_at', { ascending: false, nullsFirst: false });
     }
-    query = query
-      .order('datetime', { ascending: false })
-      .range(from, to);
+    query = query.range(from, to);
     if (search) {
       const lower = debouncedSearch.toLowerCase();
       query = query.or(
-        `name.ilike.%${lower}%,datetime.ilike.%${lower}%,location_place.ilike.%${lower}%,location_city.ilike.%${lower}%,location_department.ilike.%${lower}%`
+        `name.ilike.%${lower}%,location_place.ilike.%${lower}%,location_city.ilike.%${lower}%,location_department.ilike.%${lower}%`
       );
     }
     const { data, error, count } = await query;
@@ -347,9 +347,8 @@ const AdminDashboard = () => {
       const { error: insertError } = await supabase
         .from('events')
         .insert({
-          datetime: eventData.datetime,
-          date: eventData.date || null,
-          end_time: eventData.end_time || null,
+          start_at: eventData.start_at || null,
+          end_at: eventData.end_at || null,
           name: eventData.name,
           location_place: eventData.location_place || null,
           location_city: eventData.location_city,
@@ -511,7 +510,7 @@ const AdminDashboard = () => {
               <TableBody>
                 {pendingEvents.map(event => (
                   <TableRow key={event.id}>
-                    <TableCell className="font-medium">{event.datetime}</TableCell>
+                    <TableCell className="font-medium">{formatEventDateTimeLabel(event)}</TableCell>
                     <TableCell>
                       <div className="max-w-xs">
                         <div className="flex items-center gap-2">

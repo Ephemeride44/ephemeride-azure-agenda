@@ -29,3 +29,6 @@ yarn.lock
 
 # Supabase CLI
 supabase/.temp/
+
+# Dumps de base de données (contiennent des données de prod) + scripts ad hoc
+backups/

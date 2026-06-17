@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash, Repeat, Copy } from "lucide-react";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
+import { formatEventDateTimeLabel } from "@/lib/utils";
 
 interface EventsTableProps {
   events: Event[];
@@ -30,7 +31,7 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries, onDuplicate }: 
         <TableBody>
           {events.map((event) => (
             <TableRow key={event.id}>
-              <TableCell className="font-medium">{event.datetime}</TableCell>
+              <TableCell className="font-medium">{formatEventDateTimeLabel(event)}</TableCell>
               <TableCell>
                 <div className="max-w-xs">
                   <div className="flex items-center gap-2">

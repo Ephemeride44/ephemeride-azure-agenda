@@ -15,10 +15,12 @@ export type Database = {
           cover_url: string | null
           createdby: Json | null
           date: string | null
-          datetime: string
+          datetime: string | null
           emoji: string | null
+          end_at: string | null
           end_time: string | null
           id: string
+          start_at: string | null
           location_city: string | null
           location_department: string | null
           location_place: string | null
@@ -35,10 +37,12 @@ export type Database = {
           cover_url?: string | null
           createdby?: Json | null
           date?: string | null
-          datetime: string
+          datetime?: string | null
           emoji?: string | null
+          end_at?: string | null
           end_time?: string | null
           id?: string
+          start_at?: string | null
           location_city?: string | null
           location_department?: string | null
           location_place?: string | null
@@ -55,10 +59,12 @@ export type Database = {
           cover_url?: string | null
           createdby?: Json | null
           date?: string | null
-          datetime?: string
+          datetime?: string | null
           emoji?: string | null
+          end_at?: string | null
           end_time?: string | null
           id?: string
+          start_at?: string | null
           location_city?: string | null
           location_department?: string | null
           location_place?: string | null
