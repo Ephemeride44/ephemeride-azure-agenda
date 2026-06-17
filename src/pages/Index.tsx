@@ -11,9 +11,17 @@ import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { Shield } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
+import {
+  applyFiltersToQuery,
+  eventFilterDefinitions,
+  readFilterValues,
+  sortFilterOptions,
+  writeFilterParams,
+  type FilterValues,
+} from "@/lib/eventFilters";
 
 const supabase: SupabaseClient = baseSupabase;
 
@@ -27,8 +35,22 @@ const Index = () => {
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
   const { theme } = useTheme();
   const { user: contextUser, isSuperAdmin, organizations, isLoading } = useUserRoleContext();
+
+  // Valeurs de filtre portées par l'URL (partageables, compatibles avec l'historique).
+  const filterValues = useMemo<FilterValues>(() => readFilterValues(searchParams), [searchParams]);
+  const filtersKey = JSON.stringify(filterValues);
+
+  const handleFilterChange = (values: FilterValues) => {
+    setSearchParams(writeFilterParams(values), { replace: true });
+  };
+
+  const handleFilterReset = () => {
+    setSearchParams({}, { replace: true });
+  };
 
   // Add scroll event listener to detect when to make the header sticky
   useEffect(() => {
@@ -71,6 +93,9 @@ const Index = () => {
         // Utilisateur non connecté : récupérer tous les événements publics
       }
 
+      // Appliquer les filtres actifs (département, etc.) côté serveur
+      futureQuery = applyFiltersToQuery(futureQuery, filterValues);
+
       // Trier les événements futurs par date croissante
       futureQuery = futureQuery
         .order('date', { nullsFirst: false })
@@ -110,7 +135,16 @@ const Index = () => {
       }
     };
     fetchEvents();
-  }, [contextUser, isSuperAdmin, organizations, isLoading]);
+    // filterValues est suivi via filtersKey (clé stable) pour éviter les rechargements liés à l'identité d'objet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextUser, isSuperAdmin, organizations, isLoading, filtersKey]);
+
+  // Les filtres étant appliqués côté serveur, un changement de filtre invalide
+  // les événements passés déjà chargés afin qu'ils soient rechargés filtrés.
+  useEffect(() => {
+    setPastEvents([]);
+    setIsPastEventsLoaded(false);
+  }, [filtersKey]);
 
   const fetchPastEvents = async () => {
     // Ne pas recharger si déjà chargé
@@ -136,6 +170,9 @@ const Index = () => {
       // Utilisateur non connecté : récupérer tous les événements publics
     }
 
+    // Appliquer les filtres actifs (département, etc.) côté serveur
+    pastQuery = applyFiltersToQuery(pastQuery, filterValues);
+
     // Trier les événements passés par date décroissante (les plus récents en premier)
     pastQuery = pastQuery
       .order('date', { ascending: false, nullsFirst: false })
@@ -152,6 +189,55 @@ const Index = () => {
     setPastEvents((data || []) as Event[]);
     setIsPastEventsLoaded(true);
   };
+
+  // Charge les options disponibles pour chaque filtre, indépendamment des
+  // filtres actifs (on respecte uniquement la visibilité par organisation), afin
+  // que la liste déroulante reste exhaustive même quand un filtre est appliqué.
+  useEffect(() => {
+    if (isLoading) return;
+
+    const fetchFilterOptions = async () => {
+      const userOrgIds =
+        contextUser && !isSuperAdmin && organizations.length > 0
+          ? organizations.map((org) => org.organization_id)
+          : null;
+
+      const entries = await Promise.all(
+        eventFilterDefinitions.map(async (definition) => {
+          let query = supabase
+            .from('events')
+            .select(definition.column)
+            .eq('status', 'accepted');
+
+          if (userOrgIds) {
+            query = query.in('organization_id', userOrgIds);
+          }
+
+          const { data, error } = await query;
+          if (error) {
+            console.error(`Erreur lors du chargement des options du filtre « ${definition.key} » :`, error);
+            return [definition.key, [] as string[]] as const;
+          }
+
+          const rows = (data || []) as Array<Record<string, string | null>>;
+          const values = Array.from(
+            new Set(
+              rows
+                .map((row) => row[definition.column])
+                .filter((value): value is string => value != null && String(value).trim() !== '')
+                .map((value) => String(value).trim()),
+            ),
+          );
+
+          return [definition.key, sortFilterOptions(definition, values)] as const;
+        }),
+      );
+
+      setFilterOptions(Object.fromEntries(entries));
+    };
+
+    fetchFilterOptions();
+  }, [contextUser, isSuperAdmin, organizations, isLoading]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -229,7 +315,16 @@ const Index = () => {
 
       <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
         <div className="max-w-4xl mx-auto">
-          <EventList events={events} pastEvents={pastEvents} onLoadPastEvents={fetchPastEvents} lastUpdatedAt={lastUpdatedAt} />
+          <EventList
+            events={events}
+            pastEvents={pastEvents}
+            onLoadPastEvents={fetchPastEvents}
+            lastUpdatedAt={lastUpdatedAt}
+            filterOptions={filterOptions}
+            filterValues={filterValues}
+            onFilterChange={handleFilterChange}
+            onFilterReset={handleFilterReset}
+          />
         </div>
       </main>
 
