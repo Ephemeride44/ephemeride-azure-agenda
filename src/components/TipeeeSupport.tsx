@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Heart, X } from "lucide-react";
+import { HandHeart, X } from "lucide-react";
 import { useState } from "react";
 import { fetchTipeeeSettings } from "@/lib/siteSettings";
 import { useTheme } from "@/components/ThemeProvider";
@@ -53,8 +53,8 @@ const TipeeeSupport = () => {
           onClick={() => setEmbedOpen((v) => !v)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full border font-medium transition-colors ${buttonClasses}`}
         >
-          <Heart size={18} className="fill-current" />
-          Soutenir
+          <HandHeart size={18} className="fill-current" />
+          Soutenez-nous sur Tipeee
         </button>
       </div>
     );
@@ -67,8 +67,8 @@ const TipeeeSupport = () => {
       rel="noopener noreferrer"
       className={`fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-2 rounded-full border font-medium transition-colors ${buttonClasses}`}
     >
-      <Heart size={18} className="fill-current" />
-      Soutenir
+      <HandHeart size={18} className="fill-current" />
+      Soutenez-nous sur Tipeee
     </a>
   );
 };
