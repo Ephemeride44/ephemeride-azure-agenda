@@ -42,6 +42,11 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries, onDuplicate }: 
                         Récurrent
                       </Badge>
                     )}
+                    {event.is_full && (
+                      <Badge variant="destructive" className="shrink-0">
+                        Complet
+                      </Badge>
+                    )}
                   </div>
                   {event.recurrence_id && describeRecurrenceFromEvent(event) && (
                     <p className="text-xs text-muted-foreground mt-1">

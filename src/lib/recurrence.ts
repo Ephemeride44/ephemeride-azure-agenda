@@ -31,6 +31,7 @@ export type RecurringSharedFields = {
   theme_id?: string | null;
   cover_url?: string | null;
   organization_id?: string | null;
+  is_full?: boolean;
 };
 
 /**

@@ -72,6 +72,7 @@ const AdminDashboard = () => {
     emoji: '',
     cover_url: null,
     theme_id: null,
+    is_full: false,
     status: 'pending',
     createdby: null,
     updated_at: '',

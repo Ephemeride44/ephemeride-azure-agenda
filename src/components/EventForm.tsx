@@ -14,8 +14,11 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import { formatCityName, formatPrice, getEventStart, getEventEnd } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import RecurrenceFields from "@/components/RecurrenceFields";
 import type { RecurrenceRule, RecurringSharedFields } from "@/lib/recurrence";
+import DepartmentSelect from "@/components/DepartmentSelect";
+import { getLastDepartment, rememberLastDepartment } from "@/lib/departments";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
@@ -37,6 +40,7 @@ type EventFormValues = {
   theme_id?: string | null;
   cover_url?: string | null;
   organization_id?: string | null;
+  is_full?: boolean;
 };
 
 // Règle de récurrence telle que jointe depuis la table event_recurrences.
@@ -87,6 +91,7 @@ const defaultValues: EventFormValues = {
   theme_id: '',
   cover_url: '',
   organization_id: '',
+  is_full: false,
 };
 
 const fetchThemes = async (): Promise<Theme[]> => {
@@ -176,8 +181,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
         setRecurrence(defaultRecurrence);
       }
     } else {
-      setFormData(defaultValues);
-      formDataRef.current = defaultValues;
+      // Création : pré-remplir le département avec le dernier choisi (souvent le
+      // même d'un ajout à l'autre) pour éviter de le rechercher à chaque fois.
+      const initialValues = { ...defaultValues, location_department: getLastDepartment() };
+      setFormData(initialValues);
+      formDataRef.current = initialValues;
     }
   }, [event, duplicate]);
 
@@ -284,6 +292,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
 
     if (!currentFormData.name?.trim()) fieldErrors.name = "Le nom de l'événement est obligatoire";
     if (!currentFormData.location_city?.trim()) fieldErrors.location_city = "La ville est obligatoire";
+    if (!currentFormData.location_department?.trim()) fieldErrors.location_department = "Le département est obligatoire";
     if (!recurrence.startDate) fieldErrors.startDate = "La date de début est obligatoire";
     if (!recurrence.endDate) fieldErrors.endDate = "La date de fin est obligatoire";
     if (recurrence.startDate && recurrence.endDate && recurrence.endDate < recurrence.startDate) {
@@ -303,6 +312,10 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     }
     setValidationErrors({});
 
+    if (currentFormData.location_department) {
+      rememberLastDepartment(currentFormData.location_department);
+    }
+
     const cover_url = await uploadCoverIfNeeded(currentFormData.cover_url || null);
     if (cover_url === undefined) return;
     const organization_id = resolveOrganizationId(currentFormData.organization_id);
@@ -320,6 +333,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       theme_id: currentFormData.theme_id || null,
       cover_url: cover_url || null,
       organization_id,
+      is_full: !!currentFormData.is_full,
     };
 
     try {
@@ -366,7 +380,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       errors.push('Ville');
       fieldErrors.location_city = 'La ville est obligatoire';
     }
-    
+    if (!currentFormData.location_department?.trim()) {
+      errors.push('Département');
+      fieldErrors.location_department = 'Le département est obligatoire';
+    }
+
     if (errors.length > 0) {
       setValidationErrors(fieldErrors);
       toast({
@@ -385,6 +403,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     
     // Nettoyer les erreurs si validation OK
     setValidationErrors({});
+
+    // Mémoriser le département pour pré-remplir les prochains ajouts.
+    if (currentFormData.location_department) {
+      rememberLastDepartment(currentFormData.location_department);
+    }
 
     // Uniformiser ville (majuscules) et prix (première lettre en majuscule) avant l'enregistrement
     const normalizedFormData = {
@@ -578,17 +601,29 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location_department">Département (optionnel)</Label>
-                    <Input
+                    <Label htmlFor="location_department">Département *</Label>
+                    <DepartmentSelect
                       id="location_department"
                       value={formData.location_department || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location_department: e.target.value }))}
-                      placeholder="ex: 44"
-                      className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
+                      onChange={(code) => setFormData(prev => ({ ...prev, location_department: code }))}
+                      theme={theme}
+                      hasError={!!validationErrors.location_department}
                     />
+                    {validationErrors.location_department && (
+                      <p className="text-red-500 text-sm">{validationErrors.location_department}</p>
+                    )}
                   </div>
                 </div>
               </div>
+
+              <label htmlFor="is_full" className="flex items-center gap-2 cursor-pointer w-fit">
+                <Checkbox
+                  id="is_full"
+                  checked={!!formData.is_full}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_full: checked === true }))}
+                />
+                <span>Événement complet</span>
+              </label>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">

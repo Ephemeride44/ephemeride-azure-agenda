@@ -11,6 +11,8 @@
  * l'application sur la requête s'adaptent automatiquement.
  */
 
+import { formatDepartment } from "@/lib/departments";
+
 /** Valeur sentinelle représentant « aucun filtre » (tout afficher). */
 export const ALL_VALUE = "__all__";
 
@@ -32,18 +34,6 @@ export interface FilterDefinition {
   compareOptions?: (a: string, b: string) => number;
 }
 
-/** Noms des départements les plus fréquents (pour un affichage plus lisible). */
-const DEPARTMENT_NAMES: Record<string, string> = {
-  "44": "Loire-Atlantique",
-  "49": "Maine-et-Loire",
-  "85": "Vendée",
-  "79": "Deux-Sèvres",
-  "35": "Ille-et-Vilaine",
-  "56": "Morbihan",
-  "53": "Mayenne",
-  "72": "Sarthe",
-};
-
 /** Liste des filtres disponibles. Ajouter un filtre = ajouter une entrée ici. */
 export const eventFilterDefinitions: FilterDefinition[] = [
   {
@@ -51,8 +41,7 @@ export const eventFilterDefinitions: FilterDefinition[] = [
     column: "location_department",
     label: "Département",
     allLabel: "Tous les départements",
-    formatOption: (value) =>
-      DEPARTMENT_NAMES[value] ? `${value} — ${DEPARTMENT_NAMES[value]}` : value,
+    formatOption: (value) => formatDepartment(value),
     compareOptions: (a, b) => a.localeCompare(b, "fr", { numeric: true }),
   },
 ];

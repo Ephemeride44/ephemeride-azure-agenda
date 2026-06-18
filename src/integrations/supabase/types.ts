@@ -22,6 +22,7 @@ export type Database = {
           emoji: string | null
           end_at: string | null
           id: string
+          is_full: boolean
           start_at: string | null
           location_city: string | null
           location_department: string | null
@@ -43,6 +44,7 @@ export type Database = {
           emoji?: string | null
           end_at?: string | null
           id?: string
+          is_full?: boolean
           start_at?: string | null
           location_city?: string | null
           location_department?: string | null
@@ -64,6 +66,7 @@ export type Database = {
           emoji?: string | null
           end_at?: string | null
           id?: string
+          is_full?: boolean
           start_at?: string | null
           location_city?: string | null
           location_department?: string | null

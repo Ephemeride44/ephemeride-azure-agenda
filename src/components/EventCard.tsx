@@ -181,7 +181,14 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
         )}
 
         {/* Nom de l'événement */}
-        <h3 className={`text-xl font-bold mb-3 leading-tight ${canEdit ? 'pr-10' : ''}`}>{event.name}</h3>
+        <div className={`flex flex-wrap items-center gap-2 mb-3 ${canEdit ? 'pr-10' : ''}`}>
+          <h3 className="text-xl font-bold leading-tight">{event.name}</h3>
+          {event.is_full && (
+            <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+              Complet
+            </span>
+          )}
+        </div>
 
         {/* Lieu */}
         <div className="flex items-center text-sm mb-2">

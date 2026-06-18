@@ -13,6 +13,8 @@ import RecurrenceFields from "@/components/RecurrenceFields";
 import { buildRecurringEvents, type RecurrenceRule } from "@/lib/recurrence";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
+import DepartmentSelect from "@/components/DepartmentSelect";
+import { getLastDepartment, rememberLastDepartment } from "@/lib/departments";
 
 const defaultRecurrence: RecurrenceRule = {
   interval: 1,
@@ -37,7 +39,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     location: {
       place: "",
       city: "",
-      department: "",
+      department: getLastDepartment(),
     },
     price: "",
     audience: "",
@@ -126,6 +128,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       // Validation de la récurrence
       if (
         !formData.name ||
+        !formData.location.department ||
         !recurrence.startDate ||
         !recurrence.endDate ||
         !recurrence.startTime ||
@@ -134,11 +137,13 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
       ) {
         toast({
           title: "Informations manquantes",
-          description: "Veuillez compléter le nom et les informations de récurrence (dates, heure, jours).",
+          description: "Veuillez compléter le nom, le département et les informations de récurrence (dates, heure, jours).",
           variant: "destructive",
         });
         return;
       }
+
+      rememberLastDepartment(formData.location.department);
 
       const coverUrl = await uploadCoverIfNeeded();
       if (coverUrl === undefined) return;
@@ -203,14 +208,16 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
     }
 
     // Mode ponctuel
-    if (!formData.name || !formData.date || !formData.startTime) {
+    if (!formData.name || !formData.date || !formData.startTime || !formData.location.department) {
       toast({
         title: "Informations manquantes",
-        description: "Veuillez remplir le nom, la date et l'heure de début",
+        description: "Veuillez remplir le nom, la date, l'heure de début et le département",
         variant: "destructive",
       });
       return;
     }
+
+    rememberLastDepartment(formData.location.department);
 
     const coverUrl = await uploadCoverIfNeeded();
     if (coverUrl === undefined) return;
@@ -368,15 +375,20 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
               />
             </div>
             <div>
-              <Label htmlFor="location.department" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Département</Label>
-              <Input
-                id="location.department"
-                name="location.department"
-                placeholder="ex: 44"
-                value={formData.location.department}
-                onChange={handleChange}
-                className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B] mt-1' : 'border-white/20 bg-white/10 text-white mt-1'}
-              />
+              <Label htmlFor="location.department" className={theme === 'light' ? 'text-[#1B263B]' : 'text-white'}>Département *</Label>
+              <div className="mt-1">
+                <DepartmentSelect
+                  id="location.department"
+                  value={formData.location.department}
+                  onChange={(code) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      location: { ...prev.location, department: code },
+                    }))
+                  }
+                  theme={theme}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
