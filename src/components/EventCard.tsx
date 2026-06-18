@@ -21,6 +21,8 @@ interface EventCardProps {
 const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  // Une fois supprimé, on retire la carte de l'affichage sans recharger la page.
+  const [isDeleted, setIsDeleted] = useState(false);
   // Copie locale de l'événement : permet de refléter une modification admin
   // sans recharger la page (on reste exactement au même endroit).
   const [event, setEvent] = useState(eventProp);
@@ -62,6 +64,26 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
     });
     setShowEdit(false);
     return true;
+  };
+
+  const handleDeleteEvent = async (): Promise<void> => {
+    const { error } = await supabase.from('events').delete().eq('id', event.id);
+
+    if (error) {
+      toast({
+        title: "Erreur lors de la suppression",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Événement supprimé",
+      description: "L'événement a été supprimé avec succès",
+    });
+    setShowEdit(false);
+    setIsDeleted(true);
   };
 
   const { day, month, year } = getDateParts(event);
@@ -175,6 +197,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                 event={event}
                 onSave={handleSaveEvent}
                 onCancel={() => setShowEdit(false)}
+                onDelete={handleDeleteEvent}
               />
             </DialogContent>
           </Dialog>
@@ -309,6 +332,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
       </CardContent>
     </Card>
   );
+
+  if (isDeleted) return null;
 
   if (event.url) {
     return (

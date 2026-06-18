@@ -9,7 +9,18 @@ import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDropzone } from "react-dropzone";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import { formatCityName, formatPrice, getEventStart, getEventEnd } from "@/lib/utils";
@@ -63,6 +74,9 @@ interface EventFormProps {
   onSaveRecurring?: (rule: RecurrenceRule, shared: RecurringSharedFields) => Promise<boolean>;
   // Mode duplication : pré-remplit le formulaire mais reste en création.
   duplicate?: boolean;
+  // Suppression de l'événement (édition uniquement). Si fourni, un bouton
+  // « Supprimer » s'affiche en bas à gauche, protégé par une confirmation.
+  onDelete?: () => Promise<void> | void;
 }
 
 const defaultRecurrence: RecurrenceRule = {
@@ -100,7 +114,7 @@ const fetchThemes = async (): Promise<Theme[]> => {
   return data as Theme[];
 };
 
-const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp, onSaveRecurring, duplicate }: EventFormProps) => {
+const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, theme: themeProp, onSaveRecurring, duplicate, onDelete }: EventFormProps) => {
   const { toast } = useToast();
   const { currentOrganization, isSuperAdmin, organizations } = useUserRoleContext();
   // En duplication, on pré-remplit depuis un événement source mais on reste en création.
@@ -724,44 +738,83 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       </div>
       {/* Footer global pour les actions */}
       <div className="w-full mt-6 pt-6 flex flex-col items-center">
-        <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl justify-end">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className={theme === 'light' ? 'border-[#f3e0c7] text-[#1B263B] hover:bg-[#ffe2b0]' : 'border-white/20 text-white hover:bg-white/10'}
-            type="button"
-            disabled={false}
-          >
-            Annuler
-          </Button>
-          {showValidationActions ? (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                className="bg-green-600 text-white hover:bg-green-700"
-                disabled={false}
-                onClick={() => onSave({ ...toEventPayload(formData), status: 'accepted' })}
-              >
-                Accepter
-              </Button>
-              <Button
-                type="button"
-                className="bg-red-600 text-white hover:bg-red-700"
-                disabled={false}
-                onClick={() => onSave({ ...toEventPayload(formData), status: 'rejected' })}
-              >
-                Refuser
-              </Button>
-            </div>
+        <div className="flex flex-col-reverse md:flex-row gap-4 w-full max-w-2xl md:items-center md:justify-between">
+          {/* Bouton de suppression à gauche (édition uniquement) */}
+          {isEditing && onDelete ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  className="bg-red-600 text-white hover:bg-red-700 gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Supprimer
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer cet événement ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. L'événement
+                    {formData.name ? ` « ${formData.name} »` : ''} sera
+                    définitivement supprimé.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    onClick={() => onDelete()}
+                  >
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           ) : (
+            <span className="hidden md:block" />
+          )}
+
+          {/* Groupe d'actions à droite */}
+          <div className="flex flex-col md:flex-row gap-4 md:justify-end">
             <Button
-              type="submit"
-              className={theme === 'light' ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] shadow-sm' : 'bg-white text-ephemeride hover:bg-white/80'}
+              variant="outline"
+              onClick={onCancel}
+              className={theme === 'light' ? 'border-[#f3e0c7] text-[#1B263B] hover:bg-[#ffe2b0]' : 'border-white/20 text-white hover:bg-white/10'}
+              type="button"
               disabled={false}
             >
-              {isEditing ? "Mettre à jour" : eventType === 'recurring' ? "Créer les événements" : "Créer l'événement"}
+              Annuler
             </Button>
-          )}
+            {showValidationActions ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  disabled={false}
+                  onClick={() => onSave({ ...toEventPayload(formData), status: 'accepted' })}
+                >
+                  Accepter
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  disabled={false}
+                  onClick={() => onSave({ ...toEventPayload(formData), status: 'rejected' })}
+                >
+                  Refuser
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="submit"
+                className={theme === 'light' ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] shadow-sm' : 'bg-white text-ephemeride hover:bg-white/80'}
+                disabled={false}
+              >
+                {isEditing ? "Mettre à jour" : eventType === 'recurring' ? "Créer les événements" : "Créer l'événement"}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </form>
