@@ -3,7 +3,7 @@
 import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Euro, Ticket, Pencil, Repeat } from "lucide-react";
+import { ArrowRight, Euro, Ticket, Pencil, Repeat, Clock } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import EventForm from "@/components/EventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { daysOfWeek, getDateBlockColor, getDateParts, getEventStart, formatTimeDisplay, isToday, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
+import { daysOfWeek, getDateBlockColor, getEventStart, formatTimeDisplay, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 import { triggerRevalidate } from "@/lib/revalidate";
 
@@ -91,9 +91,10 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
     setIsDeleted(true);
   };
 
-  const { day, month, year } = getDateParts(event);
   const eventStart = getEventStart(event);
   const dayName = eventStart ? daysOfWeek[eventStart.getDay()] : "lundi";
+  const dayColor = getDateBlockColor(dayName);
+  const timeLabel = formatTimeDisplay(event);
   const recurrenceLabel = describeRecurrenceFromEvent(event, { includeTime: false, withPrefix: false });
 
   // Format location
@@ -101,49 +102,27 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
   const cardContent = (
     <div className="flex flex-col md:flex-row h-full">
-      {/* Date block : à gauche sur desktop, en haut (horizontal) sur mobile */}
-      <div className={`${getDateBlockColor(dayName)} text-white flex flex-row md:flex-col items-center justify-center gap-3 md:gap-0 px-4 py-3 md:py-6 w-full md:w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
-        {isToday(event) ? (
-          <>
-            <div className="text-lg font-bold leading-none md:mb-1">Aujourd'hui</div>
-            {formatTimeDisplay(event) && (
-              <>
-                <div className="hidden md:block w-8 border-t border-white/30 my-2"></div>
-                <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="flex flex-row md:flex-col items-baseline md:items-center gap-1.5 md:gap-0">
-              <div className="text-2xl font-bold leading-none">{day}</div>
-              <div className="text-sm font-medium md:mt-1">{month}</div>
-              <div className="text-lg font-bold md:mt-1">{year}</div>
-            </div>
-            {formatTimeDisplay(event) && (
-              <>
-                <div className="hidden md:block w-8 border-t border-white/30 my-2"></div>
-                <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
-              </>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Affiche à gauche si présente - prend toute la hauteur */}
-      {event.cover_url && (
+      {/* Visuel : affiche si présente (avec badge heure), sinon panneau coloré
+          portant l'heure, ou simple liseré coloré si l'heure est absente. */}
+      {event.cover_url ? (
         <>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex-shrink-0 w-full md:w-auto">
+              <div className="relative flex-shrink-0 w-full md:w-56">
                 <img
                   src={event.cover_url}
                   alt="Affiche de l'événement"
-                  className="h-48 w-full md:h-full md:w-24 object-cover cursor-pointer transition-transform hover:scale-105"
+                  className={`h-56 w-full md:h-full object-cover cursor-pointer transition-transform hover:scale-105 ${isPast ? 'opacity-60' : ''}`}
                   onClick={e => { e.preventDefault(); e.stopPropagation(); setOpenDialog(true); }}
                   tabIndex={0}
                   aria-label="Voir l'affiche en grand"
                 />
+                {timeLabel && (
+                  <span className={`absolute top-2 left-2 inline-flex items-center gap-1 rounded-full ${dayColor} text-white text-xs font-semibold px-2.5 py-1 shadow-md`}>
+                    <Clock className="w-3.5 h-3.5" />
+                    {timeLabel}
+                  </span>
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
@@ -161,6 +140,15 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
             </DialogContent>
           </Dialog>
         </>
+      ) : timeLabel ? (
+        <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex items-center justify-center py-5 md:py-0 ${isPast ? 'opacity-60' : ''}`}>
+          <span className="inline-flex items-center gap-1.5 text-white text-sm font-semibold">
+            <Clock className="w-4 h-4" />
+            {timeLabel}
+          </span>
+        </div>
+      ) : (
+        <div className={`flex-shrink-0 w-full h-1.5 md:h-auto md:w-1.5 ${dayColor} ${isPast ? 'opacity-60' : ''}`} />
       )}
 
       {/* Contenu principal */}
@@ -253,11 +241,11 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
           </div>
         )}
 
-        {/* Type d'événement en bas - Ne s'affiche que si audience n'est pas vide */}
+        {/* Type d'événement - pilule (ne s'affiche que si audience n'est pas vide) */}
         {event.audience && (
-          <div className={`text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wide ${theme === 'dark' ? 'bg-white/10 text-white/70' : 'bg-[#1B263B]/5 text-gray-600'}`}>
             {event.audience}
-          </div>
+          </span>
         )}
 
         {/* Boutons billeterie et plus d'infos */}
@@ -297,15 +285,15 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className={`flex items-center gap-2 px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
+                        className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
                           ? 'border-white/20 text-white hover:bg-white/10'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                           }`}
                       >
-                        PLUS D'INFOS
-                        <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
-                          ? 'text-white/70 hover:text-white'
-                          : 'text-gray-600 hover:text-gray-800'
+                        Découvrir l'événement
+                        <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${theme === 'dark'
+                          ? 'text-white/70'
+                          : 'text-gray-600'
                           }`} />
                       </a>
                     </TooltipTrigger>
@@ -344,7 +332,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
   const card = (
     <Card
-      className={`${theme === 'dark' ? 'bg-ephemeride-light' : 'bg-white'} ${theme === 'dark' ? 'text-[#faf3ec]' : 'text-[#1B263B]'} mb-4 animate-fade-in hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden`}
+      className={`${theme === 'dark' ? 'bg-ephemeride-light' : 'bg-white'} ${theme === 'dark' ? 'text-[#faf3ec]' : 'text-[#1B263B]'} mb-4 animate-fade-in hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden rounded-2xl`}
     >
       <CardContent className="p-0 h-full">
         {cardContent}
