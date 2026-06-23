@@ -118,8 +118,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                   aria-label="Voir l'affiche en grand"
                 />
                 {timeLabel && (
-                  <span className={`absolute top-2 left-2 inline-flex items-center gap-1 rounded-full ${dayColor} text-white text-xs font-semibold px-2.5 py-1 shadow-md`}>
-                    <Clock className="w-3.5 h-3.5" />
+                  <span className={`absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-full ${dayColor} text-white text-sm font-semibold px-3 py-1.5 shadow-md`}>
+                    <Clock className="w-4 h-4" />
                     {timeLabel}
                   </span>
                 )}
@@ -142,8 +142,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
         </>
       ) : timeLabel ? (
         <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex items-center justify-center py-5 md:py-0 ${isPast ? 'opacity-60' : ''}`}>
-          <span className="inline-flex items-center gap-1.5 text-white text-sm font-semibold">
-            <Clock className="w-4 h-4" />
+          <span className="inline-flex items-center gap-2 text-white text-base font-semibold">
+            <Clock className="w-5 h-5" />
             {timeLabel}
           </span>
         </div>
