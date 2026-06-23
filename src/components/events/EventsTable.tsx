@@ -1,3 +1,5 @@
+"use client";
+
 import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Button } from "@/components/ui/button";

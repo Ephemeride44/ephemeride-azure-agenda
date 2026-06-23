@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { Heart, X } from "lucide-react";
 import {
@@ -11,7 +13,9 @@ import {
 } from "react";
 import { fetchTipeeeSettings, type TipeeeSettings } from "@/lib/siteSettings";
 import { useTheme } from "@/components/ThemeProvider";
-import tipeeeLogo from "@/components/ui/Tipeee_logo.svg";
+
+// Servi statiquement depuis public/ (URL string, compatible Turbopack/Next).
+const tipeeeLogo = "/Tipeee_logo.svg";
 
 /** Clé localStorage mémorisant que le visiteur a masqué le bandeau. */
 const DISMISS_KEY = "tipeee-banner-dismissed";

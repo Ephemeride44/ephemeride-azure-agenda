@@ -1,3 +1,5 @@
+"use client";
+
 interface EventsPaginationProps {
   page: number;
   total: number;

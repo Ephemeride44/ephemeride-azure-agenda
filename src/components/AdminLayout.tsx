@@ -1,5 +1,8 @@
+"use client";
+
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from '@/components/ThemeProvider';
 import { useUserRoleContext } from '@/components/UserRoleProvider';
 import { OrganizationSelector } from '@/components/OrganizationSelector';
@@ -39,15 +42,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   subtitle = "Gestion des événements et organisations" 
 }) => {
   const { theme } = useTheme();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
   const { isSuperAdmin, user, organizations } = useUserRoleContext();
   const { signOut } = useAuth();
 
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/admin');
+      router.push('/admin');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
@@ -105,7 +108,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="flex items-center justify-between">
             {/* Logo et titre */}
             <div className="flex items-center space-x-6">
-              <Link to="/" className="flex items-center space-x-3">
+              <Link href="/" className="flex items-center space-x-3">
                 <img 
                   src={theme === 'light' ? '/images/ephemeride-logo-lite.png' : '/images/ephemeride-logo-dark.png'}
                   alt="Ephemeride" 
@@ -120,7 +123,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
             {/* Actions */}
             <div className="flex items-center space-x-4">
-              <Link to="/" target="_blank">
+              <Link href="/" target="_blank">
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   <span className="hidden sm:inline">Voir le site</span>
@@ -170,7 +173,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/admin/profile" className="flex items-center cursor-pointer">
+                    <Link href="/admin/profile" className="flex items-center cursor-pointer">
                       <User className="w-4 h-4 mr-2" />
                       Mon profil
                     </Link>
@@ -203,12 +206,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <nav className="space-y-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = location.pathname === item.href;
+                  const isActive = pathname === item.href;
                   
                   return (
                     <Link
                       key={item.href}
-                      to={item.href}
+                      href={item.href}
                       className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         isActive
                           ? 'bg-primary text-primary-foreground'

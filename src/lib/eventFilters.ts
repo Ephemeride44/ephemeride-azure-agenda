@@ -99,6 +99,24 @@ export const applyFiltersToQuery = <T extends { eq: (column: string, value: stri
     return q;
   }, query);
 
+/**
+ * Applique les filtres actifs à une liste d'événements DÉJÀ chargée (côté client).
+ * Utilisé sur la home en ISR : les événements sont récupérés côté serveur puis
+ * filtrés dans le navigateur sans nouvelle requête (filtrage instantané).
+ */
+export const applyFiltersToEvents = <T extends Record<string, unknown>>(
+  events: T[],
+  values: FilterValues,
+  definitions: FilterDefinition[] = eventFilterDefinitions,
+): T[] =>
+  events.filter((event) =>
+    definitions.every((def) => {
+      const selected = values[def.key];
+      if (!selected || selected === ALL_VALUE) return true;
+      return String(event[def.column] ?? "") === selected;
+    }),
+  );
+
 /** Indique si au moins un filtre est actif (différent de « tout »). */
 export const hasActiveFilters = (values: FilterValues): boolean =>
   Object.values(values).some((v) => v && v !== ALL_VALUE);

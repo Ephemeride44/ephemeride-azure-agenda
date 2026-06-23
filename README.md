@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
+# Éphéméride
 
-## Project info
+L'agenda culturel et citoyen du vignoble nantais.
 
-**URL**: https://lovable.dev/projects/fb2775b7-eca7-47d2-8fdd-cadb6b86f63e
+## Stack
 
-## How can I edit this code?
+- **Next.js 16** (App Router) + **React 19**
+- **TypeScript**
+- **Supabase** (base de données, auth, storage)
+- **Tailwind CSS** + **shadcn/ui**
+- **pnpm** (gestionnaire de paquets) · **Turbopack** (bundler)
+- Déploiement **Vercel** (ISR natif)
 
-There are several ways of editing your application.
+## Architecture
 
-**Use Lovable**
+Le site est rendu côté serveur avec de l'**ISR** (Incremental Static Regeneration) pour le référencement et la performance :
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fb2775b7-eca7-47d2-8fdd-cadb6b86f63e) and start prompting.
+- `/` — page d'accueil (Server Component, ISR) : la liste publique des événements est rendue côté serveur, les filtres sont appliqués côté client.
+- `/evenement/[slug]` — page détail par événement, générée statiquement (`generateStaticParams`), avec métadonnées dynamiques (OpenGraph) et données structurées **JSON-LD `Event`**.
+- `/departement/[code]` — pages d'atterrissage par département.
+- `/sitemap.xml` et `/robots.ts` — générés dynamiquement.
+- `/admin/*`, `/signup`, `/reset-password` — espaces client (auth Supabase).
+- `/api/revalidate` — revalidation ISR à la demande, déclenchée après chaque mutation admin.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Développement local
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Prérequis : **Node.js 20+** et **pnpm**.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+pnpm install
+pnpm dev          # serveur de dev (Turbopack) sur http://localhost:3000
 ```
 
-**Edit a file directly in GitHub**
+Autres scripts :
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+pnpm build        # build de production (Turbopack)
+pnpm start        # sert le build de production
+pnpm lint         # ESLint
+```
 
-**Use GitHub Codespaces**
+## Variables d'environnement
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Copier `.env.example` et renseigner les valeurs. Voir ce fichier pour la liste complète.
 
-## What technologies are used for this project?
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase (exposés au navigateur).
+- `NEXT_PUBLIC_SITE_URL` — URL publique du site (canonical, OpenGraph, sitemap).
+- `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` — analytics (optionnel).
+- `REVALIDATE_SECRET` — secret partagé pour `/api/revalidate` (usage serveur/webhook).
 
-This project is built with:
+Les secrets serveur (`SUPABASE_DB_URL`, `REVALIDATE_SECRET`) vont dans `.env.local` (non versionné).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Types Supabase
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fb2775b7-eca7-47d2-8fdd-cadb6b86f63e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```sh
+make supabase-types   # régénère src/lib/database.types.ts
+```

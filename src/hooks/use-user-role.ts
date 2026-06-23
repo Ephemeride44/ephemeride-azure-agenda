@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import { useCookies } from 'react-cookie';
 import { supabase as baseSupabase } from "@/integrations/supabase/client";

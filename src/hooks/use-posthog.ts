@@ -1,3 +1,5 @@
+"use client";
+
 import posthog from 'posthog-js';
 
 /**
@@ -6,7 +8,7 @@ import posthog from 'posthog-js';
  */
 export const usePostHog = () => {
   const isEnabled = () => {
-    return !!import.meta.env.VITE_POSTHOG_PUBLIC_KEY;
+    return !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
   };
 
   const capture = (eventName: string, properties?: Record<string, any>) => {

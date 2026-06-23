@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import type { Database } from "@/lib/database.types";
 type Event = Database["public"]["Tables"]["events"]["Row"];

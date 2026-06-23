@@ -1,3 +1,5 @@
+"use client";
+
 import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +12,9 @@ import { useState, useEffect } from "react";
 import EventForm from "@/components/EventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { daysOfWeek, getDateBlockColor, getDateParts, getEventStart, formatTimeDisplay, isToday, formatCityName, formatPrice } from "@/lib/utils";
+import { daysOfWeek, getDateBlockColor, getDateParts, getEventStart, formatTimeDisplay, isToday, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
+import { triggerRevalidate } from "@/lib/revalidate";
 
 interface EventCardProps {
   event: Event;
@@ -58,6 +61,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
     }
 
     setEvent(prev => ({ ...prev, ...updated }) as typeof event);
+    void triggerRevalidate({ slug: eventSlug({ id: event.id, name: (updated as any).name ?? event.name }), department: (updated as any).location_department ?? event.location_department });
     toast({
       title: "Événement mis à jour",
       description: "L'événement a été mis à jour avec succès",
@@ -78,6 +82,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
       return;
     }
 
+    void triggerRevalidate({ slug: eventSlug({ id: event.id, name: event.name }), department: event.location_department });
     toast({
       title: "Événement supprimé",
       description: "L'événement a été supprimé avec succès",
@@ -135,7 +140,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                   src={event.cover_url}
                   alt="Affiche de l'événement"
                   className="h-48 w-full md:h-full md:w-24 object-cover cursor-pointer transition-transform hover:scale-105"
-                  onClick={e => { e.preventDefault(); setOpenDialog(true); }}
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setOpenDialog(true); }}
                   tabIndex={0}
                   aria-label="Voir l'affiche en grand"
                 />
@@ -266,6 +271,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                     href={event.ticketing_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="cursor-pointer"
                   >
                     <Ticket className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
@@ -290,6 +296,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                         href={event.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
                           ? 'border-white/20 text-white hover:bg-white/10'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -313,6 +320,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                         href={event.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="cursor-pointer"
                       >
                         <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
@@ -347,16 +355,26 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   if (isDeleted) return null;
 
   if (event.url) {
+    const openEvent = () => window.open(event.url!, "_blank", "noopener,noreferrer");
+    // Carte cliquable sans <a> englobant : un <a> contiendrait les liens
+    // internes (billetterie, « plus d'infos ») → ancres imbriquées invalides
+    // (erreur d'hydratation React 19). On utilise un div role="link".
     return (
-      <a
-        href={event.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group block focus:outline-none"
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={openEvent}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openEvent();
+          }
+        }}
+        className="group block focus:outline-none cursor-pointer"
         style={{ textDecoration: "none" }}
       >
         {card}
-      </a>
+      </div>
     );
   }
   return card;

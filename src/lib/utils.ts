@@ -8,6 +8,41 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Transforme un texte en segment d'URL : sans accents, minuscules, tirets.
+ * Ex : "Fête de la Musique" -> "fete-de-la-musique".
+ */
+export function slugify(text?: string | null): string {
+  return (text || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Slug SEO d'un événement : "nom-de-l-evenement-<uuid>".
+ * L'UUID est conservé en suffixe pour permettre la résolution sans migration DB.
+ */
+export function eventSlug(event: { id: string; name?: string | null }): string {
+  // On plafonne la partie lisible du slug pour rester sous la limite de nom de
+  // fichier du système (255 octets). L'UUID en suffixe assure l'unicité et la
+  // résolution (idFromSlug), quelle que soit la troncature.
+  const base = slugify(event.name).slice(0, 80).replace(/-+$/, "");
+  return base ? `${base}-${event.id}` : event.id;
+}
+
+const TRAILING_UUID_RE =
+  /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/** Extrait l'UUID de l'événement depuis un slug "…-<uuid>". */
+export function idFromSlug(slug?: string | null): string | null {
+  const match = (slug || "").match(TRAILING_UUID_RE);
+  return match ? match[1] : null;
+}
+
+/**
  * Normalise le nom d'une ville en majuscules (ex : "nantes" -> "NANTES").
  * Utilisé à l'affichage et à la saisie pour uniformiser les villes.
  */

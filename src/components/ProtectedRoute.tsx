@@ -1,4 +1,7 @@
-import { Navigate } from 'react-router-dom';
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
 interface ProtectedRouteProps {
@@ -7,9 +10,16 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
 
-  // En cours de chargement
-  if (isLoading || isAuthenticated === null) {
+  useEffect(() => {
+    if (!isLoading && isAuthenticated === false) {
+      router.replace('/admin');
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  // En cours de chargement, ou non authentifié (redirection en cours)
+  if (isLoading || isAuthenticated === null || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -18,11 +28,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         </div>
       </div>
     );
-  }
-
-  // Pas authentifié, rediriger vers la page de login
-  if (!isAuthenticated) {
-    return <Navigate to="/admin" replace />;
   }
 
   // Authentifié, afficher le contenu

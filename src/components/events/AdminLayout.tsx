@@ -1,5 +1,8 @@
+"use client";
+
 import { ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +15,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { theme } = useTheme();
 
   return (
@@ -20,8 +23,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     <header className="py-4 px-4 md:px-8 border-b border-white/10">
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
-          <Link to="/">
-            <img 
+          <Link href="/">
+            <img
               src={theme === 'light' ? '/images/ephemeride-logo-lite.png' : '/images/ephemeride-logo-dark.png'}
               alt="Ephemeride" 
               className="h-20"
@@ -37,7 +40,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   : 'text-white border-white/20 hover:bg-white/10 rounded transition'
               }
             >
-              <Link to="/">Voir le site</Link>
+              <Link href="/">Voir le site</Link>
             </Button>
 
             <Tooltip>
@@ -60,7 +63,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               }
               title="Paramètres du site"
             >
-              <Link to="/admin/settings">
+              <Link href="/admin/settings">
                 <Settings className="w-6 h-6" />
               </Link>
             </Button>
@@ -73,7 +76,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               }
               onClick={() => {
                 supabase.auth.signOut();
-                navigate("/admin");
+                router.push("/admin");
               }}
             >
               Déconnexion
