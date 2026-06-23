@@ -150,16 +150,16 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
     const lineColor = theme === "light" ? "bg-gray-300" : "bg-white/15";
     const ringColor = theme === "light" ? "ring-[#faf3ec]" : "ring-[#1B263B]";
     return (
-      <div className="relative flex-shrink-0 w-16 md:w-24">
+      <div className="relative flex-shrink-0 w-20 md:w-28">
         <div className={`absolute top-2 bottom-0 left-[7px] w-px ${lineColor}`} />
         <div className={`${sticky ? "sticky top-[184px] md:top-36" : ""} z-10 ${stickyBg} pb-2`}>
           <div className="flex items-start gap-2">
-            <span className={`mt-1.5 h-3.5 w-3.5 rounded-full ring-4 ${ringColor} ${dotColor} flex-shrink-0`} />
+            <span className={`mt-2 h-3.5 w-3.5 rounded-full ring-4 ${ringColor} ${dotColor} flex-shrink-0`} />
             <div className={`leading-tight ${textColorClass} ${sticky ? "" : "opacity-70"}`}>
-              <div className="text-[10px] font-semibold uppercase tracking-wide opacity-70 whitespace-nowrap">{dayName}</div>
-              <div className="text-2xl md:text-3xl font-bold">{dayNum}</div>
-              <div className="text-xs font-medium uppercase">{monthShort}</div>
-              <div className="text-xs opacity-60">{year}</div>
+              <div className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide opacity-70 whitespace-nowrap">{dayName}</div>
+              <div className="text-3xl md:text-4xl font-bold">{dayNum}</div>
+              <div className="text-sm font-medium uppercase">{monthShort}</div>
+              <div className="text-sm opacity-60">{year}</div>
             </div>
           </div>
         </div>
