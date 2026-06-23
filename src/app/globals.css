@@ -33,6 +33,11 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    /* Accent pêche/corail des CTA — identique clair/sombre (#F2A98E / #ED9873 / #1B263B) */
+    --accent-peach: 16 79% 75%;
+    --accent-peach-hover: 18 77% 69%;
+    --accent-peach-foreground: 219 37% 17%;
   }
 
   .dark {

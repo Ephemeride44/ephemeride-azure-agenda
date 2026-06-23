@@ -21,6 +21,12 @@ export default {
         "ephemeride-light": "#243447", // Version légèrement plus claire
         "ephemeride-dark": "#162029", // Version plus sombre
         "ephemeride-foreground": "#ffffff",
+        // Accent pêche/corail des CTA (identique en clair et sombre).
+        "accent-peach": {
+          DEFAULT: "hsl(var(--accent-peach))",
+          hover: "hsl(var(--accent-peach-hover))",
+          foreground: "hsl(var(--accent-peach-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

@@ -4,11 +4,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowUp } from "lucide-react";
-import { useTheme } from "@/components/ThemeProvider";
 
 const BackToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const { theme } = useTheme();
 
   // Show button when page is scrolled down
   useEffect(() => {
@@ -38,11 +36,7 @@ const BackToTop = () => {
   return (
     <Button
       onClick={scrollToTop}
-      className={`fixed bottom-8 right-8 z-50 rounded-full w-12 h-12 p-0 shadow-lg transition-all duration-300 hover:scale-110 ${
-        theme === 'light' 
-          ? 'bg-[#1B263B] text-[#faf3ec] hover:bg-[#243447]' 
-          : 'bg-[#faf3ec] text-[#1B263B] hover:bg-white/90'
-      }`}
+      className="fixed bottom-8 right-8 z-50 rounded-full w-12 h-12 p-0 shadow-lg transition-all duration-300 hover:scale-110 bg-accent-peach text-accent-peach-foreground hover:bg-accent-peach-hover"
       size="icon"
       aria-label="Retour vers le haut"
     >

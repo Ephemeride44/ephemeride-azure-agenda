@@ -164,11 +164,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
                         asChild
                         variant="outline"
                         size="icon"
-                        className={
-                          theme === 'light'
-                            ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
-                            : 'bg-white/10 text-[#faf3ec]'
-                        }
+                        className="bg-accent-peach text-accent-peach-foreground border-transparent hover:bg-accent-peach-hover hover:text-accent-peach-foreground shadow-sm"
                       >
                         <Link href="/admin">
                           <Shield size={22} />
@@ -183,11 +179,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
                 <Button
                   onClick={() => setIsProposalDialogOpen(true)}
                   variant="outline"
-                  className={
-                    theme === 'light'
-                      ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
-                      : 'bg-white/10 text-[#faf3ec]'
-                  }
+                  className="bg-accent-peach text-accent-peach-foreground border-transparent hover:bg-accent-peach-hover hover:text-accent-peach-foreground shadow-sm font-medium"
                 >
                   Proposer un événement
                 </Button>
