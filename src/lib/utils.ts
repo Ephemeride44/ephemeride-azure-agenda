@@ -110,11 +110,11 @@ export function getEventEnd(event: EventTimeFields): Date | null {
   return parseLocalDateTime(event.end_at);
 }
 
-/** Formate une heure en français : "16h30", ou "16h" pour une heure pile. */
+/** Formate une heure en français : "16h30", ou "16h00" pour une heure pile. */
 export function formatFrTime(date: Date): string {
   const h = date.getHours();
   const m = date.getMinutes();
-  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+  return `${h}h${String(m).padStart(2, "0")}`;
 }
 
 /** Libellé de date long en français : "mercredi 21 mai 2025". */
