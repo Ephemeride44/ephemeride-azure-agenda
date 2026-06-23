@@ -137,7 +137,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
         <TipeeeBanner />
 
         <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-20 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-3xl dark:backdrop-blur-sm' : ''}`}>
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
               <div className="flex justify-start">
                 <img
@@ -188,8 +188,8 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
           </div>
         </header>
 
-        <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
-          <div className="max-w-4xl mx-auto">
+        <main className={`flex-1 container mx-auto px-4 md:px-8 py-8 md:py-12 ${isHeaderSticky ? 'mt-48 md:mt-40' : ''}`}>
+          <div className="max-w-6xl mx-auto">
             <EventList
               events={filteredEvents}
               pastEvents={filteredPastEvents}

@@ -52,15 +52,16 @@ const EventFilters = ({
 
   if (filters.length === 0) return null;
 
+  // Pilule arrondie cohérente avec le redesign (cf. maquette).
   const triggerClass = isLight
-    ? "border-[#f3e0c7] bg-white text-[#1B263B]"
-    : "border-white/20 bg-white/10 text-[#faf3ec]";
+    ? "rounded-full border-[#f3e0c7] bg-white text-[#1B263B] hover:bg-[#fff7e6]"
+    : "rounded-full border-white/15 bg-white/10 text-[#faf3ec] hover:bg-white/15";
   const labelClass = isLight ? "text-[#1B263B]" : "text-[#faf3ec]";
 
   return (
     <div className="mb-10 flex flex-wrap items-end gap-4">
       {filters.map(({ definition, values: opts }) => (
-        <div key={definition.key} className="flex flex-col gap-1">
+        <div key={definition.key} className="flex flex-col gap-1.5">
           <span className={`text-sm font-medium ${labelClass}`}>
             {definition.label}
           </span>
@@ -70,7 +71,7 @@ const EventFilters = ({
               onChange({ ...values, [definition.key]: value })
             }
           >
-            <SelectTrigger className={`w-[240px] ${triggerClass}`}>
+            <SelectTrigger className={`w-[240px] transition-colors ${triggerClass}`}>
               <SelectValue placeholder={definition.allLabel} />
             </SelectTrigger>
             <SelectContent>
@@ -92,7 +93,7 @@ const EventFilters = ({
           variant="ghost"
           size="sm"
           onClick={onReset}
-          className={`gap-1 ${labelClass}`}
+          className={`gap-1 rounded-full ${labelClass}`}
         >
           <X className="h-4 w-4" />
           Réinitialiser
