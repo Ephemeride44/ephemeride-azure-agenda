@@ -95,27 +95,29 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const locationString = `${event.location_place || ''}${event.location_city ? ` — ${formatCityName(event.location_city)}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
 
   const cardContent = (
-    <div className="flex h-full">
-      {/* Date block à gauche */}
-      <div className={`${getDateBlockColor(dayName)} text-white flex flex-col items-center justify-center px-4 py-6 w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Date block : à gauche sur desktop, en haut (horizontal) sur mobile */}
+      <div className={`${getDateBlockColor(dayName)} text-white flex flex-row md:flex-col items-center justify-center gap-3 md:gap-0 px-4 py-3 md:py-6 w-full md:w-[150px] flex-shrink-0 ${isPast ? 'opacity-60' : ''}`}>
         {isToday(event) ? (
           <>
-            <div className="text-lg font-bold leading-none mb-1">Aujourd'hui</div>
+            <div className="text-lg font-bold leading-none md:mb-1">Aujourd'hui</div>
             {formatTimeDisplay(event) && (
               <>
-                <div className="w-8 border-t border-white/30 my-2"></div>
+                <div className="hidden md:block w-8 border-t border-white/30 my-2"></div>
                 <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
               </>
             )}
           </>
         ) : (
           <>
-            <div className="text-2xl font-bold leading-none">{day}</div>
-            <div className="text-sm font-medium mt-1">{month}</div>
-            <div className="text-lg font-bold mt-1">{year}</div>
+            <div className="flex flex-row md:flex-col items-baseline md:items-center gap-1.5 md:gap-0">
+              <div className="text-2xl font-bold leading-none">{day}</div>
+              <div className="text-sm font-medium md:mt-1">{month}</div>
+              <div className="text-lg font-bold md:mt-1">{year}</div>
+            </div>
             {formatTimeDisplay(event) && (
               <>
-                <div className="w-8 border-t border-white/30 my-2"></div>
+                <div className="hidden md:block w-8 border-t border-white/30 my-2"></div>
                 <div className="text-xs font-medium">{formatTimeDisplay(event)}</div>
               </>
             )}
@@ -128,11 +130,11 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
         <>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 w-full md:w-auto">
                 <img
                   src={event.cover_url}
                   alt="Affiche de l'événement"
-                  className="h-full w-24 object-cover cursor-pointer transition-transform hover:scale-105"
+                  className="h-48 w-full md:h-full md:w-24 object-cover cursor-pointer transition-transform hover:scale-105"
                   onClick={e => { e.preventDefault(); setOpenDialog(true); }}
                   tabIndex={0}
                   aria-label="Voir l'affiche en grand"
@@ -255,7 +257,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
         {/* Boutons billeterie et plus d'infos */}
         {(event.ticketing_url || event.url) && (
-          <div className="absolute bottom-4 right-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center justify-end gap-2 md:absolute md:bottom-4 md:right-4 md:mt-0">
             {/* Bouton billeterie */}
             {event.ticketing_url && (
               <Tooltip>
