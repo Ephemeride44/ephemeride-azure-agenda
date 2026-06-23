@@ -1,5 +1,5 @@
 import BackToTop from "@/components/BackToTop";
-import TipeeeSupport from "@/components/TipeeeSupport";
+import { TipeeeProvider, TipeeeBanner, TipeeeFooterLogo } from "@/components/TipeeeSupport";
 import EventList from "@/components/EventList";
 import EventProposalForm from "@/components/EventProposalForm";
 import { useTheme } from "@/components/ThemeProvider";
@@ -250,7 +250,11 @@ const Index = () => {
   }, []);
 
   return (
+    <TipeeeProvider>
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
+      {/* Bandeau de soutien Tipeee, tout en haut (affiché si activé dans l'admin) */}
+      <TipeeeBanner />
+
       <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-20 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-3xl dark:backdrop-blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <div className={`flex flex-col md:flex-row items-center justify-between transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
@@ -331,6 +335,8 @@ const Index = () => {
           <p className="text-sm font-normal opacity-70">
             L'AGENDA CULTUREL ET CITOYEN DU VIGNOBLE NANTAIS
           </p>
+          {/* Logo Tipeee cliquable (affiché seulement si une URL est configurée) */}
+          <TipeeeFooterLogo />
         </div>
       </footer>
 
@@ -345,10 +351,8 @@ const Index = () => {
 
       {/* Add Back to Top button */}
       <BackToTop />
-
-      {/* Widget de soutien Tipeee (affiché si activé dans l'admin) */}
-      <TipeeeSupport />
     </div>
+    </TipeeeProvider>
   );
 };
 
