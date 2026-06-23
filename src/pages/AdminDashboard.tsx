@@ -73,6 +73,7 @@ const AdminDashboard = () => {
     cover_url: null,
     theme_id: null,
     is_full: false,
+    is_cancelled: false,
     status: 'pending',
     createdby: null,
     updated_at: '',

@@ -18,6 +18,7 @@ export type Database = {
           end_at: string | null
           id: string
           is_full: boolean
+          is_cancelled: boolean
           start_at: string | null
           location_city: string | null
           location_department: string | null
@@ -38,6 +39,7 @@ export type Database = {
           end_at?: string | null
           id?: string
           is_full?: boolean
+          is_cancelled?: boolean
           start_at?: string | null
           location_city?: string | null
           location_department?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           end_at?: string | null
           id?: string
           is_full?: boolean
+          is_cancelled?: boolean
           start_at?: string | null
           location_city?: string | null
           location_department?: string | null

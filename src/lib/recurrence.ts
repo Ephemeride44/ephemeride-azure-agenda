@@ -32,6 +32,7 @@ export type RecurringSharedFields = {
   cover_url?: string | null;
   organization_id?: string | null;
   is_full?: boolean;
+  is_cancelled?: boolean;
 };
 
 /**

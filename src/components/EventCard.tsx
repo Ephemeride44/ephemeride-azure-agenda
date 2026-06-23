@@ -171,8 +171,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                 }}
                 aria-label="Modifier l'événement"
                 className={`absolute top-4 right-4 z-10 p-2 rounded-full border transition-colors ${theme === 'dark'
-                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
-                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                  : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                   }`}
               >
                 <Pencil className="w-4 h-4" />
@@ -209,6 +209,11 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
           {event.is_full && (
             <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
               Complet
+            </span>
+          )}
+          {event.is_cancelled && (
+            <span className="inline-flex items-center rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+              Annulé
             </span>
           )}
         </div>
@@ -262,8 +267,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                     className="cursor-pointer"
                   >
                     <Ticket className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
-                        ? 'text-white/70 hover:text-white'
-                        : 'text-gray-600 hover:text-gray-800'
+                      ? 'text-white/70 hover:text-white'
+                      : 'text-gray-600 hover:text-gray-800'
                       }`} />
                   </a>
                 </TooltipTrigger>
@@ -283,12 +288,16 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                         href={event.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
-                            ? 'border-white/20 text-white hover:bg-white/10'
-                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-medium border transition-colors ${theme === 'dark'
+                          ? 'border-white/20 text-white hover:bg-white/10'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                           }`}
                       >
                         PLUS D'INFOS
+                        <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
+                          ? 'text-white/70 hover:text-white'
+                          : 'text-gray-600 hover:text-gray-800'
+                          }`} />
                       </a>
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">
@@ -305,8 +314,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                         className="cursor-pointer"
                       >
                         <ArrowRight className={`w-5 h-5 transition-transform hover:scale-110 ${theme === 'dark'
-                            ? 'text-white/70 hover:text-white'
-                            : 'text-gray-600 hover:text-gray-800'
+                          ? 'text-white/70 hover:text-white'
+                          : 'text-gray-600 hover:text-gray-800'
                           }`} />
                       </a>
                     </TooltipTrigger>

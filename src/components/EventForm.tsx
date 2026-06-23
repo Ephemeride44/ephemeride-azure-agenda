@@ -52,6 +52,7 @@ type EventFormValues = {
   cover_url?: string | null;
   organization_id?: string | null;
   is_full?: boolean;
+  is_cancelled?: boolean;
 };
 
 // Règle de récurrence telle que jointe depuis la table event_recurrences.
@@ -106,6 +107,7 @@ const defaultValues: EventFormValues = {
   cover_url: '',
   organization_id: '',
   is_full: false,
+  is_cancelled: false,
 };
 
 const fetchThemes = async (): Promise<Theme[]> => {
@@ -348,6 +350,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
       cover_url: cover_url || null,
       organization_id,
       is_full: !!currentFormData.is_full,
+      is_cancelled: !!currentFormData.is_cancelled,
     };
 
     try {
@@ -630,14 +633,25 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
                 </div>
               </div>
 
-              <label htmlFor="is_full" className="flex items-center gap-2 cursor-pointer w-fit">
-                <Checkbox
-                  id="is_full"
-                  checked={!!formData.is_full}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_full: checked === true }))}
-                />
-                <span>Événement complet</span>
-              </label>
+              <div className="flex flex-wrap items-center gap-6">
+                <label htmlFor="is_full" className="flex items-center gap-2 cursor-pointer w-fit">
+                  <Checkbox
+                    id="is_full"
+                    checked={!!formData.is_full}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_full: checked === true }))}
+                  />
+                  <span>Événement complet</span>
+                </label>
+
+                <label htmlFor="is_cancelled" className="flex items-center gap-2 cursor-pointer w-fit">
+                  <Checkbox
+                    id="is_cancelled"
+                    checked={!!formData.is_cancelled}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_cancelled: checked === true }))}
+                  />
+                  <span>Événement annulé</span>
+                </label>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">

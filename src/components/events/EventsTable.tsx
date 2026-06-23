@@ -47,6 +47,11 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries, onDuplicate }: 
                         Complet
                       </Badge>
                     )}
+                    {event.is_cancelled && (
+                      <Badge className="shrink-0 bg-gray-700 text-white hover:bg-gray-700">
+                        Annulé
+                      </Badge>
+                    )}
                   </div>
                   {event.recurrence_id && describeRecurrenceFromEvent(event) && (
                     <p className="text-xs text-muted-foreground mt-1">
