@@ -48,7 +48,7 @@ const EventsTable = ({ events, onEdit, onDelete, onDeleteSeries, onDuplicate }: 
                       </Badge>
                     )}
                     {event.is_cancelled && (
-                      <Badge className="shrink-0 bg-gray-700 text-white hover:bg-gray-700">
+                      <Badge className="shrink-0 bg-gray-700 text-white hover:bg-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-200">
                         Annulé
                       </Badge>
                     )}

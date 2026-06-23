@@ -212,7 +212,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
             </span>
           )}
           {event.is_cancelled && (
-            <span className="inline-flex items-center rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+            <span className="inline-flex items-center rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white dark:bg-gray-200 dark:text-gray-900">
               Annulé
             </span>
           )}
