@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTheme } from "@/components/ThemeProvider";
 import {
   ALL_VALUE,
   eventFilterDefinitions,
@@ -38,9 +37,6 @@ const EventFilters = ({
   onReset,
   definitions = eventFilterDefinitions,
 }: EventFiltersProps) => {
-  const { theme } = useTheme();
-  const isLight = theme === "light";
-
   // On ne propose un filtre que s'il existe au moins deux valeurs distinctes :
   // filtrer sur une unique valeur n'aurait aucun intérêt.
   const filters = definitions
@@ -53,10 +49,12 @@ const EventFilters = ({
   if (filters.length === 0) return null;
 
   // Pilule arrondie cohérente avec le redesign (cf. maquette).
-  const triggerClass = isLight
-    ? "rounded-full border-[#f3e0c7] bg-white text-[#1B263B] hover:bg-[#fff7e6]"
-    : "rounded-full border-white/15 bg-white/10 text-[#faf3ec] hover:bg-white/15";
-  const labelClass = isLight ? "text-[#1B263B]" : "text-[#faf3ec]";
+  // Style piloté par les variantes Tailwind `dark:` (classe posée sur <html>
+  // avant le paint) plutôt que par la valeur JS du thème, afin d'éviter le
+  // flash « select blanc » au chargement avant le montage du composant.
+  const triggerClass =
+    "rounded-full border-[#f3e0c7] bg-white text-[#1B263B] hover:bg-[#fff7e6] dark:border-white/15 dark:bg-white/10 dark:text-[#faf3ec] dark:hover:bg-white/15";
+  const labelClass = "text-[#1B263B] dark:text-[#faf3ec]";
 
   return (
     <div className="mb-10 flex flex-wrap items-end gap-4">
