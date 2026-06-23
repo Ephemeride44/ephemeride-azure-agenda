@@ -138,6 +138,49 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
 
   const textColorClass = theme === "light" ? "text-[#1B263B]" : "text-[#faf3ec]";
 
+  // Rail timeline : pastille colorée (couleur du jour) + date empilée, posée
+  // sur une ligne verticale. Sticky pour les événements à venir.
+  const renderDayMarker = (firstStart: Date | null, sticky: boolean) => {
+    const dayName = firstStart ? daysOfWeek[firstStart.getDay()] : "";
+    const dayNum = firstStart ? firstStart.getDate() : "";
+    const monthShort = firstStart ? monthNamesShort[firstStart.getMonth()] : "";
+    const year = firstStart ? firstStart.getFullYear() : "";
+    const dotColor = getDateBlockColor(dayName || "lundi");
+    const stickyBg = theme === "light" ? "bg-[#faf3ec]" : "bg-[#1B263B]";
+    const lineColor = theme === "light" ? "bg-gray-300" : "bg-white/15";
+    const ringColor = theme === "light" ? "ring-[#faf3ec]" : "ring-[#1B263B]";
+    return (
+      <div className="relative flex-shrink-0 w-16 md:w-24">
+        <div className={`absolute top-2 bottom-0 left-[7px] w-px ${lineColor}`} />
+        <div className={`${sticky ? "sticky top-[168px] md:top-32" : ""} z-10 ${stickyBg} pb-2`}>
+          <div className="flex items-start gap-2">
+            <span className={`mt-1.5 h-3.5 w-3.5 rounded-full ring-4 ${ringColor} ${dotColor} flex-shrink-0`} />
+            <div className={`leading-tight ${textColorClass} ${sticky ? "" : "opacity-70"}`}>
+              <div className="text-[10px] font-semibold uppercase tracking-wide opacity-70 whitespace-nowrap">{dayName}</div>
+              <div className="text-2xl md:text-3xl font-bold">{dayNum}</div>
+              <div className="text-xs font-medium uppercase">{monthShort}</div>
+              <div className="text-xs opacity-60">{year}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDayGroup = (date: string, dayEvents: Event[], isPast: boolean) => {
+    const firstStart = dayEvents[0] ? getEventStart(dayEvents[0]) : null;
+    return (
+      <div key={date} className="mb-6 flex gap-4 md:gap-6">
+        {renderDayMarker(firstStart, !isPast)}
+        <div className="flex-1 min-w-0 space-y-4">
+          {dayEvents.map(event => (
+            <EventCard key={event.id} event={event} isPast={isPast} />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Events Count and Last Updated Section - Before upcoming events heading */}
@@ -219,24 +262,9 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
               <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
             </div>
             
-            {Object.entries(dayEvents).map(([date, events]) => {
-              const firstEvent = events[0];
-              const firstStart = firstEvent ? getEventStart(firstEvent) : null;
-              const dayOfWeek = firstStart ? daysOfWeek[firstStart.getDay()] : "";
-              const stickyBg = theme === "light" ? "bg-[#faf3ec]" : "bg-[#1B263B]";
-              return (
-                <div key={date} className="mb-6">
-                  <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass} sticky top-[168px] md:top-32 z-10 ${stickyBg}`}>
-                    {dayOfWeek && <span className="capitalize">{dayOfWeek}</span>} {date}
-                  </h3>
-                  <div className="space-y-4">
-                    {events.map(event => (
-                      <EventCard key={event.id} event={event} isPast={false} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            {Object.entries(dayEvents).map(([date, events]) =>
+              renderDayGroup(date, events, false)
+            )}
           </div>
         ))}
       </div>
@@ -277,24 +305,9 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
                   <div className={`flex-grow border-t ${theme === "light" ? "border-gray-300" : "border-white/20"}`}></div>
                 </div>
                 
-                {Object.entries(dayEvents).map(([date, events]) => {
-                  // Jour de la semaine dérivé de la date+heure de début.
-                  const firstEvent = events[0];
-                  const firstStart = firstEvent ? getEventStart(firstEvent) : null;
-                  const dayOfWeek = firstStart ? daysOfWeek[firstStart.getDay()] : "";
-                  return (
-                    <div key={date} className="mb-6">
-                      <h3 className={`text-xl font-medium border-b border-white/20 pb-2 mb-4 ${textColorClass}`}>
-                        {dayOfWeek && <span className="capitalize">{dayOfWeek}</span>} {date}
-                      </h3>
-                      <div className="space-y-4">
-                        {events.map(event => (
-                          <EventCard key={event.id} event={event} isPast={true} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                {Object.entries(dayEvents).map(([date, events]) =>
+                  renderDayGroup(date, events, true)
+                )}
               </div>
             ))
           ) : (
