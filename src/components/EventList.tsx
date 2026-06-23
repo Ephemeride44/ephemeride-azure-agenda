@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { Database } from "@/lib/database.types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import EventCard from "./EventCard";
+import EventListSkeleton from "./EventListSkeleton";
 import { Button } from "@/components/ui/button";
 import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -31,6 +32,10 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
+  // Faux tant que la liste « à venir » n'a pas été dérivée côté client : on
+  // affiche alors un skeleton (la dérivation se fait dans un effet pour utiliser
+  // le « aujourd'hui » local du visiteur).
+  const [ready, setReady] = useState(false);
   const { theme } = useTheme();
 
   // Formate la date de la dernière création/modification d'un événement
@@ -73,6 +78,7 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
     });
 
     setUpcomingEvents(upcoming);
+    setReady(true);
   }, [events]);
 
   // Déclencher le chargement des événements passés quand on ouvre la section
@@ -137,6 +143,10 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
   };
 
   const textColorClass = theme === "light" ? "text-[#1B263B]" : "text-[#faf3ec]";
+
+  // Premier rendu (serveur + hydratation) : la liste « à venir » n'est pas
+  // encore dérivée → on affiche le skeleton plutôt qu'un état vide qui clignote.
+  if (!ready) return <EventListSkeleton />;
 
   // Rail timeline : pastille colorée (couleur du jour) + date empilée, posée
   // sur une ligne verticale. Sticky pour les événements à venir.
