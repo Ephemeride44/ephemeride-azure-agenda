@@ -152,7 +152,7 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
     return (
       <div className="relative flex-shrink-0 w-16 md:w-24">
         <div className={`absolute top-2 bottom-0 left-[7px] w-px ${lineColor}`} />
-        <div className={`${sticky ? "sticky top-[168px] md:top-32" : ""} z-10 ${stickyBg} pb-2`}>
+        <div className={`${sticky ? "sticky top-[184px] md:top-36" : ""} z-10 ${stickyBg} pb-2`}>
           <div className="flex items-start gap-2">
             <span className={`mt-1.5 h-3.5 w-3.5 rounded-full ring-4 ${ringColor} ${dotColor} flex-shrink-0`} />
             <div className={`leading-tight ${textColorClass} ${sticky ? "" : "opacity-70"}`}>
