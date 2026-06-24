@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import TipeeeSettingsCard from "@/components/settings/TipeeeSettingsCard";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { sanitizeFileName } from "@/lib/utils";
 
 type Theme = Database["public"]["Tables"]["themes"]["Row"];
 type ThemeFormValues = {
@@ -127,7 +128,7 @@ const SettingsAdmin = () => {
     let image_url = null;
     let image_url_light = null;
     if (selectedFile) {
-      const filePath = `themes/${Date.now()}_${selectedFile.name}`;
+      const filePath = `themes/${Date.now()}_${sanitizeFileName(selectedFile.name)}`;
       const { error: uploadError } = await supabase.storage.from('event-assets').upload(filePath, selectedFile, { upsert: true });
       if (!uploadError) {
         const { data: publicUrlData } = supabase.storage.from('event-assets').getPublicUrl(filePath);
@@ -135,7 +136,7 @@ const SettingsAdmin = () => {
       }
     }
     if (selectedFileLight) {
-      const filePathLight = `themes/${Date.now()}_${selectedFileLight.name}`;
+      const filePathLight = `themes/${Date.now()}_${sanitizeFileName(selectedFileLight.name)}`;
       const { error: uploadErrorLight } = await supabase.storage.from('event-assets').upload(filePathLight, selectedFileLight, { upsert: true });
       if (!uploadErrorLight) {
         const { data: publicUrlDataLight } = supabase.storage.from('event-assets').getPublicUrl(filePathLight);
@@ -212,7 +213,7 @@ const SettingsAdmin = () => {
     let image_url = editTheme.image_url;
     let image_url_light = editTheme.image_url_light;
     if (editFile) {
-      const filePath = `themes/${Date.now()}_${editFile.name}`;
+      const filePath = `themes/${Date.now()}_${sanitizeFileName(editFile.name)}`;
       const { error: uploadError } = await supabase.storage.from('event-assets').upload(filePath, editFile, { upsert: true });
       if (!uploadError) {
         const { data: publicUrlData } = supabase.storage.from('event-assets').getPublicUrl(filePath);
@@ -220,7 +221,7 @@ const SettingsAdmin = () => {
       }
     }
     if (editFileLight) {
-      const filePathLight = `themes/${Date.now()}_${editFileLight.name}`;
+      const filePathLight = `themes/${Date.now()}_${sanitizeFileName(editFileLight.name)}`;
       const { error: uploadErrorLight } = await supabase.storage.from('event-assets').upload(filePathLight, editFileLight, { upsert: true });
       if (!uploadErrorLight) {
         const { data: publicUrlDataLight } = supabase.storage.from('event-assets').getPublicUrl(filePathLight);
