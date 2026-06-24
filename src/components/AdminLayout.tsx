@@ -80,6 +80,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
     ...(isSuperAdmin ? [
       {
+        href: '/admin/calendar',
+        icon: Calendar,
+        label: 'Calendrier',
+        description: 'Vue calendrier des événements'
+      },
+      {
         href: '/admin/settings',
         icon: Settings,
         label: 'Paramètres',
