@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         ephemeride: "#1B263B", // Bleu nuit plus doux

@@ -10,55 +10,21 @@ import { Share, Mail, MessageSquare, Send, ChevronDown, ChevronUp } from "lucide
 import { useTheme } from "@/components/ThemeProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { daysOfWeek, monthNames, monthNamesShort, getDateBlockColor, getEventStart } from "@/lib/utils";
-import EventFilters from "@/components/events/EventFilters";
-import type { FilterValues } from "@/lib/eventFilters";
 
 interface EventListProps {
   events: Event[];
   pastEvents?: Event[];
   onLoadPastEvents?: () => void;
-  lastUpdatedAt?: string | null;
-  /** Options disponibles par filtre (chargées en amont, indépendamment des filtres actifs). */
-  filterOptions: Record<string, string[]>;
-  /** Valeurs de filtre courantes (portées par l'URL). */
-  filterValues: FilterValues;
-  /** Met à jour les filtres. */
-  onFilterChange: (values: FilterValues) => void;
-  /** Réinitialise les filtres. */
-  onFilterReset: () => void;
 }
 
-const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, filterOptions, filterValues, onFilterChange, onFilterReset }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   // Faux tant que la liste « à venir » n'a pas été dérivée côté client : on
   // affiche alors un skeleton (la dérivation se fait dans un effet pour utiliser
   // le « aujourd'hui » local du visiteur).
   const [ready, setReady] = useState(false);
   const { theme } = useTheme();
-
-  // Formate la date de la dernière création/modification d'un événement
-  useEffect(() => {
-    if (!lastUpdatedAt) {
-      setLastUpdated("");
-      return;
-    }
-
-    const updated = new Date(lastUpdatedAt);
-    if (Number.isNaN(updated.getTime())) {
-      setLastUpdated("");
-      return;
-    }
-
-    const dayName = daysOfWeek[updated.getDay()];
-    const day = updated.getDate();
-    const month = monthNames[updated.getMonth()];
-    const year = updated.getFullYear();
-    const hours = updated.getHours().toString().padStart(2, '0');
-    const minutes = updated.getMinutes().toString().padStart(2, '0');
-    setLastUpdated(`${dayName} ${day} ${month} ${year} à ${hours}h${minutes}`);
-  }, [lastUpdatedAt]);
 
   // Filter events into upcoming based on the current date
   // Les événements passés sont maintenant passés directement en props
@@ -193,13 +159,11 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
 
   return (
     <div>
-      {/* Events Count and Last Updated Section - Before upcoming events heading */}
-      <div className={`text-lg font-normal opacity-70 mb-8 space-y-1 ${textColorClass}`}>
-        <p>{upcomingEvents.length} événements sont recensés au moment où vous consultez cette page</p>
-        <p><span className="underline font-medium">dernière mise à jour</span> : {lastUpdated}</p>
-        
-        {/* Social sharing buttons */}
-        <div className="flex space-x-3 pt-3">
+      {/* Boutons de partage du site — masqués pour le moment (conservés dans le
+          code ; réactiver en remplaçant `false` par `true`). */}
+      {false && (
+      <div className={`mb-8 ${textColorClass}`}>
+        <div className="flex space-x-3">
           <Button 
             variant="outline" 
             size="icon" 
@@ -242,19 +206,10 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents, lastUpdatedAt, f
           </Button>
         </div>
       </div>
-      
-      {/* Barre de filtres (extensible : voir src/lib/eventFilters.ts) */}
-      <EventFilters
-        options={filterOptions}
-        values={filterValues}
-        onChange={onFilterChange}
-        onReset={onFilterReset}
-      />
+      )}
 
       {/* Upcoming Events Section */}
       <div className="space-y-8 mb-12">
-        <h2 className={`text-2xl font-semibold mb-8 ${textColorClass}`}>Événements à venir</h2>
-
         {upcomingEvents.length === 0 && (
           <p className={`opacity-70 ${textColorClass}`}>
             Aucun événement à venir ne correspond à votre recherche.

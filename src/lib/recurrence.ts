@@ -1,4 +1,4 @@
-import { daysOfWeek, formatFrTime, getEventEnd, getEventStart } from "@/lib/utils";
+import { daysOfWeek, formatFrTime, getEventEnd, getEventStart, toISODate } from "@/lib/utils";
 
 /**
  * Règle de récurrence hebdomadaire.
@@ -43,14 +43,6 @@ export type RecurringSharedFields = {
 function parseISODate(iso: string): Date {
   const [year, month, day] = iso.split("-").map((part) => parseInt(part, 10));
   return new Date(year, month - 1, day, 12, 0, 0, 0);
-}
-
-/** Formate une `Date` locale en `YYYY-MM-DD`. */
-function toISODate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

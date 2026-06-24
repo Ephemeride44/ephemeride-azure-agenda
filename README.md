@@ -28,7 +28,7 @@ Prérequis : **Node.js 20+** et **pnpm**.
 
 ```sh
 pnpm install
-pnpm dev          # serveur de dev (Turbopack) sur http://localhost:3000
+pnpm dev          # serveur de dev (Turbopack) sur http://localhost:8080
 ```
 
 Autres scripts :
