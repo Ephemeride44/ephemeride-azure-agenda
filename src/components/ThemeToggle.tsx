@@ -15,8 +15,8 @@ export function ThemeToggle() {
       onClick={toggleTheme}     
       className={
         theme === 'light'
-          ? 'bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
-          : 'bg-white/10 text-[#faf3ec]'
+          ? 'rounded-full bg-[#fff7e6] text-[#1B263B] border-[#f3e0c7] hover:bg-[#ffe2b0] hover:text-[#1B263B] shadow-sm'
+          : 'rounded-full bg-white/10 text-[#faf3ec]'
       }
     >
       {theme === 'light' ? (

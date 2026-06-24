@@ -101,6 +101,10 @@ export function getDayOfWeek(dateISO: string): string {
   return daysOfWeek[d.getDay()];
 }
 
+// NB : la même palette existe en hex dans `WEEKDAY_HEX` (src/lib/colors.ts),
+// utilisée en style inline par le calendrier. Garder les deux en phase — on ne
+// peut pas dériver ces classes dynamiquement car Tailwind n'extrait que des
+// littéraux statiques.
 export function getDateBlockColor(day: string): string {
   switch (day) {
     case "lundi":
@@ -157,6 +161,14 @@ export function parseLocalDateTime(value?: string | null): Date | null {
   );
 }
 
+/** Formate une `Date` locale en `YYYY-MM-DD`. */
+export function toISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 /** Date+heure de début d'un événement (null si `start_at` absent). */
 export function getEventStart(event: EventTimeFields): Date | null {
   return parseLocalDateTime(event.start_at);
@@ -177,6 +189,11 @@ export function formatFrTime(date: Date): string {
 /** Libellé de date long en français : "mercredi 21 mai 2025". */
 export function formatFrDateLabel(date: Date): string {
   return `${daysOfWeek[date.getDay()]} ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/** Libellé jour + mois en français, sans l'année : "mercredi 21 mai". */
+export function formatFrDayMonth(date: Date): string {
+  return `${daysOfWeek[date.getDay()]} ${date.getDate()} ${monthNames[date.getMonth()]}`;
 }
 
 /**
