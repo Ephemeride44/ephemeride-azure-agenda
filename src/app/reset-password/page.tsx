@@ -20,36 +20,40 @@ const ResetPassword: React.FC = () => {
   const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
-    // Supabase gère automatiquement les tokens dans les fragments d'URL
-    // On attend un peu pour que Supabase traite le hash
-    const checkSession = async () => {
-      // Attendre que Supabase traite le hash de l'URL
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Vérifier si on a un hash de réinitialisation dans l'URL
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const type = hashParams.get('type');
-        
-        if (type !== 'recovery') {
-          toast({
-            title: "Lien invalide",
-            description: "Ce lien de réinitialisation n'est pas valide ou a expiré.",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            router.push('/admin');
-          }, 2000);
-          return;
-        }
-      }
+    let validated = false;
 
+    const markValid = () => {
+      validated = true;
       setIsValidating(false);
     };
 
-    checkSession();
+    // Cas nominal : Supabase émet PASSWORD_RECOVERY après avoir lu le hash de l'URL.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        markValid();
+      }
+    });
+
+    // Fallback : la session de recovery est peut-être déjà posée (hash déjà consommé).
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) markValid();
+    });
+
+    // Garde-fou : lien invalide / expiré → on prévient et on sort.
+    const timeout = setTimeout(() => {
+      if (validated) return;
+      toast({
+        title: "Lien invalide",
+        description: "Ce lien de réinitialisation n'est pas valide ou a expiré.",
+        variant: "destructive",
+      });
+      setTimeout(() => router.push('/admin'), 2000);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [router, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -86,12 +90,12 @@ const ResetPassword: React.FC = () => {
 
       toast({
         title: "Mot de passe modifié",
-        description: "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
+        description: "Votre mot de passe a été mis à jour. Redirection vers l'administration…",
       });
 
-      // Rediriger vers la page de connexion après un court délai
+      // L'utilisateur est authentifié après updateUser → on l'envoie sur le dashboard.
       setTimeout(() => {
-        navigate('/admin');
+        router.push('/admin/dashboard');
       }, 2000);
     } catch (error: any) {
       console.error('Erreur lors de la réinitialisation:', error);
