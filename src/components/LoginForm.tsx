@@ -13,6 +13,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // HACK : cast temporaire pour ignorer le typage strict de Supabase
 const supabase: SupabaseClient = baseSupabase;
 
+// Construit une URL de redirection dans le contexte courant (local ou distant),
+// pour que les liens d'email restent sur le même domaine que la session en cours.
+const redirectUrl = (path: string) => `${window.location.origin}${path}`;
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,6 +51,9 @@ const LoginForm = () => {
     } else if (mode === 'magic') {
       const { error } = await supabase.auth.signInWithOtp({
         email,
+        options: {
+          emailRedirectTo: redirectUrl('/admin/dashboard'),
+        },
       });
       if (!error) {
         toast({
@@ -80,7 +87,7 @@ const LoginForm = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl('/reset-password'),
       });
 
       if (error) {
