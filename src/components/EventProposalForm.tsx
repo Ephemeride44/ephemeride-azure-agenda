@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/ThemeProvider";
-import { formatCityName, formatPrice } from "@/lib/utils";
+import { formatCityName, formatPrice, sanitizeFileName } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import RecurrenceFields from "@/components/RecurrenceFields";
 import { buildRecurringEvents, type RecurrenceRule } from "@/lib/recurrence";
@@ -92,7 +92,7 @@ const EventProposalForm = ({ onClose }: { onClose: () => void }) => {
   const uploadCoverIfNeeded = async (): Promise<string | null | undefined> => {
     if (!coverFile) return null;
     setIsUploading(true);
-    const filePath = `covers/${Date.now()}_${coverFile.name}`;
+    const filePath = `covers/${Date.now()}_${sanitizeFileName(coverFile.name)}`;
     const { error: uploadError } = await supabase.storage
       .from("event-assets")
       .upload(filePath, coverFile, { upsert: true });

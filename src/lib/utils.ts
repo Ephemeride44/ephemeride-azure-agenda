@@ -33,6 +33,28 @@ export function eventSlug(event: { id: string; name?: string | null }): string {
   return base ? `${base}-${event.id}` : event.id;
 }
 
+/**
+ * Nettoie un nom de fichier pour l'utiliser comme clé de stockage (Supabase
+ * Storage n'accepte pas les accents ni la plupart des caractères spéciaux).
+ * L'extension est préservée. Ex : "Société été.PNG" -> "societe-ete.png".
+ */
+export function sanitizeFileName(fileName?: string | null): string {
+  const name = (fileName || "").trim();
+  const lastDot = name.lastIndexOf(".");
+  const hasExt = lastDot > 0;
+  const base = hasExt ? name.slice(0, lastDot) : name;
+  const ext = hasExt ? name.slice(lastDot + 1) : "";
+
+  const cleanBase = slugify(base) || "fichier";
+  const cleanExt = ext
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  return cleanExt ? `${cleanBase}.${cleanExt}` : cleanBase;
+}
+
 const TRAILING_UUID_RE =
   /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 

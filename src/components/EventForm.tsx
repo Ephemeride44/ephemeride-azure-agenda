@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
-import { formatCityName, formatPrice, getEventStart, getEventEnd } from "@/lib/utils";
+import { formatCityName, formatPrice, getEventStart, getEventEnd, sanitizeFileName } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import RecurrenceFields from "@/components/RecurrenceFields";
@@ -233,7 +233,7 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   const uploadCoverIfNeeded = async (currentCoverUrl: string | null): Promise<string | null | undefined> => {
     if (!coverFile) return currentCoverUrl;
     setIsUploading(true);
-    const filePath = `covers/${Date.now()}_${coverFile.name}`;
+    const filePath = `covers/${Date.now()}_${sanitizeFileName(coverFile.name)}`;
     const { error: uploadError } = await supabase.storage.from('event-assets').upload(filePath, coverFile, { upsert: true });
     setIsUploading(false);
     if (uploadError) {
