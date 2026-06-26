@@ -11,7 +11,8 @@ import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDropzone } from "react-dropzone";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Bell } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -133,6 +134,12 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [formData, setFormData] = useState<EventFormValues>(defaultValues);
   const formDataRef = useRef<EventFormValues>(defaultValues);
+  // Notification push aux personnes ayant mis l'événement en favori (édition).
+  const [bookmarkCount, setBookmarkCount] = useState<number | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  // Dialogue post-sauvegarde : proposé après « Mettre à jour » s'il y a ≥ 1 favori.
+  const [showNotifyPrompt, setShowNotifyPrompt] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<Partial<Event> | null>(null);
   const { theme: contextTheme } = useTheme();
   const theme = themeProp || contextTheme;
   
@@ -207,6 +214,25 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     }
   }, [event, duplicate]);
 
+  // En édition : nombre de personnes ayant mis l'événement en favori (pour la
+  // case « Envoyer la notif »). RPC sécurisée (admins uniquement).
+  useEffect(() => {
+    if (!isEditing || !event?.id) {
+      setBookmarkCount(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("count_event_bookmarks", {
+        p_event_id: event.id,
+      });
+      if (!cancelled) setBookmarkCount(!error && typeof data === "number" ? data : 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, event?.id]);
+
   const { data: themesData, isLoading: isLoadingThemes } = useQuery<Theme[]>({
     queryKey: ["themes"],
     queryFn: fetchThemes,
@@ -273,6 +299,82 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     return { ...rest, start_at, end_at };
   };
 
+  // Message par défaut de la notification, déduit du changement le plus notable
+  // entre l'événement d'origine et le formulaire. L'admin peut le réécrire.
+  const buildAutoMessage = (): string => {
+    const name = (formData.name || event?.name || "L'événement").trim();
+    if (!event) return `${name} a été mis à jour.`;
+
+    if (!event.is_cancelled && formData.is_cancelled) return `${name} : l'événement est annulé.`;
+    if (!event.is_full && formData.is_full) return `${name} : c'est complet, plus de places disponibles.`;
+
+    const origStart = getEventStart(event);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const origDate = origStart
+      ? `${origStart.getFullYear()}-${pad(origStart.getMonth() + 1)}-${pad(origStart.getDate())}`
+      : "";
+    const origTime = origStart ? `${pad(origStart.getHours())}:${pad(origStart.getMinutes())}` : "";
+    const dateChanged = !!formData.date && formData.date !== origDate;
+    const timeChanged = !!formData.start_time && formData.start_time !== origTime;
+    if (dateChanged || timeChanged) {
+      const d = formData.date
+        ? new Date(`${formData.date}T${formData.start_time || "00:00"}:00`)
+        : null;
+      const dateLabel = d
+        ? d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+        : formData.date;
+      const timeLabel = formData.start_time ? ` à ${formData.start_time}` : "";
+      return `${name} : nouvel horaire, le ${dateLabel}${timeLabel}.`;
+    }
+
+    const placeChanged =
+      (formData.location_place || "") !== (event.location_place || "") ||
+      (formData.location_city || "") !== (event.location_city || "");
+    if (placeChanged) {
+      const loc = [formData.location_place, formData.location_city].filter(Boolean).join(", ");
+      return `${name} : nouveau lieu — ${loc}.`;
+    }
+
+    return `${name} a été mis à jour.`;
+  };
+
+  // Persiste l'événement via onSave, puis envoie éventuellement la notification
+  // push aux personnes l'ayant mis en favori.
+  const persistAndMaybeNotify = async (payload: Partial<Event>, notify: boolean) => {
+    try {
+      const success = await onSave(payload);
+      if (!success) return; // onSave a échoué : ne pas fermer le formulaire
+
+      if (notify && event?.id && notificationMessage.trim()) {
+        const { data: notif, error: notifError } = await supabase.functions.invoke(
+          "send-event-notification",
+          { body: { eventId: event.id, message: notificationMessage.trim() } },
+        );
+        if (notifError) {
+          toast({
+            title: "Notification non envoyée",
+            description: notifError.message,
+            variant: "destructive",
+          });
+        } else {
+          const parts = [`${notif?.sent ?? 0} push`];
+          if (notif?.emailed) parts.push(`${notif.emailed} e-mail(s)`);
+          toast({
+            title: "Notification envoyée",
+            description: `Transmis : ${parts.join(", ")}.`,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('💥 [EventForm] onSave error', e);
+      toast({
+        title: "Erreur de sauvegarde",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onSubmit = async (data: Partial<Event>) => {
     // Nettoyer les données : convertir les chaînes vides en null pour la base de données
     const cleanData = Object.fromEntries(
@@ -284,21 +386,19 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     const cover_url = await uploadCoverIfNeeded(cleanData.cover_url || null);
     if (cover_url === undefined) return;
     const organization_id = resolveOrganizationId(cleanData.organization_id);
+    const payload = { ...cleanData, cover_url, organization_id };
 
-    try {
-      const success = await onSave({ ...cleanData, cover_url, organization_id });
-      if (!success) {
-        // Si onSave retourne false, ne pas fermer le formulaire
-        return;
-      }
-    } catch (e) {
-      console.error('💥 [EventForm] onSave error', e);
-      toast({
-        title: "Erreur de sauvegarde",
-        description: "Une erreur est survenue lors de la sauvegarde.",
-        variant: "destructive",
-      });
+    // En édition, si au moins une personne a mis l'événement en favori, on
+    // propose d'envoyer une notification AVANT de finaliser (le dialogue
+    // enregistre puis notifie ou non selon le choix de l'admin).
+    if (isEditing && (bookmarkCount ?? 0) >= 1) {
+      setPendingPayload(payload);
+      setNotificationMessage(buildAutoMessage());
+      setShowNotifyPrompt(true);
+      return;
     }
+
+    await persistAndMaybeNotify(payload, false);
   };
 
   // Soumission d'un événement récurrent : valide la règle, prépare les champs
@@ -833,6 +933,56 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
           </div>
         </div>
       </div>
+
+      {/* Dialogue post-sauvegarde : proposer d'avertir les personnes ayant mis
+          l'événement en favori. Apparaît après « Mettre à jour » s'il y a ≥ 1
+          favori. Les deux actions enregistrent ; seule « Notifier » envoie le push. */}
+      <AlertDialog open={showNotifyPrompt} onOpenChange={setShowNotifyPrompt}>
+        <AlertDialogContent
+          className={theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Prévenir les personnes intéressées ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bookmarkCount} {(bookmarkCount ?? 0) > 1 ? 'personnes ont' : 'personne a'} mis cet
+              événement en favori. Vous pouvez leur envoyer une notification du changement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-1">
+            <Textarea
+              rows={3}
+              value={notificationMessage}
+              onChange={(e) => setNotificationMessage(e.target.value)}
+              placeholder="Message de la notification"
+              className={theme === 'light' ? 'border-[#f3e0c7] bg-white text-[#1B263B]' : 'border-white/20 bg-white/10 text-white'}
+            />
+            <p className="text-xs opacity-60">Message envoyé en notification push. Modifiable avant l'envoi.</p>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                const payload = pendingPayload;
+                if (payload) void persistAndMaybeNotify(payload, false);
+              }}
+            >
+              Enregistrer sans notifier
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const payload = pendingPayload;
+                if (payload) void persistAndMaybeNotify(payload, true);
+              }}
+            >
+              Enregistrer et notifier
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 };

@@ -8,6 +8,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { UserRoleProvider } from "@/components/UserRoleProvider";
+import { AuthDialogProvider } from "@/components/account/AuthDialogProvider";
+import { PushPromptProvider } from "@/components/account/PushPromptProvider";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import PostHogProvider from "@/components/PostHogProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -21,7 +24,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ThemeProvider>
               <Toaster />
               <Sonner />
-              <UserRoleProvider>{children}</UserRoleProvider>
+              <UserRoleProvider>
+                <PushPromptProvider>
+                  <AuthDialogProvider>{children}</AuthDialogProvider>
+                </PushPromptProvider>
+              </UserRoleProvider>
+              <ServiceWorkerRegister />
             </ThemeProvider>
           </TooltipProvider>
         </CookiesProvider>

@@ -3,7 +3,7 @@
 import type { Database } from "@/integrations/supabase/types";
 type Event = Database["public"]["Tables"]["events"]["Row"];
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Euro, Ticket, Pencil, Repeat, Clock } from "lucide-react";
+import { ArrowRight, Euro, Ticket, Pencil, Repeat, Clock, Bookmark } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { daysOfWeek, getDateBlockColor, getEventStart, formatTimeDisplay, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 import { triggerRevalidate } from "@/lib/revalidate";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 
 interface EventCardProps {
   event: Event;
@@ -33,6 +34,11 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const { toast } = useToast();
   const { isSuperAdmin, isOrganizationAdmin } = useUserRoleContext();
   const canEdit = isSuperAdmin || isOrganizationAdmin;
+  const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks();
+  const bookmarked = isBookmarked(event.id);
+  // Favoris réservés aux utilisateurs connectés (feature en accès restreint).
+  const showBookmark = isAuthenticated;
+  const actionCount = (showBookmark ? 1 : 0) + (canEdit ? 1 : 0);
 
   useEffect(() => {
     setEvent(eventProp);
@@ -129,16 +135,6 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
               Voir l'affiche en grand
             </TooltipContent>
           </Tooltip>
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogContent className="max-w-2xl flex flex-col items-center bg-black/95">
-              <img
-                src={event.cover_url}
-                alt="Affiche de l'événement"
-                className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
-                style={{ background: '#fff' }}
-              />
-            </DialogContent>
-          </Dialog>
         </>
       ) : timeLabel ? (
         <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex items-center justify-center py-5 md:py-0 ${isPast ? 'opacity-60' : ''}`}>
@@ -153,8 +149,10 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
       {/* Contenu principal */}
       <div className="flex-1 p-6 relative">
-        {/* Bouton Modifier (admins uniquement) */}
-        {canEdit && (
+        {/* Actions en haut à droite : favori (connectés) + modifier (admins). */}
+        {actionCount > 0 && (
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          {showBookmark && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -162,44 +160,56 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                 onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setShowEdit(true);
+                  toggleBookmark(event.id);
                 }}
-                aria-label="Modifier l'événement"
-                className={`absolute top-4 right-4 z-10 p-2 rounded-full border transition-colors ${theme === 'dark'
-                  ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
-                  : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                aria-label={bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+                aria-pressed={bookmarked}
+                className={`p-2 rounded-full border transition-colors ${bookmarked
+                  ? 'border-transparent bg-accent-peach text-accent-peach-foreground hover:bg-accent-peach-hover'
+                  : theme === 'dark'
+                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                   }`}
               >
-                <Pencil className="w-4 h-4" />
+                <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="left" className="text-xs">
-              Modifier l'événement
+              {bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
             </TooltipContent>
           </Tooltip>
-        )}
+          )}
 
-        {/* Dialog d'édition (admins) : s'ouvre sur place, la fermeture ne déplace pas la page */}
-        {canEdit && (
-          <Dialog open={showEdit} onOpenChange={setShowEdit}>
-            <DialogContent
-              className={`w-3/4 max-w-4xl mx-auto max-h-[90vh] overflow-y-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`}
-            >
-              <DialogHeader>
-                <DialogTitle>Modifier l'événement</DialogTitle>
-              </DialogHeader>
-              <EventForm
-                event={event}
-                onSave={handleSaveEvent}
-                onCancel={() => setShowEdit(false)}
-                onDelete={handleDeleteEvent}
-              />
-            </DialogContent>
-          </Dialog>
+          {/* Bouton Modifier (admins uniquement) */}
+          {canEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowEdit(true);
+                  }}
+                  aria-label="Modifier l'événement"
+                  className={`p-2 rounded-full border transition-colors ${theme === 'dark'
+                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="text-xs">
+                Modifier l'événement
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         )}
 
         {/* Nom de l'événement */}
-        <div className={`flex flex-wrap items-center gap-2 mb-3 ${canEdit ? 'pr-10' : ''}`}>
+        <div className={`flex flex-wrap items-center gap-2 mb-3 ${actionCount >= 2 ? 'pr-20' : actionCount === 1 ? 'pr-10' : ''}`}>
           <h3 className="text-xl font-bold leading-tight">{event.name}</h3>
           {event.is_full && (
             <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
@@ -342,30 +352,77 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
   if (isDeleted) return null;
 
+  // Les modales (affiche en grand, édition) sont rendues HORS de la carte
+  // cliquable. Bien que Radix les portale dans document.body, les événements
+  // synthétiques React remontent selon l'arbre React : si elles étaient
+  // descendantes du div role="link", un clic (ou Espace/Entrée) dans le
+  // formulaire d'édition déclencherait l'ouverture du lien externe.
+  const dialogs = (
+    <>
+      {event.cover_url && (
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent className="max-w-2xl flex flex-col items-center bg-black/95">
+            <img
+              src={event.cover_url}
+              alt="Affiche de l'événement"
+              className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
+              style={{ background: '#fff' }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+      {canEdit && (
+        <Dialog open={showEdit} onOpenChange={setShowEdit}>
+          <DialogContent
+            className={`w-3/4 max-w-4xl mx-auto max-h-[90vh] overflow-y-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`}
+          >
+            <DialogHeader>
+              <DialogTitle>Modifier l'événement</DialogTitle>
+            </DialogHeader>
+            <EventForm
+              event={event}
+              onSave={handleSaveEvent}
+              onCancel={() => setShowEdit(false)}
+              onDelete={handleDeleteEvent}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+
   if (event.url) {
     const openEvent = () => window.open(event.url!, "_blank", "noopener,noreferrer");
     // Carte cliquable sans <a> englobant : un <a> contiendrait les liens
     // internes (billetterie, « plus d'infos ») → ancres imbriquées invalides
     // (erreur d'hydratation React 19). On utilise un div role="link".
     return (
-      <div
-        role="link"
-        tabIndex={0}
-        onClick={openEvent}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openEvent();
-          }
-        }}
-        className="group block focus:outline-none cursor-pointer"
-        style={{ textDecoration: "none" }}
-      >
-        {card}
-      </div>
+      <>
+        <div
+          role="link"
+          tabIndex={0}
+          onClick={openEvent}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openEvent();
+            }
+          }}
+          className="group block focus:outline-none cursor-pointer"
+          style={{ textDecoration: "none" }}
+        >
+          {card}
+        </div>
+        {dialogs}
+      </>
     );
   }
-  return card;
+  return (
+    <>
+      {card}
+      {dialogs}
+    </>
+  );
 };
 
 export default EventCard;
