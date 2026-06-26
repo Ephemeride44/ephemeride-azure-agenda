@@ -1,8 +1,8 @@
--- Abonnements visiteurs (communes, organisateurs), préférences et historique de
+-- Abonnements visiteurs (communes, organisateur·ices), préférences et historique de
 -- notifications, enrichissement des organisations, et bucket avatars.
 --
 -- Prolonge la migration 20260625 (favoris + push) : on ouvre aux comptes publics
--- le suivi de communes et d'organisateurs, avec une délivrance push doublée d'un
+-- le suivi de communes et d'organisateur·ices, avec une délivrance push doublée d'un
 -- historique persistant (Notification Tray). RLS « chacun ses lignes » partout ;
 -- l'insertion des notifications est réservée au service_role (Edge Functions).
 
@@ -39,7 +39,7 @@ create policy "city_subscriptions_delete_own"
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
--- Abonnements aux organisateurs (organizations)
+-- Abonnements aux organisateur·ices (organizations)
 -- ---------------------------------------------------------------------------
 create table if not exists public.organization_subscriptions (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -71,7 +71,7 @@ create policy "organization_subscriptions_delete_own"
   for delete
   using (auth.uid() = user_id);
 
--- Compteur public « N abonnés » d'un organisateur, sans exposer la liste.
+-- Compteur public « N abonnés » d'un·e organisateur·ice, sans exposer la liste.
 create or replace function public.count_organization_subscribers(p_org_id uuid)
 returns integer
 language sql
@@ -167,7 +167,7 @@ create policy "notifications_delete_own"
   using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
--- Enrichissement des organisations (carte organisateur publique)
+-- Enrichissement des organisations (carte organisateur·ice publique)
 -- ---------------------------------------------------------------------------
 alter table public.organizations
   add column if not exists location_city text,

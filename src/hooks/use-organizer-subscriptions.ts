@@ -18,7 +18,7 @@ export interface OrganizerSummary {
 }
 
 /**
- * Abonnements de l'utilisateur connecté aux organisateurs (organizations).
+ * Abonnements de l'utilisateur connecté aux organisateur·ices (organizations).
  * Expose aussi la liste des organisations actives pour les écrans de sélection.
  */
 export const useOrganizerSubscriptions = () => {

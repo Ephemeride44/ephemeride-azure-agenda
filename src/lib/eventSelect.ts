@@ -1,6 +1,6 @@
 // SELECT partagé pour charger un événement avec ses relations d'affichage
 // (thème, récurrence, organisation). Centralisé pour que la mention de
-// l'organisateur soit disponible partout où une EventCard est rendue.
+// l'organisateur·ice soit disponible partout où une EventCard est rendue.
 // Typé `string` (et non littéral) volontairement : la jointure organisation
 // référence des colonnes pas encore présentes dans types.ts tant que les types
 // Supabase ne sont pas régénérés. Un type littéral ferait échouer le parsing

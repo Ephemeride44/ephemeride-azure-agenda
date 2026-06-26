@@ -16,7 +16,7 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "bookmark", label: "Favoris" },
   { key: "city", label: "Villes" },
-  { key: "organization", label: "Organisateurs" },
+  { key: "organization", label: "Organisateur·ices" },
 ];
 
 const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
@@ -149,10 +149,10 @@ export const NotificationTrayContent = ({ onNavigate }: NotificationTrayContentP
 // Navigation selon le type de notification :
 // - favori : scroll fluide jusqu'à l'événement sur l'agenda ;
 // - ville : applique le filtre commune puis scroll jusqu'à l'événement ;
-// - organisateur : ouvre la page de l'organisateur.
+// - organisateur·ice : ouvre la page de l'organisateur·ice.
 function navigateToNotification(router: ReturnType<typeof useRouter>, n: AppNotification) {
   if (n.type === "organization" && n.organization_id) {
-    router.push(`/organisateur/${n.organization_id}`);
+    router.push(`/organisateur·ice/${n.organization_id}`);
     return;
   }
   if ((n.type === "bookmark" || n.type === "city") && n.event_id) {

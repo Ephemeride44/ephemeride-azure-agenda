@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     const channel = channelByUser.get(uid)!;
     const body =
       channel === "organization"
-        ? `Nouvel événement d'un organisateur que vous suivez.`
+        ? `Nouvel événement d'un·e organisateur·ice que vous suivez.`
         : `Nouvel événement à ${event.location_city}.`;
     return {
       user_id: uid,
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     `.</p>` +
     `<p><a href="${eventUrl}" style="color:#1B263B">Voir l'événement →</a></p>` +
     `<hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>` +
-    `<p style="font-size:12px;color:#888">Vous recevez cet e-mail car vous suivez cette commune ou cet organisateur sur Éphéméride.</p>` +
+    `<p style="font-size:12px;color:#888">Vous recevez cet e-mail car vous suivez cette commune ou cet·te organisateur·ice sur Éphéméride.</p>` +
     `</div>`;
   const emailed = await sendEmailFallback(admin, unreached, {
     subject: `Nouvel événement : ${event.name}`,

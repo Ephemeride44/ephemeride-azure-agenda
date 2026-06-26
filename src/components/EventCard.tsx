@@ -180,61 +180,61 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
       <div className="flex-1 p-6 relative">
         {/* Actions en haut à droite : favori (connectés) + modifier (admins). */}
         {actionCount > 0 && (
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          {showBookmark && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleBookmark(event.id);
-                }}
-                aria-label={bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
-                aria-pressed={bookmarked}
-                className={`p-2 rounded-full border transition-colors ${bookmarked
-                  ? 'border-transparent bg-accent-peach text-accent-peach-foreground hover:bg-accent-peach-hover'
-                  : theme === 'dark'
-                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
-                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                  }`}
-              >
-                <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="text-xs">
-              {bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
-            </TooltipContent>
-          </Tooltip>
-          )}
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            {showBookmark && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleBookmark(event.id);
+                    }}
+                    aria-label={bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+                    aria-pressed={bookmarked}
+                    className={`p-2 rounded-full border transition-colors ${bookmarked
+                      ? 'border-transparent bg-accent-peach text-accent-peach-foreground hover:bg-accent-peach-hover'
+                      : theme === 'dark'
+                        ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                        : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                      }`}
+                  >
+                    <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">
+                  {bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-          {/* Bouton Modifier (admins uniquement) */}
-          {canEdit && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowEdit(true);
-                  }}
-                  aria-label="Modifier l'événement"
-                  className={`p-2 rounded-full border transition-colors ${theme === 'dark'
-                    ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
-                    : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                    }`}
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left" className="text-xs">
-                Modifier l'événement
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+            {/* Bouton Modifier (admins uniquement) */}
+            {canEdit && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowEdit(true);
+                    }}
+                    aria-label="Modifier l'événement"
+                    className={`p-2 rounded-full border transition-colors ${theme === 'dark'
+                      ? 'border-white/20 text-white/70 hover:text-white hover:bg-white/10'
+                      : 'border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                      }`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">
+                  Modifier l'événement
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         )}
 
         {/* Nom de l'événement */}
@@ -263,10 +263,10 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
           {locationString}
         </div>
 
-        {/* Mention de l'organisateur (cliquable vers sa page) */}
+        {/* Mention de l'organisateur·ice (cliquable vers sa page) */}
         {event.organization && (
           <Link
-            href={`/organisateur/${event.organization.id}`}
+            href={`/organisateur·ice/${event.organization.id}`}
             onClick={(e) => e.stopPropagation()}
             className="mb-2 inline-flex items-center gap-1.5 text-sm transition-colors hover:text-accent-peach"
           >

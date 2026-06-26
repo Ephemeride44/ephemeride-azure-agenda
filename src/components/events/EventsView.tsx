@@ -20,7 +20,7 @@ interface EventsViewProps {
 
 /**
  * Bascule Liste / Calendrier autonome, réutilisée hors de la home (page
- * organisateur). La vue liste s'appuie sur les événements fournis ; la vue
+ * organisateur·ice). La vue liste s'appuie sur les événements fournis ; la vue
  * calendrier charge le mois visible (scopée à l'organisation si fournie).
  */
 export const EventsView = ({ events, organizationId }: EventsViewProps) => {
@@ -39,11 +39,10 @@ export const EventsView = ({ events, organizationId }: EventsViewProps) => {
                 type="button"
                 onClick={() => setView(v)}
                 aria-pressed={view === v}
-                className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm transition-colors ${
-                  view === v
-                    ? "bg-accent-violet text-accent-violet-foreground font-bold shadow-sm"
-                    : "font-medium text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm transition-colors ${view === v
+                  ? "bg-accent-violet text-accent-violet-foreground font-bold shadow-sm"
+                  : "font-medium text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {v === "list" ? "Liste" : "Calendrier"}

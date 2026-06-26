@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BadgeCheck, Eye, EyeOff, Lock, Moon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BadgeCheck, Eye, EyeOff, Lock, Moon, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -11,12 +12,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { AvatarUploader } from "@/components/account/AvatarUploader";
 
 export default function CompteProfilPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -28,6 +41,28 @@ export default function CompteProfilPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      toast({
+        title: "Au revoir 😿",
+        description: "Votre compte a été supprimé. Merci d'avoir fait un bout de chemin avec Éphéméride — à bientôt peut-être !",
+      });
+      await signOut();
+      router.push("/");
+    } catch (err) {
+      toast({
+        title: "Échec de la suppression",
+        description: err instanceof Error ? err.message : "Réessayez plus tard.",
+        variant: "destructive",
+      });
+      setDeletingAccount(false);
+    }
+  };
 
   useEffect(() => {
     const meta = user?.user_metadata ?? {};
@@ -87,14 +122,14 @@ export default function CompteProfilPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card/50 p-4">
-        <div className="flex items-center gap-4">
-          <AvatarUploader size="h-16 w-16" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-medium">Photo de profil</p>
             <p className="text-sm text-muted-foreground">
-              JPG ou PNG, 2 Mo max. Survolez l'avatar pour l'importer. Vos initiales sont utilisées par défaut.
+              JPG ou PNG, 2 Mo max. Vos initiales sont utilisées par défaut.
             </p>
           </div>
+          <AvatarUploader size="h-16 w-16" withActions />
         </div>
       </div>
 
@@ -111,9 +146,9 @@ export default function CompteProfilPage() {
 
       <div className="space-y-2">
         <Label>Adresse e-mail</Label>
-        <div className="flex items-center gap-2">
-          <Input value={user?.email ?? ""} disabled className="flex-1" />
-          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input value={user?.email ?? ""} disabled className="min-w-0 flex-1" />
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
             <BadgeCheck className="h-3.5 w-3.5" />
             Vérifié
           </span>
@@ -128,7 +163,7 @@ export default function CompteProfilPage() {
 
       <Separator />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid items-start gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-card/50 p-4">
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -158,33 +193,64 @@ export default function CompteProfilPage() {
           )}
         </div>
 
-        <div className="rounded-xl border border-border bg-card/50 p-4 opacity-60">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="font-medium">Compte Google</p>
-              <p className="text-sm text-muted-foreground">Bientôt disponible.</p>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Moon className="mt-0.5 h-5 w-5 text-accent-violet" />
+              <div>
+                <p className="font-medium">Apparence</p>
+                <p className="text-sm text-muted-foreground">Basculer entre le thème clair et sombre.</p>
+              </div>
             </div>
-            <Switch checked={false} disabled aria-label="Lier Google (bientôt)" />
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+              aria-label="Mode sombre"
+            />
           </div>
         </div>
       </div>
 
       <Separator />
 
-      <div className="rounded-xl border border-border bg-card/50 p-4">
-        <div className="flex items-center justify-between gap-4">
+      {/* Zone de danger */}
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <Moon className="mt-0.5 h-5 w-5 text-accent-violet" />
+            <Trash2 className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
             <div>
-              <p className="font-medium">Apparence</p>
-              <p className="text-sm text-muted-foreground">Basculer entre le thème clair et sombre.</p>
+              <p className="font-medium text-destructive">Supprimer mon compte</p>
+              <p className="text-sm text-muted-foreground">
+                Suppression définitive de votre compte et de toutes vos données (favoris, abonnements,
+                notifications). Cette action est irréversible.
+              </p>
             </div>
           </div>
-          <Switch
-            checked={theme === "dark"}
-            onCheckedChange={toggleTheme}
-            aria-label="Mode sombre"
-          />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="shrink-0" disabled={deletingAccount}>
+                {deletingAccount ? "Suppression…" : "Supprimer"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer définitivement votre compte ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Vos favoris, abonnements aux communes et organisateurs, préférences et notifications
+                  seront définitivement supprimés. Cette action est irréversible.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => void handleDeleteAccount()}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Supprimer mon compte
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>

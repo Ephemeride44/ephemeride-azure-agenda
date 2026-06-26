@@ -1,7 +1,8 @@
 "use client";
 
 import { useDropzone } from "react-dropzone";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { GradientAvatar } from "@/components/account/GradientAvatar";
 import { useAvatarUpload } from "@/hooks/use-avatar-upload";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,36 +14,39 @@ interface AvatarUploaderProps {
   size?: string;
   textClassName?: string;
   onChange?: () => void;
+  /** Affiche des boutons « Importer / Retirer » (recommandé sur mobile, où le
+   *  survol n'existe pas). Par défaut, seul le survol révèle l'action. */
+  withActions?: boolean;
 }
 
 /**
- * Avatar éditable : au survol, une pastille « appareil photo » invite à importer
- * une image (JPG/PNG, 2 Mo max). Réutilisé dans la dialog de bienvenue et la page
- * Compte. Upload immédiat via `useAvatarUpload`.
+ * Avatar éditable. Au survol, une pastille « appareil photo » invite à importer
+ * une image (JPG/PNG, 2 Mo max). Avec `withActions`, des boutons explicites sont
+ * ajoutés pour fonctionner au doigt. Upload immédiat via `useAvatarUpload`.
  */
-export const AvatarUploader = ({ size = "h-20 w-20", textClassName = "text-xl", onChange }: AvatarUploaderProps) => {
+export const AvatarUploader = ({
+  size = "h-20 w-20",
+  textClassName = "text-xl",
+  onChange,
+  withActions = false,
+}: AvatarUploaderProps) => {
   const { user } = useAuth();
-  const { uploadFile, isUploading } = useAvatarUpload(onChange);
+  const { uploadFile, removeAvatar, isUploading } = useAvatarUpload(onChange);
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, open } = useDropzone({
     onDrop: (files) => {
       if (files[0]) void uploadFile(files[0]);
     },
     accept: { "image/*": [] },
     multiple: false,
     disabled: isUploading,
-    noKeyboard: false,
   });
 
   const name = getDisplayName(user);
   const src = getAvatarUrl(user);
 
-  return (
-    <div
-      {...getRootProps()}
-      className="group relative cursor-pointer rounded-full"
-      title="Changer la photo"
-    >
+  const avatar = (
+    <div {...getRootProps()} className="group relative shrink-0 cursor-pointer rounded-full" title="Changer la photo">
       <input {...getInputProps()} aria-label="Importer une photo de profil" />
       <GradientAvatar name={name} src={src} className={size} textClassName={textClassName} />
       <div
@@ -56,6 +60,33 @@ export const AvatarUploader = ({ size = "h-20 w-20", textClassName = "text-xl", 
           <Loader2 className="h-5 w-5 animate-spin text-white" />
         ) : (
           <Camera className="h-5 w-5 text-white" />
+        )}
+      </div>
+    </div>
+  );
+
+  if (!withActions) return avatar;
+
+  return (
+    <div className="flex items-center gap-4">
+      {avatar}
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={open} disabled={isUploading}>
+          <Upload className="mr-1.5 h-4 w-4" />
+          {isUploading ? "Envoi…" : "Importer"}
+        </Button>
+        {src && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => void removeAvatar()}
+            disabled={isUploading}
+            className="text-destructive hover:text-destructive"
+          >
+            <X className="mr-1.5 h-4 w-4" />
+            Retirer
+          </Button>
         )}
       </div>
     </div>

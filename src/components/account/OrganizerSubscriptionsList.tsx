@@ -6,14 +6,14 @@ import { GradientAvatar } from "@/components/account/GradientAvatar";
 import { useOrganizerSubscriptions } from "@/hooks/use-organizer-subscriptions";
 
 interface OrganizerSubscriptionsListProps {
-  /** Limite le nombre d'organisateurs affichés (ex: étape wizard). */
+  /** Limite le nombre d'organisateur·ices affichés (ex: étape wizard). */
   limit?: number;
-  /** N'affiche que les organisateurs déjà suivis (page « Organisateurs suivis »). */
+  /** N'affiche que les organisateur·ices déjà suivis (page « Organisateur·ices suivis »). */
   onlySubscribed?: boolean;
 }
 
 /**
- * Liste d'organisateurs avec bouton S'abonner / Abonné. Réutilisée par le wizard
+ * Liste d'organisateur·ices avec bouton S'abonner / Abonné. Réutilisée par le wizard
  * d'onboarding et les pages Compte.
  */
 export const OrganizerSubscriptionsList = ({ limit, onlySubscribed }: OrganizerSubscriptionsListProps) => {
@@ -27,8 +27,8 @@ export const OrganizerSubscriptionsList = ({ limit, onlySubscribed }: OrganizerS
     return (
       <p className="text-sm text-muted-foreground">
         {onlySubscribed
-          ? "Vous ne suivez aucun organisateur pour le moment."
-          : "Aucun organisateur disponible pour le moment."}
+          ? "Vous ne suivez aucun·e organisateur·ice pour le moment."
+          : "Aucun·e organisateur·ice disponible pour le moment."}
       </p>
     );
   }

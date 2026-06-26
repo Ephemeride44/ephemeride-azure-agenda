@@ -9,6 +9,7 @@ import EventProposalForm from "@/components/EventProposalForm";
 import { useTheme } from "@/components/ThemeProvider";
 import AccountMenu, { MobileMenu } from "@/components/account/AccountMenu";
 import { NotificationBell } from "@/components/account/NotificationBell";
+import { LogoLink } from "@/components/LogoLink";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -431,7 +432,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
           <div className="relative max-w-6xl mx-auto">
             <div className={`flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
               <div className="flex flex-col items-center md:items-start gap-1">
-                <img
+                <LogoLink
                   src={theme === 'light' ? '/images/ephemeride-logo-lite.png' : '/images/ephemeride-logo-dark.png'}
                   alt="Ephemeride"
                   className={`w-auto max-w-full object-contain transition-all duration-300 ${isHeaderSticky ? 'h-12 md:h-20' : 'h-16 md:h-32'}`}
