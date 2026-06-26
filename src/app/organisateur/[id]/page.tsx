@@ -26,17 +26,17 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { id } = await params;
   const org = await getOrganizationById(id);
-  if (!org) return { title: "Organisateur introuvable" };
+  if (!org) return { title: "Organisateurice introuvable" };
   const description = org.description ?? `Tous les événements à venir de ${org.name} sur Éphéméride.`;
   return {
     title: org.name,
     description,
-    alternates: { canonical: `/organisateur/${id}` },
+    alternates: { canonical: `/organisateur·ice/${id}` },
     openGraph: {
       title: `${org.name} — Éphéméride`,
       description,
       type: "website",
-      url: `/organisateur/${id}`,
+      url: `/organisateur·ice/${id}`,
     },
   };
 }
@@ -80,7 +80,7 @@ export default async function OrganizerPage(
 
           <div className="min-w-0">
             {events.length === 0 ? (
-              <p className="opacity-70">Aucun événement à venir pour cet organisateur.</p>
+              <p className="opacity-70">Aucun événement à venir pour cet·te organisateur·ice.</p>
             ) : (
               <Suspense>
                 <EventsView events={events} organizationId={id} />

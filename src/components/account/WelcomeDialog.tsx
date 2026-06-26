@@ -47,7 +47,7 @@ export const WelcomeDialog = ({ open, onConfigure, onSkip }: WelcomeDialogProps)
         <div className="space-y-2 py-2">
           <Feature icon={<Bookmark className="h-5 w-5 text-accent-peach" />} label="Alertes sur vos favoris" />
           <Feature icon={<MapPin className="h-5 w-5 text-accent-violet" />} label="Flux des événements près de chez vous" />
-          <Feature icon={<Megaphone className="h-5 w-5 text-emerald-500" />} label="Annonces de vos organisateurs" />
+          <Feature icon={<Megaphone className="h-5 w-5 text-emerald-500" />} label="Annonces de vos organisateur·ices" />
         </div>
 
         <div className="flex flex-col gap-2">

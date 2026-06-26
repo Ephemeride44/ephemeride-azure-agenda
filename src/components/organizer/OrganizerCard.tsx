@@ -21,7 +21,7 @@ interface OrganizerCardProps {
 }
 
 /**
- * Carte d'identité d'un organisateur (page publique) : bandeau dégradé, avatar,
+ * Carte d'identité d'un·e organisateur·ice (page publique) : bandeau dégradé, avatar,
  * compteurs, lien site, abonnement et partage.
  */
 export const OrganizerCard = ({ organization, eventCount, subscriberCount }: OrganizerCardProps) => {
@@ -39,7 +39,7 @@ export const OrganizerCard = ({ organization, eventCount, subscriberCount }: Org
         await navigator.share({ title: organization.name, url });
       } else {
         await navigator.clipboard.writeText(url);
-        toast({ title: "Lien copié", description: "Le lien de l'organisateur a été copié." });
+        toast({ title: "Lien copié", description: "Le lien de l'organisateur·ice a été copié." });
       }
     } catch {
       /* partage annulé */

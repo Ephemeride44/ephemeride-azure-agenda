@@ -2,7 +2,7 @@
 
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
-import { Bell, Bookmark, LogIn, LogOut, Megaphone, Shield, User } from "lucide-react";
+import { Bell, Bookmark, LogOut, Megaphone, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,8 +18,8 @@ import { useAuthDialog } from "@/components/account/AuthDialogProvider";
 import { getAvatarUrl, getDisplayName } from "@/lib/user";
 import { cn } from "@/lib/utils";
 
-const loginButtonClass =
-  "bg-accent-peach text-accent-peach-foreground border-transparent hover:bg-accent-peach-hover hover:text-accent-peach-foreground shadow-sm";
+// Lien « Connexion » discret (texte clair très léger, sans fond).
+const loginLinkClass = "font-normal text-foreground/70 hover:bg-transparent hover:text-foreground";
 
 /**
  * Déclencheur du menu : avatar circulaire (photo ou initiales sur dégradé pêche
@@ -50,7 +50,7 @@ AvatarTrigger.displayName = "AvatarTrigger";
 
 /**
  * Items du menu utilisateur, partagés entre le menu compte (desktop) et le
- * hamburger (mobile) : compte, favoris, notifications, organisateurs suivis,
+ * hamburger (mobile) : compte, favoris, notifications, organisateur·ices suivis,
  * accès admin (si admin), déconnexion.
  */
 const AccountMenuItems = () => {
@@ -92,9 +92,9 @@ const AccountMenuItems = () => {
         </Link>
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
-        <Link href="/compte/organisateurs" className="cursor-pointer rounded-lg py-2">
+        <Link href="/compte/organisateur·ices" className="cursor-pointer rounded-lg py-2">
           <Megaphone className="mr-2 h-4 w-4" />
-          Organisateurs suivis
+          Organisateur·ices suivis
         </Link>
       </DropdownMenuItem>
       {isAdmin && (
@@ -129,8 +129,7 @@ export const AccountMenu = () => {
 
   if (!isAuthenticated) {
     return (
-      <Button className={loginButtonClass} onClick={openAuthDialog}>
-        <LogIn className="mr-2 h-4 w-4" />
+      <Button variant="ghost" onClick={openAuthDialog} className={loginLinkClass}>
         Connexion
       </Button>
     );
@@ -150,6 +149,7 @@ export const AccountMenu = () => {
 
 /**
  * Menu utilisateur (mobile) : même avatar et mêmes items que le desktop.
+ * Le menu passe AU-DESSUS de la barre fixe du bas (z-[60]) via `!z-[70]`.
  * Visiteur non connecté → bouton « Connexion ». Le choix du thème se fait dans
  * « Mon profil ».
  */
@@ -161,8 +161,8 @@ export const MobileMenu = () => {
 
   if (!isAuthenticated) {
     return (
-      <Button variant="outline" size="icon" aria-label="Connexion" className={loginButtonClass} onClick={openAuthDialog}>
-        <LogIn size={20} />
+      <Button variant="ghost" size="sm" onClick={openAuthDialog} className={cn("px-2", loginLinkClass)}>
+        Connexion
       </Button>
     );
   }
@@ -172,7 +172,7 @@ export const MobileMenu = () => {
       <DropdownMenuTrigger asChild>
         <AvatarTrigger />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2">
+      <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 !z-[70]">
         <AccountMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>

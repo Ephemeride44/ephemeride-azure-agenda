@@ -1,1 +1,6 @@
 project_id = "kgjvfuzdnbvgxkbndwfr"
+
+# Send Email Hook : appelé par Supabase Auth (signature standardwebhooks), pas
+# par un utilisateur → pas de JWT à vérifier.
+[functions.send-auth-email]
+verify_jwt = false

@@ -18,7 +18,7 @@ type EventRow = Database["public"]["Tables"]["events"]["Row"];
 interface CalendarViewProps {
   /** Filtres actifs de la home (ex : Département), appliqués à la vue. */
   filterValues: FilterValues;
-  /** Restreint la vue aux événements d'une organisation (page organisateur). */
+  /** Restreint la vue aux événements d'une organisation (page organisateur·ice). */
   organizationId?: string;
 }
 

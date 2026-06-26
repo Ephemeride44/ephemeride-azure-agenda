@@ -15,7 +15,7 @@ interface GradientAvatarProps {
 /**
  * Avatar avec photo si disponible, sinon initiales sur un dégradé pêche → violet
  * (identité visuelle « Constellation »). Réutilisé pour les utilisateurs et les
- * organisateurs.
+ * organisateur·ices.
  */
 export const GradientAvatar = ({ name, src, className, textClassName }: GradientAvatarProps) => {
   return (

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthDialog } from "@/components/account/AuthDialogProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { LogoLink } from "@/components/LogoLink";
 import { AccountNav } from "@/components/account/AccountNav";
 
 /**
@@ -14,17 +16,23 @@ import { AccountNav } from "@/components/account/AccountNav";
 export default function CompteLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const { openAuthDialog } = useAuthDialog();
+  const { theme } = useTheme();
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-ephemeride light:bg-[#faf3ec]">
       <header className="py-4 px-4 md:px-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="gap-2">
             <Link href="/">
               <ArrowLeft className="h-4 w-4" />
               Retour à l'agenda
             </Link>
           </Button>
+          {/* Petit logo pour égayer l'en-tête. */}
+          <LogoLink
+            src={theme === "light" ? "/images/ephemeride-logo-lite.png" : "/images/ephemeride-logo-dark.png"}
+            className="h-8 w-auto object-contain"
+          />
         </div>
       </header>
 
@@ -38,8 +46,8 @@ export default function CompteLayout({ children }: { children: React.ReactNode }
               <Button onClick={openAuthDialog}>Se connecter</Button>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-              <aside className="md:sticky md:top-6 md:self-start">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+              <aside className="min-w-0 md:sticky md:top-6 md:self-start">
                 <AccountNav />
               </aside>
               <div className="min-w-0">{children}</div>

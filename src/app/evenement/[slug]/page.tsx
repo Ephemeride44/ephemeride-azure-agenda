@@ -66,13 +66,13 @@ function buildJsonLd(event: any, slug: string) {
   const offers =
     event.ticketing_url || event.price
       ? {
-          "@type": "Offer",
-          ...(event.price ? { price: event.price } : {}),
-          ...(event.ticketing_url ? { url: event.ticketing_url } : {}),
-          availability: event.is_full
-            ? "https://schema.org/SoldOut"
-            : "https://schema.org/InStock",
-        }
+        "@type": "Offer",
+        ...(event.price ? { price: event.price } : {}),
+        ...(event.ticketing_url ? { url: event.ticketing_url } : {}),
+        availability: event.is_full
+          ? "https://schema.org/SoldOut"
+          : "https://schema.org/InStock",
+      }
       : undefined;
 
   return {
@@ -123,7 +123,7 @@ export default async function EventPage(
         </Link>
 
         {/* On réutilise la carte d'événement de l'agenda : même visuel, toutes
-            les infos (date, lieu, prix, récurrence, organisateur, favori…). */}
+            les infos (date, lieu, prix, récurrence, organisateur·ice, favori…). */}
         <article className="mt-6">
           <EventCard event={event as never} />
         </article>

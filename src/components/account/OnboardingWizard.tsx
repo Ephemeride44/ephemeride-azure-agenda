@@ -27,7 +27,7 @@ interface OnboardingWizardProps {
 }
 
 /**
- * Wizard d'onboarding en 3 étapes : communes suivies, organisateurs, préférences
+ * Wizard d'onboarding en 3 étapes : communes suivies, organisateur·ices, préférences
  * push. Chaque étape peut être passée. Réutilise les managers communs à la page
  * Compte.
  */
@@ -84,7 +84,7 @@ const StepOrganizers = () => (
     <DialogHeader>
       <DialogTitle className="flex items-center gap-2">
         <Megaphone className="h-5 w-5 text-emerald-500" />
-        Abonnez-vous aux organisateurs
+        Abonnez-vous aux organisateur·ices
       </DialogTitle>
       <DialogDescription>
         Recevez leurs annonces en direct : nouveaux événements, billetterie, infos de dernière minute.
@@ -117,7 +117,7 @@ const StepPush = () => {
     {
       key: "notify_organizations",
       icon: <Megaphone className="h-5 w-5 text-emerald-500" />,
-      title: "Organisateurs suivis",
+      title: "Organisateur·ices suivis",
       description: "Annonces en direct",
     },
   ];

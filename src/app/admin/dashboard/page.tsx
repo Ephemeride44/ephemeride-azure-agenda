@@ -56,7 +56,7 @@ const AdminDashboard = () => {
   const [eventToDelete, setEventToDelete] = useState<EventRow | null>(null);
   const [deleteMode, setDeleteMode] = useState<'single' | 'series'>('single');
   const [showPastEvents, setShowPastEvents] = useState(false);
-  
+
   const { toast } = useToast();
   const router = useRouter();
   const { theme } = useTheme();
@@ -225,7 +225,7 @@ const AdminDashboard = () => {
       if (notified > 0) {
         toast({
           title: "Abonnés notifiés",
-          description: `${notified} personne(s) suivant la commune ou l'organisateur ont été alertées.`,
+          description: `${notified} personne(s) suivant la commune ou l'organisateur·ice ont été alertées.`,
         });
       }
     } catch {
@@ -352,14 +352,14 @@ const AdminDashboard = () => {
 
   const handleSaveEvent = async (eventData: Omit<EventRow, 'id'> & { id?: string }) => {
     let success = false;
-    
+
     if (eventData.id) {
       // Update existing event
       // Nettoyer les données pour éviter les UUID vides
       const cleanData = { ...eventData };
       if (cleanData.organization_id === '') cleanData.organization_id = null;
       if (cleanData.theme_id === '') cleanData.theme_id = null;
-      
+
       const { error: updateError } = await supabase
         .from('events')
         .update({
@@ -367,7 +367,7 @@ const AdminDashboard = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventData.id);
-        
+
       if (updateError) {
         toast({
           title: "Erreur lors de la mise à jour",
@@ -423,14 +423,14 @@ const AdminDashboard = () => {
         if (inserted?.id) void notifyNewEvent(inserted.id);
       }
     }
-    
+
     // Rafraîchir la liste
     if (success) {
       await fetchPendingEvents();
       await fetchAcceptedEvents();
       setShowForm(false);
     }
-    
+
     return success;
   };
 
@@ -542,261 +542,261 @@ const AdminDashboard = () => {
     <AdminLayout title="Tableau de bord" subtitle="Gestion des événements">
       <div className="space-y-6">
 
-      {/* Section événements en attente */}
-      {pendingEvents.length > 0 && (
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-orange-600">Événements en attente de validation</h2>
-              <Badge variant="outline" className="text-orange-600 border-orange-600">
-                {pendingEvents.length} en attente
-              </Badge>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Lieu</TableHead>
-                  <TableHead>Proposé par</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingEvents.map(event => (
-                  <TableRow key={event.id}>
-                    <TableCell className="font-medium">{formatEventDateTimeLabel(event)}</TableCell>
-                    <TableCell>
-                      <div className="max-w-xs">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{event.name}</p>
-                          {event.recurrence_id && (
-                            <Badge variant="secondary" className="gap-1 shrink-0">
-                              <Repeat className="h-3 w-3" />
-                              Récurrent
-                            </Badge>
-                          )}
-                        </div>
-                        {event.recurrence_id && describeRecurrenceFromEvent(event) && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {describeRecurrenceFromEvent(event)}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{event.location_place}</p>
-                        <p className="text-sm text-muted-foreground">{event.location_city}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        {event.createdby && typeof event.createdby === 'object' && 'name' in event.createdby ? (
-                          <p className="font-medium">{(event.createdby as { name?: string }).name}</p>
-                        ) : null}
-                        {event.createdby && typeof event.createdby === 'object' && 'email' in event.createdby ? (
-                          <a 
-                            href={`mailto:${(event.createdby as { email?: string }).email}`} 
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            {(event.createdby as { email?: string }).email}
-                          </a>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2 flex-wrap">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => { setCurrentEvent(event); setDuplicateMode(false); setShowForm(true); }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Voir
-                        </Button>
-
-                        {/* Accepter : split button (action principale individuelle + menu série) */}
-                        <div className="flex">
-                          <Button
-                            size="sm"
-                            className={`bg-green-600 text-white hover:bg-green-700 ${event.recurrence_id ? 'rounded-r-none' : ''}`}
-                            title="Accepter cet événement"
-                            onClick={() => handleValidateSingle(event, 'accepted')}
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            Accepter
-                          </Button>
-                          {event.recurrence_id && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-600 text-white hover:bg-green-700 rounded-l-none border-l border-green-700 px-2"
-                                  title="Plus d'options"
-                                >
-                                  <ChevronDown className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleValidateSeries(event, 'accepted')}>
-                                  <Repeat className="w-4 h-4 mr-2" />
-                                  Accepter la série
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-
-                        {/* Refuser : split button (action principale individuelle + menu série) */}
-                        <div className="flex">
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className={event.recurrence_id ? 'rounded-r-none' : ''}
-                            title="Refuser cet événement"
-                            onClick={() => handleValidateSingle(event, 'rejected')}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Refuser
-                          </Button>
-                          {event.recurrence_id && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="rounded-l-none border-l border-red-800 px-2"
-                                  title="Plus d'options"
-                                >
-                                  <ChevronDown className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleValidateSeries(event, 'rejected')}>
-                                  <Repeat className="w-4 h-4 mr-2" />
-                                  Refuser la série
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
+        {/* Section événements en attente */}
+        {pendingEvents.length > 0 && (
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-orange-600">Événements en attente de validation</h2>
+                <Badge variant="outline" className="text-orange-600 border-orange-600">
+                  {pendingEvents.length} en attente
+                </Badge>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Lieu</TableHead>
+                    <TableHead>Proposé par</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                </TableHeader>
+                <TableBody>
+                  {pendingEvents.map(event => (
+                    <TableRow key={event.id}>
+                      <TableCell className="font-medium">{formatEventDateTimeLabel(event)}</TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium truncate">{event.name}</p>
+                            {event.recurrence_id && (
+                              <Badge variant="secondary" className="gap-1 shrink-0">
+                                <Repeat className="h-3 w-3" />
+                                Récurrent
+                              </Badge>
+                            )}
+                          </div>
+                          {event.recurrence_id && describeRecurrenceFromEvent(event) && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {describeRecurrenceFromEvent(event)}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{event.location_place}</p>
+                          <p className="text-sm text-muted-foreground">{event.location_city}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          {event.createdby && typeof event.createdby === 'object' && 'name' in event.createdby ? (
+                            <p className="font-medium">{(event.createdby as { name?: string }).name}</p>
+                          ) : null}
+                          {event.createdby && typeof event.createdby === 'object' && 'email' in event.createdby ? (
+                            <a
+                              href={`mailto:${(event.createdby as { email?: string }).email}`}
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              {(event.createdby as { email?: string }).email}
+                            </a>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2 flex-wrap">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setCurrentEvent(event); setDuplicateMode(false); setShowForm(true); }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Voir
+                          </Button>
 
-      {/* Section événements acceptés */}
-      <EventsHeader
-        onAdd={handleAddEvent}
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Rechercher par nom, date ou lieu..."
-        theme={theme}
-        showPastEvents={showPastEvents}
-        onTogglePastEvents={setShowPastEvents}
-      />
-      {/* Tableau principal des événements */}
-      <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} onDeleteSeries={confirmDeleteSeries} onDuplicate={handleDuplicateEvent} />
-      <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
-          <DialogHeader>
-            <DialogTitle>{duplicateMode ? "Dupliquer un événement" : currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
-          </DialogHeader>
-          <EventForm
-            event={currentEvent}
-            onSave={async (eventData) => {
-              try {
-                const mappedData = {
-                  ...eventData,
-                  updated_at: new Date().toISOString(),
-                } as EventRow & { theme: ThemeRow };
-                delete mappedData.theme;
-                delete (mappedData as Record<string, unknown>).recurrence;
-                delete (mappedData as Record<string, unknown>).organization;
+                          {/* Accepter : split button (action principale individuelle + menu série) */}
+                          <div className="flex">
+                            <Button
+                              size="sm"
+                              className={`bg-green-600 text-white hover:bg-green-700 ${event.recurrence_id ? 'rounded-r-none' : ''}`}
+                              title="Accepter cet événement"
+                              onClick={() => handleValidateSingle(event, 'accepted')}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Accepter
+                            </Button>
+                            {event.recurrence_id && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 text-white hover:bg-green-700 rounded-l-none border-l border-green-700 px-2"
+                                    title="Plus d'options"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleValidateSeries(event, 'accepted')}>
+                                    <Repeat className="w-4 h-4 mr-2" />
+                                    Accepter la série
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
 
-                if (eventData.status === 'accepted') {
-                  // Convertir les chaînes vides en null : les colonnes UUID
-                  // (organization_id, theme_id, recurrence_id) rejettent "".
-                  const cleanData = Object.fromEntries(
-                    Object.entries({ ...mappedData, status: 'accepted' }).map(([key, value]) => [
-                      key,
-                      value === '' ? null : value,
-                    ])
-                  ) as typeof mappedData;
+                          {/* Refuser : split button (action principale individuelle + menu série) */}
+                          <div className="flex">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className={event.recurrence_id ? 'rounded-r-none' : ''}
+                              title="Refuser cet événement"
+                              onClick={() => handleValidateSingle(event, 'rejected')}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Refuser
+                            </Button>
+                            {event.recurrence_id && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="rounded-l-none border-l border-red-800 px-2"
+                                    title="Plus d'options"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleValidateSeries(event, 'rejected')}>
+                                    <Repeat className="w-4 h-4 mr-2" />
+                                    Refuser la série
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
-                  const { error } = await supabase.from('events').update(cleanData).eq('id', currentEvent?.id);
-                  if (error) throw error;
-                  setShowForm(false);
-                  await fetchPendingEvents();
-                  await fetchAcceptedEvents();
-                  void triggerRevalidate();
-                  toast({ title: "Événement accepté", description: "L'événement a été accepté." });
-                  return true;
-                } else if (eventData.status === 'rejected') {
-                  const { error } = await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent?.id);
-                  if (error) throw error;
-                  setShowForm(false);
-                  await fetchPendingEvents();
-                  await fetchAcceptedEvents();
-                  void triggerRevalidate();
-                  toast({ title: "Événement refusé", description: "L'événement a été refusé." });
-                  return true;
-                } else {
-                  // Edition classique, ajout, ou duplication (création : pas d'id source)
-                  const idToSave = duplicateMode ? undefined : currentEvent?.id;
-                  const success = await handleSaveEvent({ ...eventData, id: idToSave } as Omit<EventRow, 'id'> & { id?: string });
-                  return success;
+        {/* Section événements acceptés */}
+        <EventsHeader
+          onAdd={handleAddEvent}
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Rechercher par nom, date ou lieu..."
+          theme={theme}
+          showPastEvents={showPastEvents}
+          onTogglePastEvents={setShowPastEvents}
+        />
+        {/* Tableau principal des événements */}
+        <EventsTable events={acceptedEvents} onEdit={handleEditEvent} onDelete={confirmDeleteEvent} onDeleteSeries={confirmDeleteSeries} onDuplicate={handleDuplicateEvent} />
+        <EventsPagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className={`w-3/4 max-w-4xl mx-auto ${theme === 'light' ? 'bg-[#f8f8f6] text-ephemeride border-none' : 'bg-ephemeride-light text-ephemeride-foreground border-none'}`} >
+            <DialogHeader>
+              <DialogTitle>{duplicateMode ? "Dupliquer un événement" : currentEvent ? (currentEvent.status === 'pending' ? "Valider une proposition" : "Modifier l'événement") : "Ajouter un événement"}</DialogTitle>
+            </DialogHeader>
+            <EventForm
+              event={currentEvent}
+              onSave={async (eventData) => {
+                try {
+                  const mappedData = {
+                    ...eventData,
+                    updated_at: new Date().toISOString(),
+                  } as EventRow & { theme: ThemeRow };
+                  delete mappedData.theme;
+                  delete (mappedData as Record<string, unknown>).recurrence;
+                  delete (mappedData as Record<string, unknown>).organization;
+
+                  if (eventData.status === 'accepted') {
+                    // Convertir les chaînes vides en null : les colonnes UUID
+                    // (organization_id, theme_id, recurrence_id) rejettent "".
+                    const cleanData = Object.fromEntries(
+                      Object.entries({ ...mappedData, status: 'accepted' }).map(([key, value]) => [
+                        key,
+                        value === '' ? null : value,
+                      ])
+                    ) as typeof mappedData;
+
+                    const { error } = await supabase.from('events').update(cleanData).eq('id', currentEvent?.id);
+                    if (error) throw error;
+                    setShowForm(false);
+                    await fetchPendingEvents();
+                    await fetchAcceptedEvents();
+                    void triggerRevalidate();
+                    toast({ title: "Événement accepté", description: "L'événement a été accepté." });
+                    return true;
+                  } else if (eventData.status === 'rejected') {
+                    const { error } = await supabase.from('events').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', currentEvent?.id);
+                    if (error) throw error;
+                    setShowForm(false);
+                    await fetchPendingEvents();
+                    await fetchAcceptedEvents();
+                    void triggerRevalidate();
+                    toast({ title: "Événement refusé", description: "L'événement a été refusé." });
+                    return true;
+                  } else {
+                    // Edition classique, ajout, ou duplication (création : pas d'id source)
+                    const idToSave = duplicateMode ? undefined : currentEvent?.id;
+                    const success = await handleSaveEvent({ ...eventData, id: idToSave } as Omit<EventRow, 'id'> & { id?: string });
+                    return success;
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Erreur de sauvegarde",
+                    description: "Une erreur est survenue lors de la sauvegarde de l'événement.",
+                    variant: "destructive",
+                  });
+                  return false;
                 }
-              } catch (error) {
-                toast({
-                  title: "Erreur de sauvegarde",
-                  description: "Une erreur est survenue lors de la sauvegarde de l'événement.",
-                  variant: "destructive",
-                });
-                return false;
-              }
-            }}
-            onCancel={() => setShowForm(false)}
-            showValidationActions={currentEvent?.status === 'pending' && !duplicateMode}
-            themes={themes}
-            onSaveRecurring={handleSaveRecurringEvent}
-            duplicate={duplicateMode}
-          />
-        </DialogContent>
-      </Dialog>
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{deleteMode === 'series' ? "Supprimer la série" : "Confirmer la suppression"}</DialogTitle>
-          </DialogHeader>
-          {deleteMode === 'series' ? (
-            <p>Voulez-vous vraiment supprimer <b>toute la série récurrente</b> de l'événement <b>{eventToDelete?.name}</b> ? Tous les événements liés seront supprimés.</p>
-          ) : (
-            <p>Voulez-vous vraiment supprimer l'événement <b>{eventToDelete?.name}</b> ?</p>
-          )}
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              Annuler
-            </button>
-            <button
-              className="btn btn-danger"
-              onClick={handleDeleteConfirmed}
-            >
-              Supprimer
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              }}
+              onCancel={() => setShowForm(false)}
+              showValidationActions={currentEvent?.status === 'pending' && !duplicateMode}
+              themes={themes}
+              onSaveRecurring={handleSaveRecurringEvent}
+              duplicate={duplicateMode}
+            />
+          </DialogContent>
+        </Dialog>
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{deleteMode === 'series' ? "Supprimer la série" : "Confirmer la suppression"}</DialogTitle>
+            </DialogHeader>
+            {deleteMode === 'series' ? (
+              <p>Voulez-vous vraiment supprimer <b>toute la série récurrente</b> de l'événement <b>{eventToDelete?.name}</b> ? Tous les événements liés seront supprimés.</p>
+            ) : (
+              <p>Voulez-vous vraiment supprimer l'événement <b>{eventToDelete?.name}</b> ?</p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Annuler
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDeleteConfirmed}
+              >
+                Supprimer
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

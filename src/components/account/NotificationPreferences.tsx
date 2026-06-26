@@ -9,7 +9,7 @@ import { useNotificationPrefs } from "@/hooks/use-notification-prefs";
 
 /**
  * Préférences de notifications (page « Notifications » du compte). Trois canaux
- * activables, le flux par ville et les organisateurs suivis intégrant leur
+ * activables, le flux par ville et les organisateur·ices suivis intégrant leur
  * gestion d'abonnements. Réutilise les managers communs au wizard.
  */
 export const NotificationPreferences = () => {
@@ -39,8 +39,8 @@ export const NotificationPreferences = () => {
 
       <Section
         icon={<Megaphone className="h-5 w-5 text-emerald-500" />}
-        title="Organisateurs suivis"
-        description="Annonces en direct des organisateurs auxquels vous êtes abonné·e."
+        title="Organisateur·ices suivis"
+        description="Annonces en direct des organisateur·ices auxquels vous êtes abonné·e."
         checked={prefs.notify_organizations}
         onCheckedChange={(v) => setPref("notify_organizations", v)}
       >
