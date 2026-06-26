@@ -24,9 +24,16 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 interface EventCardProps {
   event: Event;
   isPast?: boolean;
+  /**
+   * Affiche le bloc date (jour/numéro/mois) sur la vignette ou le panneau coloré.
+   * À désactiver quand une frise temporelle porte déjà la date (liste de la home)
+   * pour éviter la redondance ; conservé ailleurs (favoris, page événement, page
+   * organisateur·ice). L'heure reste affichée dans tous les cas.
+   */
+  showDate?: boolean;
 }
 
-const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
+const EventCard = ({ event: eventProp, isPast = false, showDate = true }: EventCardProps) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   // Une fois supprimé, on retire la carte de l'affichage sans recharger la page.
@@ -113,6 +120,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const dayNumber = eventStart ? eventStart.getDate() : null;
   const monthShort = eventStart ? monthNamesShort[eventStart.getMonth()] : null;
   const hasDate = eventStart != null;
+  // Affichage effectif du bloc date : présent ET non masqué par le contexte.
+  const showDateBlock = showDate && hasDate;
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // Format location
@@ -137,7 +146,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                   aria-label="Voir l'affiche en grand"
                 />
                 <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5">
-                  {hasDate && (
+                  {showDateBlock && (
                     <span className={`inline-flex items-center rounded-full ${dayColor} text-white text-xs font-semibold px-2.5 py-1 shadow-md`}>
                       {capitalize(weekdayShort!)} {dayNumber} {monthShort}
                     </span>
@@ -156,9 +165,9 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
             </TooltipContent>
           </Tooltip>
         </>
-      ) : hasDate || timeLabel ? (
+      ) : showDateBlock || timeLabel ? (
         <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex flex-col items-center justify-center gap-1 py-5 md:py-0 text-white ${isPast ? 'opacity-60' : ''}`}>
-          {hasDate && (
+          {showDateBlock && (
             <div className="text-center leading-none">
               <div className="text-xs font-semibold uppercase tracking-wide opacity-90">{capitalize(weekdayShort!)}</div>
               <div className="text-4xl font-extrabold leading-tight">{dayNumber}</div>
@@ -266,7 +275,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
         {/* Mention de l'organisateur·ice (cliquable vers sa page) */}
         {event.organization && (
           <Link
-            href={`/organisateur·ice/${event.organization.id}`}
+            href={`/organisateur/${event.organization.id}`}
             onClick={(e) => e.stopPropagation()}
             className="mb-2 inline-flex items-center gap-1.5 text-sm transition-colors hover:text-accent-peach"
           >

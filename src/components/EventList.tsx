@@ -15,9 +15,14 @@ interface EventListProps {
   events: Event[];
   pastEvents?: Event[];
   onLoadPastEvents?: () => void;
+  /**
+   * Affiche le bloc date dans chaque carte. À désactiver quand la frise
+   * temporelle (rail de gauche) porte déjà la date pour éviter la redondance.
+   */
+  showCardDate?: boolean;
 }
 
-const EventList = ({ events, pastEvents = [], onLoadPastEvents }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents, showCardDate = true }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   // Faux tant que la liste « à venir » n'a pas été dérivée côté client : on
@@ -150,7 +155,7 @@ const EventList = ({ events, pastEvents = [], onLoadPastEvents }: EventListProps
         {renderDayMarker(firstStart, !isPast)}
         <div className="flex-1 min-w-0 space-y-4">
           {dayEvents.map(event => (
-            <EventCard key={event.id} event={event} isPast={isPast} />
+            <EventCard key={event.id} event={event} isPast={isPast} showDate={showCardDate} />
           ))}
         </div>
       </div>

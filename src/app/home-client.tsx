@@ -491,6 +491,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
                 events={filteredEvents}
                 pastEvents={filteredPastEvents}
                 onLoadPastEvents={fetchPastEvents}
+                showCardDate={false}
               />
             ) : (
               <CalendarView filterValues={filterValues} />
