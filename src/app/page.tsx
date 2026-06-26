@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import HomeClient from "./home-client";
 import {
   getUpcomingEvents,
@@ -17,10 +18,14 @@ export default async function HomePage() {
   ]);
 
   return (
-    <HomeClient
-      initialEvents={events}
-      lastUpdatedAt={lastUpdatedAt}
-      filterOptions={filterOptions}
-    />
+    // Suspense requis : HomeClient lit les search params (nuqs) — évite le
+    // déopt/erreur de génération statique.
+    <Suspense>
+      <HomeClient
+        initialEvents={events}
+        lastUpdatedAt={lastUpdatedAt}
+        filterOptions={filterOptions}
+      />
+    </Suspense>
   );
 }

@@ -387,6 +387,11 @@ const EventForm = ({ event, onSave, onCancel, showValidationActions, themes, the
     if (cover_url === undefined) return;
     const organization_id = resolveOrganizationId(cleanData.organization_id);
     const payload = { ...cleanData, cover_url, organization_id };
+    // Retirer les relations jointes (non écrivables comme colonnes) éventuellement
+    // présentes via EVENT_SELECT : theme, recurrence, organization.
+    delete (payload as Record<string, unknown>).theme;
+    delete (payload as Record<string, unknown>).recurrence;
+    delete (payload as Record<string, unknown>).organization;
 
     // En édition, si au moins une personne a mis l'événement en favori, on
     // propose d'envoyer une notification AVANT de finaliser (le dialogue

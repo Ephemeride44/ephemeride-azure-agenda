@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { applyFiltersToEvents, type FilterValues } from "@/lib/eventFilters";
+import { EVENT_SELECT } from "@/lib/eventSelect";
 import { getEventStart, monthNames, toISODate } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDragToClose } from "@/hooks/use-drag-to-close";
@@ -14,11 +15,11 @@ import DayDetailPanel from "@/components/calendar/DayDetailPanel";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 
-const EVENT_SELECT = "*, theme:theme_id(*), recurrence:recurrence_id(*)";
-
 interface CalendarViewProps {
   /** Filtres actifs de la home (ex : Département), appliqués à la vue. */
   filterValues: FilterValues;
+  /** Restreint la vue aux événements d'une organisation (page organisateur). */
+  organizationId?: string;
 }
 
 /** Reconstruit une `Date` locale depuis une clé `YYYY-MM-DD`. */
@@ -32,7 +33,7 @@ function dateFromKey(key: string): Date {
  * mois visible, les regroupe par jour, et affiche soit deux volets côte à côte
  * (desktop), soit la constellation + un bottom sheet au tap d'un jour (mobile).
  */
-const CalendarView = ({ filterValues }: CalendarViewProps) => {
+const CalendarView = ({ filterValues, organizationId }: CalendarViewProps) => {
   const isMobile = useIsMobile();
   const [month, setMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -48,22 +49,23 @@ const CalendarView = ({ filterValues }: CalendarViewProps) => {
     setLoading(true);
     const from = toISODate(startOfMonth(month));
     const to = toISODate(addMonths(startOfMonth(month), 1));
-    const { data, error } = await supabase
+    let query = supabase
       .from("events")
       .select(EVENT_SELECT)
       .eq("status", "accepted")
       .gte("start_at", from)
-      .lt("start_at", to)
-      .order("start_at", { ascending: true, nullsFirst: false });
+      .lt("start_at", to);
+    if (organizationId) query = query.eq("organization_id", organizationId);
+    const { data, error } = await query.order("start_at", { ascending: true, nullsFirst: false });
 
     if (error) {
       console.error("Erreur lors du chargement du calendrier :", error);
       setEvents([]);
     } else {
-      setEvents((data || []) as EventRow[]);
+      setEvents((data || []) as unknown as EventRow[]);
     }
     setLoading(false);
-  }, [month]);
+  }, [month, organizationId]);
 
   useEffect(() => {
     fetchMonth();

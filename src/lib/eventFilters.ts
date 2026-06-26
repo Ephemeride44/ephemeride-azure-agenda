@@ -44,6 +44,9 @@ export const eventFilterDefinitions: FilterDefinition[] = [
     formatOption: (value) => formatDepartment(value),
     compareOptions: (a, b) => a.localeCompare(b, "fr", { numeric: true }),
   },
+  // Le filtre par commune est désactivé tant que les valeurs `location_city`
+  // ne sont pas normalisées (saisie libre → doublons/casse). À réactiver une
+  // fois les communes nettoyées.
 ];
 
 /** Tri par défaut des options d'un filtre. */

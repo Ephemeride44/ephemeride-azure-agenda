@@ -135,6 +135,8 @@ const AdminCalendar = () => {
                   updated_at: new Date().toISOString(),
                 } as EventRow & { theme?: ThemeRow };
                 delete (mapped as { theme?: ThemeRow }).theme;
+                delete (mapped as Record<string, unknown>).recurrence;
+                delete (mapped as Record<string, unknown>).organization;
                 // Les colonnes UUID rejettent "" : convertir en null.
                 const clean = Object.fromEntries(
                   Object.entries({ ...mapped, status: "accepted" }).map(
