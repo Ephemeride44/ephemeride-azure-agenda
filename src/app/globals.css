@@ -38,6 +38,13 @@
     --accent-peach: 16 79% 75%;
     --accent-peach-hover: 18 77% 69%;
     --accent-peach-foreground: 219 37% 17%;
+
+    /* Accent violet — bascule de vue (Liste / Agenda), identique clair/sombre.
+       Lavande désaturée de la charte (#B8A9D9) ; texte foncé pour rester lisible
+       sur ce pastel clair. */
+    --accent-violet: 259 39% 76%;
+    --accent-violet-hover: 259 39% 70%;
+    --accent-violet-foreground: 219 37% 17%;
   }
 
   .dark {

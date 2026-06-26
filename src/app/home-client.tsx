@@ -8,12 +8,12 @@ import EventFilters from "@/components/events/EventFilters";
 import EventProposalForm from "@/components/EventProposalForm";
 import { useTheme } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import AccountMenu, { MobileMenu } from "@/components/account/AccountMenu";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarDays, List, Moon, Plus, Shield, SlidersHorizontal, Sun } from "lucide-react";
-import Link from "next/link";
+import { CalendarDays, List, Moon, Plus, SlidersHorizontal, Sun } from "lucide-react";
 import { formatFrDateLabel, formatFrTime, getEventStart } from "@/lib/utils";
 import { useDragToClose } from "@/hooks/use-drag-to-close";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -196,7 +196,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
             aria-pressed={view === v}
             className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm transition-colors ${
               view === v
-                ? "bg-accent-peach text-accent-peach-foreground font-bold shadow-sm"
+                ? "bg-accent-violet text-accent-violet-foreground font-bold shadow-sm"
                 : "font-medium text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -281,7 +281,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
             type="button"
             onClick={() => setView("list")}
             aria-pressed={view === "list"}
-            className={`${mobileBarItem} ${view === "list" ? "text-accent-peach" : "opacity-60"}`}
+            className={`${mobileBarItem} ${view === "list" ? "text-accent-violet" : "opacity-60"}`}
           >
             <List className="h-5 w-5" />
             Liste
@@ -301,7 +301,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
             type="button"
             onClick={() => setView("calendar")}
             aria-pressed={view === "calendar"}
-            className={`${mobileBarItem} ${view === "calendar" ? "text-accent-peach" : "opacity-60"}`}
+            className={`${mobileBarItem} ${view === "calendar" ? "text-accent-violet" : "opacity-60"}`}
           >
             <CalendarDays className="h-5 w-5" />
             Agenda
@@ -329,7 +329,11 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
         <TipeeeBanner />
 
         <header className={`py-4 px-4 md:px-8 transition-all duration-300 z-20 ${isHeaderSticky ? 'fixed top-0 left-0 right-0 dark:bg-ephemeride/95 light:bg-[#faf3ec]/95 shadow-md backdrop-blur-3xl dark:backdrop-blur-sm' : ''}`}>
-          <div className="max-w-6xl mx-auto">
+          <div className="relative max-w-6xl mx-auto">
+            {/* Menu (mobile) : thème + compte + admin regroupés. */}
+            <div className="md:hidden absolute right-0 top-1 z-10">
+              <MobileMenu />
+            </div>
             <div className={`flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 transition-all duration-300 ${isHeaderSticky ? 'py-2' : 'py-4'}`}>
               <div className="flex justify-start">
                 <img
@@ -354,25 +358,7 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
                     Changer le thème
                   </TooltipContent>
                 </Tooltip>
-                {contextUser && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="icon"
-                        className="bg-accent-peach text-accent-peach-foreground border-transparent hover:bg-accent-peach-hover hover:text-accent-peach-foreground shadow-sm"
-                      >
-                        <Link href="/admin">
-                          <Shield size={22} />
-                        </Link>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      Administration
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                <AccountMenu />
                 <Button
                   onClick={() => setIsProposalDialogOpen(true)}
                   variant="outline"

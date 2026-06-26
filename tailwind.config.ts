@@ -28,6 +28,12 @@ export default {
           hover: "hsl(var(--accent-peach-hover))",
           foreground: "hsl(var(--accent-peach-foreground))",
         },
+        // Accent violet : état actif de la bascule de vue (Liste / Agenda).
+        "accent-violet": {
+          DEFAULT: "hsl(var(--accent-violet))",
+          hover: "hsl(var(--accent-violet-hover))",
+          foreground: "hsl(var(--accent-violet-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

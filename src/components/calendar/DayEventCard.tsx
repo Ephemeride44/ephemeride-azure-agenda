@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Euro, Image as ImageIcon, MapPin, Pencil, Ticket } from "lucide-react";
+import { ArrowRight, Bookmark, Clock, Euro, Image as ImageIcon, MapPin, Pencil, Repeat, Ticket } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import EventForm from "@/components/EventForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +18,8 @@ import {
   formatTimeDisplay,
   getEventStart,
 } from "@/lib/utils";
+import { describeRecurrenceFromEvent } from "@/lib/recurrence";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 import { hexA, weekdayColor } from "@/lib/colors";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -31,17 +33,21 @@ interface DayEventCardProps {
 
 /**
  * Carte d'événement riche du panneau jour de la vue calendrier : colonne média
- * (affiche ou panneau coloré avec l'heure) + corps (titre, badges, lieu, prix,
- * type, billetterie). Les superadmins disposent d'un bouton « Modifier » qui
- * ouvre `EventForm`, exactement comme `EventCard`.
+ * (affiche cliquable pour agrandir, ou panneau coloré avec l'heure) + corps
+ * (titre, badges, lieu, prix, récurrence, public, billetterie, « Découvrir »).
+ * Comme `EventCard`, la carte entière est cliquable (ouvre `event.url`) via un
+ * `div role="link"` — les liens internes appellent `stopPropagation`. Les
+ * superadmins disposent d'un bouton « Modifier » qui ouvre `EventForm`.
  */
 const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEventCardProps) => {
   const big = size === "desktop";
   const { theme } = useTheme();
   const { toast } = useToast();
   const { isSuperAdmin } = useUserRoleContext();
+  const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks();
   const [event, setEvent] = useState(eventProp);
   const [showEdit, setShowEdit] = useState(false);
+  const [openPoster, setOpenPoster] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
@@ -51,6 +57,8 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
   const start = getEventStart(event);
   const color = weekdayColor(start ?? new Date());
   const timeLabel = formatTimeDisplay(event);
+  const recurrenceLabel = describeRecurrenceFromEvent(event, { includeTime: false, withPrefix: false });
+  const bookmarked = isBookmarked(event.id);
   const locationString = `${event.location_place || ""}${
     event.location_city ? ` — ${formatCityName(event.location_city)}` : ""
   }${event.location_department ? ` (${event.location_department})` : ""}`;
@@ -101,7 +109,7 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
 
   const mediaWidth = big ? 116 : 84;
 
-  return (
+  const card = (
     <div
       className="flex overflow-hidden rounded-2xl border-0 shadow-sm bg-white dark:bg-ephemeride-light text-[#1B263B] dark:text-[#faf3ec]"
       style={{ opacity: event.is_cancelled ? 0.62 : 1 }}
@@ -117,20 +125,59 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
       >
         {event.cover_url ? (
           <>
-            <img
-              src={event.cover_url}
-              alt="Affiche de l'événement"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            {timeLabel && (
-              <span
-                className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold text-[#1B263B] shadow"
-                style={{ background: color, fontSize: big ? 12 : 11 }}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Voir l'affiche en grand"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenPoster(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenPoster(true);
+                    }
+                  }}
+                  className="absolute inset-0 cursor-pointer"
+                >
+                  <img
+                    src={event.cover_url}
+                    alt="Affiche de l'événement"
+                    className="h-full w-full object-cover transition-transform hover:scale-105"
+                  />
+                  {timeLabel && (
+                    <span
+                      className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold text-[#1B263B] shadow"
+                      style={{ background: color, fontSize: big ? 12 : 11 }}
+                    >
+                      <Clock style={{ width: big ? 13 : 12, height: big ? 13 : 12 }} />
+                      {timeLabel}
+                    </span>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Voir l'affiche en grand
+              </TooltipContent>
+            </Tooltip>
+            <Dialog open={openPoster} onOpenChange={setOpenPoster}>
+              <DialogContent
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-2xl flex flex-col items-center bg-black/95"
               >
-                <Clock style={{ width: big ? 13 : 12, height: big ? 13 : 12 }} />
-                {timeLabel}
-              </span>
-            )}
+                <img
+                  src={event.cover_url}
+                  alt="Affiche de l'événement"
+                  className="max-h-[80vh] w-auto object-contain rounded shadow-lg"
+                  style={{ background: "#fff" }}
+                />
+              </DialogContent>
+            </Dialog>
           </>
         ) : timeLabel ? (
           <span className="flex flex-col items-center gap-1 text-[#1B263B]">
@@ -149,6 +196,38 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
 
       {/* Corps */}
       <div className="relative min-w-0 flex-1" style={{ padding: big ? "13px 16px" : "11px 13px" }}>
+        {/* Bouton Favori (réservé aux utilisateurs connectés). */}
+        {isAuthenticated && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleBookmark(event.id);
+                }}
+                aria-label={bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+                aria-pressed={bookmarked}
+                className={`absolute top-2 z-10 rounded-full border p-1.5 transition-colors ${
+                  isSuperAdmin ? "right-9" : "right-2"
+                } ${
+                  bookmarked
+                    ? "border-transparent bg-accent-peach text-accent-peach-foreground hover:bg-accent-peach-hover"
+                    : theme === "dark"
+                      ? "border-white/20 text-white/70 hover:bg-white/10 hover:text-white"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                }`}
+              >
+                <Bookmark className="h-3.5 w-3.5" fill={bookmarked ? "currentColor" : "none"} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs">
+              {bookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Bouton Modifier (superadmins) */}
         {isSuperAdmin && (
           <>
@@ -156,7 +235,11 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => setShowEdit(true)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowEdit(true);
+                  }}
                   aria-label="Modifier l'événement"
                   className={`absolute right-2 top-2 z-10 rounded-full border p-1.5 transition-colors ${
                     theme === "dark"
@@ -173,6 +256,7 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
             </Tooltip>
             <Dialog open={showEdit} onOpenChange={setShowEdit}>
               <DialogContent
+                onClick={(e) => e.stopPropagation()}
                 className={`mx-auto w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto ${
                   theme === "light"
                     ? "bg-[#f8f8f6] text-ephemeride border-none"
@@ -194,7 +278,7 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
         )}
 
         {/* Titre + badges */}
-        <div className={`flex flex-wrap items-center gap-2 ${isSuperAdmin ? "pr-8" : ""}`} style={{ marginBottom: big ? 7 : 5 }}>
+        <div className={`flex flex-wrap items-center gap-2 ${isSuperAdmin ? "pr-16" : isAuthenticated ? "pr-8" : ""}`} style={{ marginBottom: big ? 7 : 5 }}>
           <span className="font-bold leading-tight" style={{ fontSize: big ? 16 : 14 }}>
             {event.name}
           </span>
@@ -228,8 +312,18 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
           </div>
         )}
 
-        {/* Pied : type + billetterie */}
-        <div className="flex items-center justify-between gap-2" style={{ marginTop: big ? 10 : 8 }}>
+        {/* Récurrence */}
+        {recurrenceLabel && (
+          <div className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+            <Repeat className="shrink-0" style={{ width: big ? 14 : 13, height: big ? 14 : 13 }} />
+            <span className="truncate" style={{ fontSize: big ? 13 : 12 }}>
+              {recurrenceLabel}
+            </span>
+          </div>
+        )}
+
+        {/* Pied : type + billetterie + découvrir */}
+        <div className="flex flex-wrap items-center justify-between gap-2" style={{ marginTop: big ? 10 : 8 }}>
           {event.audience ? (
             <span className="inline-block rounded-full bg-[#1B263B]/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-white/10">
               {event.audience}
@@ -237,32 +331,88 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
           ) : (
             <span />
           )}
-          {event.ticketing_url &&
-            (big ? (
-              <a
-                href={event.ticketing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors border-gray-300 text-[#1B263B] hover:bg-gray-50 dark:border-white/20 dark:text-[#faf3ec] dark:hover:bg-white/10"
-              >
-                <Ticket className="h-4 w-4" />
-                Billetterie
-              </a>
-            ) : (
-              <a
-                href={event.ticketing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Accéder à la billetterie"
-                className="text-muted-foreground transition-transform hover:scale-110"
-              >
-                <Ticket className="h-5 w-5" />
-              </a>
-            ))}
+          {(event.ticketing_url || event.url) && (
+            <div className="flex items-center gap-2">
+              {event.ticketing_url &&
+                (big ? (
+                  <a
+                    href={event.ticketing_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors border-gray-300 text-[#1B263B] hover:bg-gray-50 dark:border-white/20 dark:text-[#faf3ec] dark:hover:bg-white/10"
+                  >
+                    <Ticket className="h-4 w-4" />
+                    Billetterie
+                  </a>
+                ) : (
+                  <a
+                    href={event.ticketing_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Accéder à la billetterie"
+                    className="text-muted-foreground transition-transform hover:scale-110"
+                  >
+                    <Ticket className="h-5 w-5" />
+                  </a>
+                ))}
+              {event.url &&
+                (big ? (
+                  <a
+                    href={event.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors border-gray-300 text-[#1B263B] hover:bg-gray-50 dark:border-white/20 dark:text-[#faf3ec] dark:hover:bg-white/10"
+                  >
+                    Découvrir l'événement
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <a
+                    href={event.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Accéder au site de l'événement"
+                    className="text-muted-foreground transition-transform hover:scale-110"
+                  >
+                    <ArrowRight className="h-5 w-5" />
+                  </a>
+                ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
+
+  // Carte cliquable (ouvre le site de l'événement), comme `EventCard` : on
+  // utilise un div role="link" plutôt qu'un <a> englobant, afin d'éviter les
+  // ancres imbriquées (billetterie, « Découvrir ») → hydratation invalide.
+  if (event.url) {
+    const openEvent = () => window.open(event.url!, "_blank", "noopener,noreferrer");
+    return (
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={openEvent}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openEvent();
+          }
+        }}
+        className="block cursor-pointer focus:outline-none"
+        style={{ textDecoration: "none" }}
+      >
+        {card}
+      </div>
+    );
+  }
+
+  return card;
 };
 
 export default DayEventCard;
