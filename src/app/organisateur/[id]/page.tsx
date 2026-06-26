@@ -31,12 +31,12 @@ export async function generateMetadata(
   return {
     title: org.name,
     description,
-    alternates: { canonical: `/organisateur·ice/${id}` },
+    alternates: { canonical: `/organisateur/${id}` },
     openGraph: {
       title: `${org.name} — Éphéméride`,
       description,
       type: "website",
-      url: `/organisateur·ice/${id}`,
+      url: `/organisateur/${id}`,
     },
   };
 }

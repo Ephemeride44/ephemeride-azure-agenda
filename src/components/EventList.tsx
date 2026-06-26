@@ -16,13 +16,14 @@ interface EventListProps {
   pastEvents?: Event[];
   onLoadPastEvents?: () => void;
   /**
-   * Affiche le bloc date dans chaque carte. À désactiver quand la frise
-   * temporelle (rail de gauche) porte déjà la date pour éviter la redondance.
+   * Affiche le bloc date dans chaque carte. `false` par défaut : la frise
+   * temporelle (rail de gauche) porte déjà la date, l'afficher aussi dans la
+   * carte ferait doublon.
    */
   showCardDate?: boolean;
 }
 
-const EventList = ({ events, pastEvents = [], onLoadPastEvents, showCardDate = true }: EventListProps) => {
+const EventList = ({ events, pastEvents = [], onLoadPastEvents, showCardDate = false }: EventListProps) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isPastEventsOpen, setIsPastEventsOpen] = useState<boolean>(false);
   // Faux tant que la liste « à venir » n'a pas été dérivée côté client : on

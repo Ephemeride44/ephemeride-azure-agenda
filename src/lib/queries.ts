@@ -135,7 +135,7 @@ export interface OrganizationPublic {
   logo_url: string | null;
 }
 
-/** Une organisation active par son id (page /organisateur·ice/[id]). */
+/** Une organisation active par son id (page /organisateur/[id]). */
 export async function getOrganizationById(id: string): Promise<OrganizationPublic | null> {
   const supabase = untypedServer();
   const { data, error } = await supabase
@@ -152,7 +152,7 @@ export async function getOrganizationById(id: string): Promise<OrganizationPubli
   return (data as unknown as OrganizationPublic) ?? null;
 }
 
-/** Événements acceptés à venir d'une organisation (page /organisateur·ice/[id]). */
+/** Événements acceptés à venir d'une organisation (page /organisateur/[id]). */
 export async function getUpcomingEventsByOrganization(
   organizationId: string,
 ): Promise<EventWithRelations[]> {

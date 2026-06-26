@@ -152,7 +152,7 @@ export const NotificationTrayContent = ({ onNavigate }: NotificationTrayContentP
 // - organisateur·ice : ouvre la page de l'organisateur·ice.
 function navigateToNotification(router: ReturnType<typeof useRouter>, n: AppNotification) {
   if (n.type === "organization" && n.organization_id) {
-    router.push(`/organisateur·ice/${n.organization_id}`);
+    router.push(`/organisateur/${n.organization_id}`);
     return;
   }
   if ((n.type === "bookmark" || n.type === "city") && n.event_id) {
