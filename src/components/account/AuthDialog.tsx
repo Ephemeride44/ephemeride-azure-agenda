@@ -14,16 +14,16 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { usePushPrompt } from "@/components/account/PushPromptProvider";
+import { useOnboarding } from "@/components/account/OnboardingProvider";
 import { supabase as baseSupabase } from "@/integrations/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Cast pour ignorer le typage strict de Supabase (aligné sur LoginForm).
 const supabase = baseSupabase as unknown as SupabaseClient;
 
-// Création de compte public désactivée pour l'instant : la fonctionnalité
-// (favoris) est réservée aux utilisateurs existants. Repasser à true pour
-// rouvrir l'inscription au grand public.
-const SIGNUP_ENABLED = false;
+// Inscription publique ouverte : tout visiteur peut créer un compte pour suivre
+// des favoris, des communes et des organisateurs.
+const SIGNUP_ENABLED = true;
 
 // Redirection dans le contexte courant (local / distant), comme le LoginForm.
 const redirectUrl = (path: string) => `${window.location.origin}${path}`;
@@ -41,6 +41,7 @@ interface AuthDialogProps {
 export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const { toast } = useToast();
   const { promptPushIfEligible } = usePushPrompt();
+  const { startOnboarding } = useOnboarding();
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,7 +102,8 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     toast({ title: "Compte créé", description: "Bienvenue sur Éphéméride !" });
     reset();
     onOpenChange(false);
-    setTimeout(() => promptPushIfEligible(), 250);
+    // Lance le parcours d'onboarding (le wizard gère lui-même la permission push).
+    setTimeout(() => startOnboarding(), 250);
   };
 
   const handleResetPassword = async () => {

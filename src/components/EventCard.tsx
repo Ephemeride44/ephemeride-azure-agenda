@@ -1,9 +1,13 @@
 "use client";
 
 import type { Database } from "@/integrations/supabase/types";
-type Event = Database["public"]["Tables"]["events"]["Row"];
+import type { EventOrganization } from "@/lib/eventSelect";
+type Event = Database["public"]["Tables"]["events"]["Row"] & {
+  organization?: Pick<EventOrganization, "id" | "name"> | null;
+};
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Euro, Ticket, Pencil, Repeat, Clock, Bookmark } from "lucide-react";
+import { ArrowRight, Euro, Ticket, Pencil, Repeat, Clock, Bookmark, Megaphone } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserRoleContext } from "@/components/UserRoleProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,7 +16,7 @@ import { useState, useEffect } from "react";
 import EventForm from "@/components/EventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { daysOfWeek, getDateBlockColor, getEventStart, formatTimeDisplay, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
+import { daysOfWeek, monthNamesShort, getDateBlockColor, getEventStart, formatTimeDisplay, formatCityName, formatPrice, eventSlug } from "@/lib/utils";
 import { describeRecurrenceFromEvent } from "@/lib/recurrence";
 import { triggerRevalidate } from "@/lib/revalidate";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -50,6 +54,7 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
     const cleanData = { ...data } as Record<string, unknown>;
     delete cleanData.theme;
     delete cleanData.recurrence;
+    delete cleanData.organization;
     delete cleanData.id;
     if (cleanData.organization_id === '') cleanData.organization_id = null;
     if (cleanData.theme_id === '') cleanData.theme_id = null;
@@ -103,13 +108,21 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
   const timeLabel = formatTimeDisplay(event);
   const recurrenceLabel = describeRecurrenceFromEvent(event, { includeTime: false, withPrefix: false });
 
+  // Bloc date affiché à gauche de la carte (utile hors liste, ex. page détail).
+  const weekdayShort = eventStart ? `${daysOfWeek[eventStart.getDay()].slice(0, 3)}.` : null;
+  const dayNumber = eventStart ? eventStart.getDate() : null;
+  const monthShort = eventStart ? monthNamesShort[eventStart.getMonth()] : null;
+  const hasDate = eventStart != null;
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
   // Format location
   const locationString = `${event.location_place || ''}${event.location_city ? ` — ${formatCityName(event.location_city)}` : ''}${event.location_department ? ` (${event.location_department})` : ''}`;
 
   const cardContent = (
     <div className="flex flex-col md:flex-row h-full">
-      {/* Visuel : affiche si présente (avec badge heure), sinon panneau coloré
-          portant l'heure, ou simple liseré coloré si l'heure est absente. */}
+      {/* Visuel : affiche si présente (avec badges date + heure), sinon panneau
+          coloré portant la date et l'heure, ou simple liseré coloré si aucune
+          date ni heure. */}
       {event.cover_url ? (
         <>
           <Tooltip>
@@ -123,12 +136,19 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
                   tabIndex={0}
                   aria-label="Voir l'affiche en grand"
                 />
-                {timeLabel && (
-                  <span className={`absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-full ${dayColor} text-white text-sm font-semibold px-3 py-1.5 shadow-md`}>
-                    <Clock className="w-4 h-4" />
-                    {timeLabel}
-                  </span>
-                )}
+                <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5">
+                  {hasDate && (
+                    <span className={`inline-flex items-center rounded-full ${dayColor} text-white text-xs font-semibold px-2.5 py-1 shadow-md`}>
+                      {capitalize(weekdayShort!)} {dayNumber} {monthShort}
+                    </span>
+                  )}
+                  {timeLabel && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-full ${dayColor} text-white text-sm font-semibold px-3 py-1.5 shadow-md`}>
+                      <Clock className="w-4 h-4" />
+                      {timeLabel}
+                    </span>
+                  )}
+                </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
@@ -136,12 +156,21 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
             </TooltipContent>
           </Tooltip>
         </>
-      ) : timeLabel ? (
-        <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex items-center justify-center py-5 md:py-0 ${isPast ? 'opacity-60' : ''}`}>
-          <span className="inline-flex items-center gap-2 text-white text-base font-semibold">
-            <Clock className="w-5 h-5" />
-            {timeLabel}
-          </span>
+      ) : hasDate || timeLabel ? (
+        <div className={`flex-shrink-0 w-full md:w-56 ${dayColor} flex flex-col items-center justify-center gap-1 py-5 md:py-0 text-white ${isPast ? 'opacity-60' : ''}`}>
+          {hasDate && (
+            <div className="text-center leading-none">
+              <div className="text-xs font-semibold uppercase tracking-wide opacity-90">{capitalize(weekdayShort!)}</div>
+              <div className="text-4xl font-extrabold leading-tight">{dayNumber}</div>
+              <div className="text-xs font-semibold uppercase tracking-wide opacity-90">{monthShort}</div>
+            </div>
+          )}
+          {timeLabel && (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+              <Clock className="w-4 h-4" />
+              {timeLabel}
+            </span>
+          )}
         </div>
       ) : (
         <div className={`flex-shrink-0 w-full h-1.5 md:h-auto md:w-1.5 ${dayColor} ${isPast ? 'opacity-60' : ''}`} />
@@ -233,6 +262,19 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
           />
           {locationString}
         </div>
+
+        {/* Mention de l'organisateur (cliquable vers sa page) */}
+        {event.organization && (
+          <Link
+            href={`/organisateur/${event.organization.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="mb-2 inline-flex items-center gap-1.5 text-sm transition-colors hover:text-accent-peach"
+          >
+            <Megaphone className="h-3.5 w-3.5 opacity-70" />
+            <span className="text-[11px] uppercase tracking-wide opacity-60">Organisé par</span>
+            <span className="font-medium">{event.organization.name}</span>
+          </Link>
+        )}
 
         {/* Prix avec icône euro */}
         {!isPast && event.price && (
@@ -342,7 +384,8 @@ const EventCard = ({ event: eventProp, isPast = false }: EventCardProps) => {
 
   const card = (
     <Card
-      className={`${theme === 'dark' ? 'bg-ephemeride-light' : 'bg-white'} ${theme === 'dark' ? 'text-[#faf3ec]' : 'text-[#1B263B]'} mb-4 animate-fade-in hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden rounded-2xl`}
+      id={`event-${event.id}`}
+      className={`${theme === 'dark' ? 'bg-ephemeride-light' : 'bg-white'} ${theme === 'dark' ? 'text-[#faf3ec]' : 'text-[#1B263B]'} mb-4 animate-fade-in hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden rounded-2xl scroll-mt-24`}
     >
       <CardContent className="p-0 h-full">
         {cardContent}

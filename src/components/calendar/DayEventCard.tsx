@@ -67,6 +67,7 @@ const DayEventCard = ({ event: eventProp, size = "desktop", onChanged }: DayEven
     const cleanData = { ...data } as Record<string, unknown>;
     delete cleanData.theme;
     delete cleanData.recurrence;
+    delete cleanData.organization;
     delete cleanData.id;
     if (cleanData.organization_id === "") cleanData.organization_id = null;
     if (cleanData.theme_id === "") cleanData.theme_id = null;

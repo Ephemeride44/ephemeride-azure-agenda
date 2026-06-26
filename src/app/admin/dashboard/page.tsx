@@ -212,6 +212,27 @@ const AdminDashboard = () => {
     setShowDeleteConfirm(true);
   };
 
+  // Alerte best-effort les personnes abonnées à la commune ou à l'organisation
+  // d'un événement fraîchement publié (push + Notification Tray + e-mail).
+  // Non bloquant : l'idempotence est garantie côté Edge Function.
+  const notifyNewEvent = async (eventId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-new-event", {
+        body: { eventId },
+      });
+      if (error) return;
+      const notified = (data as { notified?: number } | null)?.notified ?? 0;
+      if (notified > 0) {
+        toast({
+          title: "Abonnés notifiés",
+          description: `${notified} personne(s) suivant la commune ou l'organisateur ont été alertées.`,
+        });
+      }
+    } catch {
+      /* notification non bloquante */
+    }
+  };
+
   // Validation groupée d'une proposition récurrente : passe toutes les occurrences
   // en attente liées à la même récurrence en accepted/rejected.
   const handleValidateSeries = async (event: EventRow, status: 'accepted' | 'rejected') => {
@@ -238,6 +259,19 @@ const AdminDashboard = () => {
     await fetchPendingEvents();
     await fetchAcceptedEvents();
     void triggerRevalidate();
+    // Une seule alerte par série : la prochaine occurrence à venir.
+    if (status === 'accepted') {
+      const { data: next } = await supabase
+        .from('events')
+        .select('id')
+        .eq('recurrence_id', event.recurrence_id)
+        .eq('status', 'accepted')
+        .gte('start_at', new Date().toISOString())
+        .order('start_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (next?.id) void notifyNewEvent(next.id);
+    }
   };
 
   // Validation individuelle d'une proposition : ne change que l'occurrence ciblée.
@@ -263,6 +297,7 @@ const AdminDashboard = () => {
     await fetchPendingEvents();
     await fetchAcceptedEvents();
     void triggerRevalidate();
+    if (status === 'accepted') void notifyNewEvent(event.id);
   };
 
   const handleDeleteConfirmed = async () => {
@@ -349,8 +384,8 @@ const AdminDashboard = () => {
     } else {
       // Create new event
       const organizationId = eventData.organization_id ?? currentOrganization?.organization_id ?? null;
-      
-      const { error: insertError } = await supabase
+
+      const { data: inserted, error: insertError } = await supabase
         .from('events')
         .insert({
           start_at: eventData.start_at || null,
@@ -369,8 +404,10 @@ const AdminDashboard = () => {
           organization_id: organizationId,
           updated_at: new Date().toISOString(),
           status: "accepted",
-        });
-        
+        })
+        .select('id')
+        .single();
+
       if (insertError) {
         toast({
           title: "Erreur lors de la création",
@@ -383,6 +420,7 @@ const AdminDashboard = () => {
           description: "Le nouvel événement a été créé avec succès",
         });
         success = true;
+        if (inserted?.id) void notifyNewEvent(inserted.id);
       }
     }
     
@@ -442,7 +480,10 @@ const AdminDashboard = () => {
       updated_at: now,
     }));
 
-    const { error: insertError } = await supabase.from('events').insert(rows);
+    const { data: insertedRows, error: insertError } = await supabase
+      .from('events')
+      .insert(rows)
+      .select('id, start_at');
 
     if (insertError) {
       // Rollback : supprimer la récurrence (cascade sur les events déjà insérés).
@@ -463,6 +504,12 @@ const AdminDashboard = () => {
     await fetchAcceptedEvents();
     void triggerRevalidate();
     setShowForm(false);
+    // Une seule alerte : la prochaine occurrence à venir de la série.
+    const nowMs = Date.now();
+    const upcoming = (insertedRows ?? [])
+      .filter((r) => r.start_at && new Date(r.start_at).getTime() >= nowMs)
+      .sort((a, b) => new Date(a.start_at!).getTime() - new Date(b.start_at!).getTime());
+    if (upcoming[0]?.id) void notifyNewEvent(upcoming[0].id);
     return true;
   };
 
@@ -671,6 +718,8 @@ const AdminDashboard = () => {
                   updated_at: new Date().toISOString(),
                 } as EventRow & { theme: ThemeRow };
                 delete mappedData.theme;
+                delete (mappedData as Record<string, unknown>).recurrence;
+                delete (mappedData as Record<string, unknown>).organization;
 
                 if (eventData.status === 'accepted') {
                   // Convertir les chaînes vides en null : les colonnes UUID

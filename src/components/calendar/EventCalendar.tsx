@@ -14,6 +14,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   cn,
   daysOfWeek,
   formatFrTime,
@@ -36,6 +41,49 @@ interface EventCalendarProps {
 
 const WEEKDAY_LABELS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MAX_EVENTS_PER_DAY = 3;
+
+/** Pastille cliquable d'un événement, partagée entre la grille et le popover. */
+function EventButton({
+  event,
+  blockColor,
+  onSelect,
+}: {
+  event: EventRow;
+  blockColor: string;
+  onSelect: (event: EventRow) => void;
+}) {
+  const start = getEventStart(event);
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(event)}
+      title={event.name}
+      className={cn(
+        "flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-xs text-white transition-opacity hover:opacity-80",
+        blockColor,
+        event.is_cancelled && "opacity-60 line-through",
+      )}
+    >
+      {event.emoji && <span className="shrink-0">{event.emoji}</span>}
+      {start && (
+        <span className="shrink-0 font-medium tabular-nums">
+          {formatFrTime(start)}
+        </span>
+      )}
+      <span className="truncate">{event.name}</span>
+      {event.is_full && (
+        <span className="ml-auto shrink-0 rounded bg-black/25 px-1 text-[10px] uppercase">
+          Complet
+        </span>
+      )}
+      {event.is_cancelled && (
+        <span className="ml-auto shrink-0 rounded bg-black/25 px-1 text-[10px] uppercase">
+          Annulé
+        </span>
+      )}
+    </button>
+  );
+}
 
 /**
  * Vue calendrier mensuelle présentationnelle (aucun fetch). Affiche les
@@ -149,46 +197,41 @@ export function EventCalendar({
               </div>
 
               <div className="flex flex-col gap-1 overflow-y-auto">
-                {visible.map((event) => {
-                  const start = getEventStart(event);
-                  return (
-                    <button
-                      key={event.id}
-                      type="button"
-                      onClick={() => onSelectEvent(event)}
-                      title={event.name}
-                      className={cn(
-                        "flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-xs text-white transition-opacity hover:opacity-80",
-                        blockColor,
-                        event.is_cancelled && "opacity-60 line-through",
-                      )}
-                    >
-                      {event.emoji && (
-                        <span className="shrink-0">{event.emoji}</span>
-                      )}
-                      {start && (
-                        <span className="shrink-0 font-medium tabular-nums">
-                          {formatFrTime(start)}
-                        </span>
-                      )}
-                      <span className="truncate">{event.name}</span>
-                      {event.is_full && (
-                        <span className="ml-auto shrink-0 rounded bg-black/25 px-1 text-[10px] uppercase">
-                          Complet
-                        </span>
-                      )}
-                      {event.is_cancelled && (
-                        <span className="ml-auto shrink-0 rounded bg-black/25 px-1 text-[10px] uppercase">
-                          Annulé
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                {visible.map((event) => (
+                  <EventButton
+                    key={event.id}
+                    event={event}
+                    blockColor={blockColor}
+                    onSelect={onSelectEvent}
+                  />
+                ))}
                 {overflow > 0 && (
-                  <span className="px-1 text-[11px] text-muted-foreground">
-                    +{overflow} autre{overflow > 1 ? "s" : ""}
-                  </span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded px-1 py-0.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        +{overflow} autre{overflow > 1 ? "s" : ""}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-64 p-2">
+                      <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+                        {dayEvents.length} événement
+                        {dayEvents.length > 1 ? "s" : ""} ce jour
+                      </p>
+                      <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+                        {dayEvents.map((event) => (
+                          <EventButton
+                            key={event.id}
+                            event={event}
+                            blockColor={blockColor}
+                            onSelect={onSelectEvent}
+                          />
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </div>
             </div>

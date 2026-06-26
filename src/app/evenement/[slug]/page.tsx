@@ -7,12 +7,9 @@ import {
   getEventStart,
   getEventEnd,
   formatFrDateLabel,
-  formatTimeDisplay,
   formatCityName,
-  formatPrice,
 } from "@/lib/utils";
-import { formatDepartment } from "@/lib/departments";
-import { describeRecurrenceFromEvent } from "@/lib/recurrence";
+import EventCard from "@/components/EventCard";
 
 // ISR : régénération horaire + à la demande (api/revalidate). Les nouveaux
 // événements non pré-générés sont rendus à la première visite.
@@ -112,15 +109,10 @@ export default async function EventPage(
   const event = id ? await getEventById(id) : null;
   if (!event) notFound();
 
-  const start = getEventStart(event);
-  const time = formatTimeDisplay(event);
-  const recurrence = describeRecurrenceFromEvent(event, { includeTime: false });
-  const city = formatCityName(event.location_city);
-  const price = formatPrice(event.price);
   const jsonLd = buildJsonLd(event, slug);
 
   return (
-    <div className="min-h-screen dark:bg-ephemeride">
+    <div className="min-h-screen dark:bg-ephemeride light:bg-[#faf3ec]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -130,104 +122,10 @@ export default async function EventPage(
           ← Retour à l'agenda
         </Link>
 
+        {/* On réutilise la carte d'événement de l'agenda : même visuel, toutes
+            les infos (date, lieu, prix, récurrence, organisateur, favori…). */}
         <article className="mt-6">
-          <header className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-semibold flex items-center gap-3">
-              {event.emoji && <span aria-hidden>{event.emoji}</span>}
-              <span>{event.name}</span>
-            </h1>
-            {event.is_cancelled && (
-              <p className="mt-2 inline-block rounded bg-destructive/15 text-destructive px-2 py-1 text-sm font-medium">
-                Événement annulé
-              </p>
-            )}
-            {event.is_full && !event.is_cancelled && (
-              <p className="mt-2 inline-block rounded bg-muted px-2 py-1 text-sm font-medium">
-                Complet
-              </p>
-            )}
-          </header>
-
-          {event.cover_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={event.cover_url}
-              alt={event.name}
-              className="w-full rounded-lg mb-6 object-cover max-h-[480px]"
-            />
-          )}
-
-          <dl className="space-y-3 text-base">
-            {start && (
-              <div>
-                <dt className="font-medium opacity-70">Date</dt>
-                <dd className="capitalize">
-                  {formatFrDateLabel(start)}
-                  {time ? ` — ${time}` : ""}
-                </dd>
-              </div>
-            )}
-            {recurrence && (
-              <div>
-                <dt className="font-medium opacity-70">Récurrence</dt>
-                <dd>{recurrence}</dd>
-              </div>
-            )}
-            {(event.location_place || city) && (
-              <div>
-                <dt className="font-medium opacity-70">Lieu</dt>
-                <dd>{[event.location_place, city].filter(Boolean).join(", ")}</dd>
-              </div>
-            )}
-            {event.location_department && (
-              <div>
-                <dt className="font-medium opacity-70">Département</dt>
-                <dd>
-                  <Link
-                    href={`/departement/${event.location_department}`}
-                    className="underline hover:opacity-80"
-                  >
-                    {formatDepartment(event.location_department)}
-                  </Link>
-                </dd>
-              </div>
-            )}
-            {event.audience && (
-              <div>
-                <dt className="font-medium opacity-70">Public</dt>
-                <dd>{event.audience}</dd>
-              </div>
-            )}
-            {price && (
-              <div>
-                <dt className="font-medium opacity-70">Tarif</dt>
-                <dd>{price}</dd>
-              </div>
-            )}
-          </dl>
-
-          <div className="flex flex-wrap gap-3 mt-8">
-            {event.ticketing_url && (
-              <a
-                href={event.ticketing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-4 py-2 font-medium"
-              >
-                Billetterie
-              </a>
-            )}
-            {event.url && (
-              <a
-                href={event.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border px-4 py-2 font-medium"
-              >
-                Site de l'événement
-              </a>
-            )}
-          </div>
+          <EventCard event={event as never} />
         </article>
       </div>
     </div>
