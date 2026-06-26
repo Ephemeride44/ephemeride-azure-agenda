@@ -10,6 +10,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import AccountMenu, { MobileMenu } from "@/components/account/AccountMenu";
 import { NotificationBell } from "@/components/account/NotificationBell";
 import { LogoLink } from "@/components/LogoLink";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -502,6 +503,15 @@ const HomeClient = ({ initialEvents, lastUpdatedAt, filterOptions }: HomeClientP
             <p className="text-sm font-normal opacity-70">
               L'AGENDA CULTUREL ET CITOYEN DU VIGNOBLE NANTAIS
             </p>
+            <nav className="flex items-center justify-center gap-x-3 gap-y-1 flex-wrap text-xs opacity-70">
+              <Link href="/conditions" className="hover:underline hover:opacity-100 transition-opacity">
+                Conditions d'utilisation
+              </Link>
+              <span aria-hidden className="opacity-50">·</span>
+              <Link href="/confidentialite" className="hover:underline hover:opacity-100 transition-opacity">
+                Confidentialité des données
+              </Link>
+            </nav>
             {/* Logo Tipeee cliquable (affiché seulement si une URL est configurée) */}
             <TipeeeFooterLogo />
           </div>
