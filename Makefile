@@ -41,13 +41,15 @@ supabase-secrets:
 		VAPID_PRIVATE_KEY="$(VAPID_PRIVATE_KEY)" \
 		VAPID_SUBJECT="$(VAPID_SUBJECT)"
 
-# Configure les secrets Resend pour le fallback e-mail (valeurs depuis .env.local).
+# Configure les secrets Resend (e-mails sortants + redirection des mails entrants).
 # RESEND_FROM doit utiliser un domaine expéditeur vérifié dans Resend.
 supabase-secrets-email:
 	npx supabase secrets set \
 		RESEND_API_KEY="$(RESEND_API_KEY)" \
 		RESEND_FROM="$(RESEND_FROM)" \
-		SITE_URL="$(NEXT_PUBLIC_SITE_URL)"
+		SITE_URL="$(NEXT_PUBLIC_SITE_URL)" \
+		RESEND_EMAIL_RECEIVED_FORWARD="$(RESEND_EMAIL_RECEIVED_FORWARD)" \
+		RESEND_WEBHOOK_SECRET="$(RESEND_WEBHOOK_SECRET)"
 
 # Déploiement complet de la fonctionnalité notifications push :
 # migration + secrets + déploiement de toutes les fonctions.

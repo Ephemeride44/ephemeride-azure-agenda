@@ -4,3 +4,8 @@ project_id = "kgjvfuzdnbvgxkbndwfr"
 # par un utilisateur → pas de JWT à vérifier.
 [functions.send-auth-email]
 verify_jwt = false
+
+# Webhook Resend `email.received` : appelé par Resend (signature Svix), pas par un
+# utilisateur → pas de JWT à vérifier.
+[functions.forward-inbound-email]
+verify_jwt = false
